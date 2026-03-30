@@ -1,0 +1,3892 @@
+<!-- Debug Pro 页面 - 嵌入式版本 (适配 unified-tool 上位机) -->
+<div class="debug-pro-page" style="height:100%;display:flex;flex-direction:column;overflow:hidden">
+<style>
+/* ===== Debug Pro 页面样式 - 适配上位机主题系统 ===== */
+.debug-pro-page {
+    --dp-bg: transparent;
+    --dp-bg2: var(--card-bg, rgba(15, 25, 40, 0.9));
+    --dp-bg3: var(--input-bg, rgba(0, 0, 0, 0.4));
+    --dp-border: var(--border-color, rgba(0, 255, 136, 0.25));
+    --dp-text: var(--text-color, rgba(255,255,255,0.90));
+    --dp-text2: var(--text-muted, rgba(255,255,255,0.70));
+    --dp-text3: var(--text-dim, rgba(255,255,255,0.56));
+    --dp-accent: var(--accent, #00ff88);
+    --dp-success: var(--color-success, #00ff88);
+    --dp-danger: var(--color-danger, #ff6b6b);
+    --dp-log-tx: #00d4ff;
+    --dp-log-rx: #a78bfa;
+    --dp-log-sys: var(--text-muted);
+    --dp-log-err: #ff6b6b;
+    font-family: var(--font-ui, 'SF Pro Display','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif);
+    font-size: 14px;
+}
+.debug-pro-page * { box-sizing: border-box; }
+
+/* 工具类 */
+.debug-pro-page .flex{display:flex}
+.debug-pro-page .flex-col{flex-direction:column}
+.debug-pro-page .flex-1{flex:1}
+.debug-pro-page .items-center{align-items:center}
+.debug-pro-page .justify-between{justify-content:space-between}
+.debug-pro-page .gap-1{gap:4px}
+.debug-pro-page .gap-2{gap:8px}
+.debug-pro-page .gap-3{gap:12px}
+.debug-pro-page .p-2{padding:8px}
+.debug-pro-page .p-3{padding:12px}
+.debug-pro-page .px-3{padding-left:12px;padding-right:12px}
+.debug-pro-page .py-2{padding-top:8px;padding-bottom:8px}
+.debug-pro-page .text-xs{font-size:12px}
+.debug-pro-page .text-sm{font-size:13px}
+.debug-pro-page .font-medium{font-weight:500}
+.debug-pro-page .font-bold{font-weight:700}
+.debug-pro-page .font-mono{font-family:var(--font-mono, 'JetBrains Mono',Consolas,monospace)}
+.debug-pro-page .rounded{border-radius:6px}
+.debug-pro-page .rounded-lg{border-radius:12px}
+.debug-pro-page .hidden{display:none}
+.debug-pro-page .overflow-auto{overflow:auto}
+.debug-pro-page .shrink-0{flex-shrink:0}
+.debug-pro-page .cursor-pointer{cursor:pointer}
+.debug-pro-page .h-full{height:100%}
+.debug-pro-page .w-full{width:100%}
+.debug-pro-page .min-h-0{min-height:0}
+
+/* 面板样式 */
+.debug-pro-page .dp-panel {
+    background: var(--dp-bg2);
+    border: 1px solid var(--dp-border);
+    border-radius: 12px;
+}
+
+/* 按钮 */
+.debug-pro-page .dp-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--dp-border);
+    background: var(--dp-bg2);
+    color: var(--dp-text2);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+.debug-pro-page .dp-btn:hover {
+    border-color: var(--dp-accent);
+    color: var(--dp-accent);
+}
+.debug-pro-page .dp-btn.active {
+    border-color: var(--dp-accent);
+    background: var(--dp-accent);
+    color: rgba(0,0,0,0.88);
+}
+.debug-pro-page .dp-btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--dp-border);
+    background: var(--dp-bg2);
+    color: var(--dp-text2);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.debug-pro-page .dp-btn-icon:hover {
+    border-color: var(--dp-accent);
+    color: var(--dp-accent);
+}
+.debug-pro-page .dp-btn-primary {
+    background: var(--dp-accent);
+    border-color: var(--dp-accent);
+    color: rgba(0,0,0,0.88);
+}
+.debug-pro-page .dp-btn-primary:hover {
+    box-shadow: 0 0 12px var(--accent-glow, rgba(0,255,136,0.4));
+}
+
+/* 输入框 */
+.debug-pro-page .dp-input {
+    border: 1px solid var(--dp-border);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 32px;
+    font-size: 13px;
+    background: var(--dp-bg3);
+    color: var(--dp-text);
+    transition: all 0.2s;
+}
+.debug-pro-page .dp-input:focus {
+    border-color: var(--dp-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-dim, rgba(0,255,136,0.2));
+}
+
+/* 命令表格 */
+.debug-pro-page .cmd-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.debug-pro-page .cmd-table th {
+    background: var(--dp-bg3);
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--dp-text2);
+    border-bottom: 1px solid var(--dp-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.debug-pro-page .cmd-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--dp-border);
+    color: var(--dp-text);
+}
+.debug-pro-page .cmd-table tr:hover td {
+    background: var(--dp-bg3);
+}
+.debug-pro-page .cmd-table .cmd-hex {
+    font-family: var(--font-mono);
+    color: var(--dp-accent);
+    font-weight: 500;
+}
+
+/* 日志样式 */
+.debug-pro-page .log-item {
+    padding: 2px 8px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.debug-pro-page .log-sys { color: var(--dp-log-sys); }
+.debug-pro-page .log-tx { color: var(--dp-log-tx); }
+.debug-pro-page .log-rx { color: var(--dp-log-rx); cursor: pointer; }
+.debug-pro-page .log-rx:hover { background: rgba(255,255,255,0.05); }
+.debug-pro-page .log-err { color: var(--dp-log-err); }
+
+/* 日志容器 */
+.debug-pro-page #log-body {
+    flex: 1 1 0 !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+    position: relative !important;
+}
+.debug-pro-page #log-container {
+    position: absolute !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow-y: auto !important;
+}
+
+/* 分隔条 */
+.debug-pro-page .resizer {
+    width: 6px;
+    cursor: col-resize;
+    background: var(--dp-border);
+    transition: background 0.2s;
+    flex-shrink: 0;
+    border-radius: 3px;
+    margin: 0 3px;
+}
+.debug-pro-page .resizer:hover,
+.debug-pro-page .resizer.active {
+    background: var(--dp-accent);
+}
+
+/* 波形工具栏 */
+.debug-pro-page .chart-tool {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--dp-text3);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.debug-pro-page .chart-tool:hover {
+    background: var(--dp-bg2);
+    color: var(--dp-text);
+}
+.debug-pro-page .chart-tool.active {
+    background: var(--dp-accent);
+    color: rgba(0,0,0,0.88);
+}
+
+/* 状态点 */
+.debug-pro-page .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.debug-pro-page .status-dot.online {
+    background: var(--dp-success);
+    box-shadow: 0 0 8px var(--dp-success);
+}
+.debug-pro-page .status-dot.offline {
+    background: var(--dp-danger);
+}
+.debug-pro-page .status-dot.connecting {
+    background: #f59e0b;
+    animation: dp-pulse 1.5s infinite;
+}
+@keyframes dp-pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.6; transform:scale(1.2); }
+}
+
+/* 右键菜单 */
+.debug-pro-page .context-menu {
+    position: fixed;
+    background: var(--dp-bg2);
+    border: 1px solid var(--dp-border);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 9999;
+    min-width: 150px;
+    display: none;
+}
+.debug-pro-page .context-menu.show { display: block; }
+.debug-pro-page .context-menu-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--dp-text);
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.debug-pro-page .context-menu-item:hover {
+    background: var(--dp-accent);
+    color: rgba(0,0,0,0.88);
+}
+.debug-pro-page .context-menu-item svg { width: 14px; height: 14px; }
+
+/* 滚动条 */
+.debug-pro-page ::-webkit-scrollbar { width: 6px; height: 6px; }
+.debug-pro-page ::-webkit-scrollbar-track { background: transparent; }
+.debug-pro-page ::-webkit-scrollbar-thumb { background: var(--dp-border); border-radius: 3px; }
+.debug-pro-page ::-webkit-scrollbar-thumb:hover { background: var(--dp-text3); }
+</style>
+
+<!-- 顶部工具栏 -->
+<div class="dp-toolbar flex items-center justify-between shrink-0 p-2" style="border-bottom:1px solid var(--dp-border);background:var(--dp-bg2);border-radius:8px 8px 0 0">
+    <!-- 左侧：连接控制 -->
+    <div class="flex items-center gap-2">
+        <select id="dp-baud-rate" class="dp-input" style="width:100px" onchange="DebugPro.saveBaudRate()">
+            <option value="9600">9600</option>
+            <option value="115200" selected>115200</option>
+            <option value="256000">256000</option>
+            <option value="460800">460800</option>
+            <option value="921600">921600</option>
+        </select>
+        <button id="dp-btn-quick" onclick="DebugPro.quickReconnect()" class="dp-btn" title="快速重连">
+            <span>🔄</span> <span id="dp-quick-label">重连</span>
+        </button>
+        <button id="dp-btn-serial" onclick="DebugPro.connectSerial()" class="dp-btn-icon" title="选择串口">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.5"/><circle cx="15" cy="9" r="1.5"/><path d="M9 15h6"/></svg>
+        </button>
+        <button id="dp-btn-ble" onclick="DebugPro.connectBLE()" class="dp-btn-icon" title="蓝牙BLE">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+        </button>
+        <button id="dp-btn-wifi" onclick="DebugPro.connectWiFi()" class="dp-btn-icon" title="WiFi" style="color:#22c55e">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+        </button>
+        <div style="width:1px;height:24px;background:var(--dp-border);margin:0 4px"></div>
+        <button onclick="DebugPro.showUpgradeDialog()" class="dp-btn" title="固件升级">
+            <span>⬆️</span> <span>升级</span>
+        </button>
+    </div>
+    
+    <!-- 中间：状态 -->
+    <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 px-3 py-1" style="background:var(--dp-bg3);border:1px solid var(--dp-border);border-radius:20px">
+            <div id="dp-status-dot" class="status-dot offline"></div>
+            <span id="dp-status-text" class="text-xs font-medium" style="color:var(--dp-text2)">未连接</span>
+        </div>
+        <div class="flex items-center gap-3 font-mono text-xs">
+            <span style="color:var(--dp-accent)">TX <span id="dp-tx-count">0</span></span>
+            <span style="color:var(--dp-success)">RX <span id="dp-rx-count">0</span></span>
+        </div>
+    </div>
+    
+    <!-- 右侧：设置 -->
+    <div class="flex items-center gap-2">
+        <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text2)">
+            <input type="checkbox" id="dp-auto-wave" onchange="DebugPro.saveSettings()">
+            <span class="text-xs">自动波形</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text2)">
+            <input type="checkbox" id="dp-auto-scroll" checked onchange="DebugPro.saveSettings()">
+            <span class="text-xs">滚动</span>
+        </label>
+    </div>
+</div>
+
+<!-- 主内容区：三栏布局 -->
+<div id="dp-main" class="flex flex-1 gap-2 p-2 min-h-0" style="overflow:hidden">
+    
+    <!-- 左侧：命令面板 -->
+    <aside id="dp-panel-cmd" class="dp-panel flex flex-col h-full overflow-hidden" style="flex:0 0 280px;min-width:200px">
+        <!-- 配置选择 -->
+        <div class="p-2 flex items-center gap-1" style="border-bottom:1px solid var(--dp-border)">
+            <select id="dp-config-select" class="dp-input flex-1 text-xs" onchange="DebugPro.switchConfig()">
+                <option value="default">默认配置</option>
+            </select>
+            <button onclick="DebugPro.loadConfigsFromFolder()" class="dp-btn-icon" style="width:28px;height:28px" title="从文件夹加载">📁</button>
+            <button onclick="DebugPro.addConfig()" class="dp-btn-icon" style="width:28px;height:28px" title="新建">➕</button>
+            <button onclick="DebugPro.deleteConfig()" class="dp-btn-icon" style="width:28px;height:28px" title="删除">🗑️</button>
+        </div>
+        <div class="p-2 flex items-center gap-1" style="border-bottom:1px solid var(--dp-border)">
+            <button onclick="document.getElementById('dp-import-file').click()" class="dp-btn text-xs">导入</button>
+            <button onclick="DebugPro.exportCmds()" class="dp-btn text-xs">导出</button>
+            <button onclick="DebugPro.toggleEditMode()" id="dp-edit-mode-btn" class="dp-btn text-xs">✏️编辑</button>
+            <button onclick="DebugPro.addCmd()" class="dp-btn text-xs">+添加</button>
+            <input type="file" id="dp-import-file" accept=".ini,.json,.txt" onchange="DebugPro.handleImport(event)" class="hidden">
+        </div>
+        <!-- 命令列表 -->
+        <div class="flex-1 overflow-auto">
+            <table class="cmd-table" style="table-layout:fixed">
+                <thead>
+                    <tr>
+                        <th style="width:28px"></th>
+                        <th style="width:auto">命令(HEX)</th>
+                        <th style="width:80px">说明</th>
+                        <th style="width:40px">延时</th>
+                    </tr>
+                </thead>
+                <tbody id="dp-cmd-tbody"></tbody>
+            </table>
+        </div>
+        <!-- 底部按钮 -->
+        <div class="p-2 flex gap-2" style="border-top:1px solid var(--dp-border)">
+            <button onclick="DebugPro.sendSelected()" class="dp-btn-primary flex-1 py-2 text-xs font-medium rounded-lg">发送选中</button>
+            <button onclick="DebugPro.sendAllSequence()" class="dp-btn flex-1 py-2 text-xs" style="border-color:var(--dp-accent);color:var(--dp-accent)">循环发送</button>
+        </div>
+    </aside>
+    
+    <!-- 分隔条1 -->
+    <div class="resizer" data-left="dp-panel-cmd" data-right="dp-panel-log"></div>
+    
+    <!-- 中间：日志区 -->
+    <div id="dp-panel-log" class="dp-panel flex flex-col" style="flex:1;min-width:300px;overflow:hidden">
+        <div class="flex items-center justify-between shrink-0 px-3 py-2" style="border-bottom:1px solid var(--dp-border)">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--dp-text3)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span class="text-sm font-bold">通信日志</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text2)">
+                    <input type="checkbox" id="dp-show-hex" onchange="DebugPro.saveSettings()">
+                    <span class="text-xs">HEX</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text2)">
+                    <input type="checkbox" id="dp-show-timestamp" checked onchange="DebugPro.saveSettings()">
+                    <span class="text-xs">时间</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text2)">
+                    <input type="checkbox" id="dp-log-record" onchange="DebugPro.saveSettings()">
+                    <span class="text-xs">记录</span>
+                </label>
+                <button onclick="DebugPro.selectAllLog()" class="dp-btn-icon" style="width:26px;height:26px" title="全选">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                </button>
+                <button onclick="DebugPro.saveLogToFile()" class="dp-btn-icon" style="width:26px;height:26px" title="保存">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button onclick="DebugPro.clearLog()" class="dp-btn-icon" style="width:26px;height:26px" title="清空">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
+        </div>
+        <div id="log-body" style="flex:1;background:var(--dp-bg3);min-height:0">
+            <div id="log-container" tabindex="0" style="padding:8px;user-select:text;outline:none;height:100%;overflow-y:auto">
+                <div id="dp-log-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dp-text3)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:8px;opacity:0.3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span style="font-size:13px;opacity:0.5">暂无数据</span>
+                </div>
+                <div id="dp-log-content" style="display:none"></div>
+            </div>
+        </div>
+        <!-- 发送区 -->
+        <div class="p-2 shrink-0" style="border-top:1px solid var(--dp-border)">
+            <div class="flex gap-2 items-center">
+                <input type="text" id="dp-send-input" class="dp-input flex-1 font-mono text-xs" placeholder="输入命令... (↑↓浏览历史)" onkeydown="DebugPro.handleInputKeydown(event)">
+                <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text2)">
+                    <input type="checkbox" id="dp-send-hex" onchange="DebugPro.saveSettings()">
+                    <span class="text-xs">HEX</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text2)">
+                    <input type="checkbox" id="dp-send-nl" checked onchange="DebugPro.saveSettings()">
+                    <span class="text-xs">\n</span>
+                </label>
+                <button onclick="DebugPro.send()" id="dp-btn-send" disabled class="dp-btn-primary px-4 py-2 text-xs font-medium rounded-lg disabled:opacity-50">发送</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 分隔条2 -->
+    <div class="resizer" data-left="dp-panel-log" data-right="dp-panel-wave"></div>
+
+    <!-- 右侧：波形区 -->
+    <aside id="dp-panel-wave" class="dp-panel flex flex-col h-full overflow-hidden" style="flex:0 0 320px;min-width:250px">
+        <div class="px-3 py-2 flex items-center justify-between shrink-0" style="border-bottom:1px solid var(--dp-border)">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--dp-success)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span class="text-sm font-bold">波形分析</span>
+            </div>
+            <!-- 工具栏 -->
+            <div class="flex items-center gap-1 p-1 rounded" style="background:var(--dp-bg3);border:1px solid var(--dp-border)">
+                <button onclick="DebugPro.resetZoom()" class="chart-tool" title="重置缩放">↺</button>
+                <button onclick="DebugPro.clearWave()" class="chart-tool" title="清空">🗑</button>
+            </div>
+        </div>
+        <!-- 波形图占主要空间 -->
+        <div class="flex-1 p-2 min-h-0 flex flex-col" style="gap:8px">
+            <div style="flex:1;position:relative;background:var(--dp-bg3);border:1px solid var(--dp-border);min-height:120px" class="rounded-lg p-1">
+                <canvas id="dp-waveChart"></canvas>
+                <div style="position:absolute;bottom:4px;right:8px;font-size:10px;color:var(--dp-text3);pointer-events:none">滚轮缩放 | 拖拽平移</div>
+            </div>
+            <!-- 统计信息 - 紧凑布局 -->
+            <div class="grid shrink-0" style="grid-template-columns:repeat(4,1fr);gap:4px;text-align:center">
+                <div class="rounded p-1" style="background:var(--dp-bg3);border:1px solid var(--dp-border)">
+                    <span class="text-xs" style="color:var(--dp-text3)">最大</span>
+                    <div id="dp-stat-max" class="font-mono text-xs">--</div>
+                </div>
+                <div class="rounded p-1" style="background:var(--dp-bg3);border:1px solid var(--dp-border)">
+                    <span class="text-xs" style="color:var(--dp-text3)">最小</span>
+                    <div id="dp-stat-min" class="font-mono text-xs">--</div>
+                </div>
+                <div class="rounded p-1" style="background:var(--dp-bg3);border:1px solid var(--dp-border)">
+                    <span class="text-xs" style="color:var(--dp-text3)">平均</span>
+                    <div id="dp-stat-avg" class="font-mono text-xs">--</div>
+                </div>
+                <div class="rounded p-1" style="background:var(--dp-bg3);border:1px solid var(--dp-border)">
+                    <span class="text-xs" style="color:var(--dp-text3)">点数</span>
+                    <div id="dp-stat-count" class="font-mono text-xs" style="color:var(--dp-accent)">0</div>
+                </div>
+            </div>
+            <!-- 过滤范围设置 -->
+            <div class="flex items-center gap-2 mt-1" style="font-size:11px">
+                <span style="color:var(--dp-text3)">过滤:</span>
+                <input type="number" id="dp-filter-min" class="dp-input font-mono" style="width:60px;height:22px;font-size:11px;padding:0 4px" placeholder="下限" value="255" title="小于此值的数字将被过滤" onchange="DebugPro.saveSettings()">
+                <span style="color:var(--dp-text3)">~</span>
+                <input type="number" id="dp-filter-max" class="dp-input font-mono" style="width:60px;height:22px;font-size:11px;padding:0 4px" placeholder="上限" value="65535" title="大于此值的数字将被过滤" onchange="DebugPro.saveSettings()">
+                <label class="flex items-center gap-1 cursor-pointer" style="color:var(--dp-text3)" title="启用过滤">
+                    <input type="checkbox" id="dp-filter-enable" checked style="width:12px;height:12px" onchange="DebugPro.saveSettings()">
+                    <span>启用</span>
+                </label>
+            </div>
+        </div>
+        <!-- 底部操作区 - 更紧凑 -->
+        <div class="p-2 shrink-0" style="border-top:1px solid var(--dp-border)">
+            <div class="flex gap-2 items-center">
+                <button onclick="DebugPro.saveWithNote()" class="dp-btn text-xs" title="保存当前波形">💾</button>
+                <button onclick="DebugPro.exportWaveData()" class="dp-btn text-xs" title="导出数据">📤</button>
+                <button onclick="DebugPro.toggleWaveHistory()" class="dp-btn text-xs" title="历史记录">📁</button>
+                <input type="text" id="dp-wave-input" class="dp-input flex-1 font-mono text-xs" placeholder="粘贴数据..." style="min-width:60px">
+                <button onclick="DebugPro.parseWaveInput()" class="dp-btn-primary px-2 text-xs">解析</button>
+            </div>
+            <!-- 波形历史（默认隐藏） -->
+            <div id="dp-wave-history-panel" style="display:none;margin-top:8px;max-height:100px;overflow-y:auto">
+                <div id="dp-wave-history-list"></div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- 右键菜单 -->
+<div id="dp-context-menu" class="context-menu">
+    <div class="context-menu-item" onclick="DebugPro.addSelectionToWave()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        添加到波形
+    </div>
+    <div class="context-menu-item" onclick="DebugPro.copySelection()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        复制
+    </div>
+</div>
+
+<!-- 设备选择弹窗 -->
+<div id="dp-device-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center">
+    <div style="background:var(--dp-bg2);border-radius:12px;padding:20px;min-width:320px;max-width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="font-size:16px;font-weight:bold" id="dp-device-modal-title">选择串口</h3>
+            <button onclick="DebugPro.closeDeviceModal()" style="background:none;border:none;cursor:pointer;color:var(--dp-text3);font-size:20px">&times;</button>
+        </div>
+        <div id="dp-device-list" style="max-height:300px;overflow-y:auto"></div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--dp-border)">
+            <button onclick="DebugPro.scanNewDevice()" class="dp-btn-primary w-full py-2">扫描新设备...</button>
+        </div>
+    </div>
+</div>
+
+<!-- 升级弹窗 -->
+<div id="dp-upgrade-modal" class="dp-modal-overlay">
+    <div class="dp-modal-content" onclick="event.stopPropagation()">
+        <!-- 标题栏 -->
+        <div class="dp-modal-header">
+            <h3>⬆️ 固件升级</h3>
+            <button onclick="DebugPro.hideUpgradeDialog()" class="dp-modal-close">&times;</button>
+        </div>
+        
+        <!-- 双卡片布局 -->
+        <div class="dp-upgrade-cards">
+            <!-- 左侧：当前设备 -->
+            <div class="dp-upgrade-card">
+                <div class="dp-card-header">
+                    <span class="dp-card-label">当前设备</span>
+                    <span id="dp-dev-mode" class="dp-badge">--</span>
+                </div>
+                <div class="dp-card-model" id="dp-dev-model">读取中...</div>
+                <div class="dp-card-id">ID: <span id="dp-dev-id">--</span></div>
+                <div class="dp-card-version">
+                    <span class="dp-version-label">当前版本</span>
+                    <span class="dp-version-value" id="dp-dev-version">--</span>
+                </div>
+                <div class="dp-card-footer">
+                    <span>Boot: <b id="dp-dev-boot">--</b></span>
+                    <span>大小: <b id="dp-dev-size">--</b></span>
+                    <span>CRC: <b id="dp-dev-crc">--</b></span>
+                </div>
+            </div>
+            
+            <!-- 中间箭头 -->
+            <div class="dp-upgrade-arrow">→</div>
+            
+            <!-- 右侧：目标固件 -->
+            <div class="dp-upgrade-card">
+                <div id="dp-fw-select-zone" class="dp-fw-dropzone" onclick="DebugPro.selectFirmware()">
+                    <div class="dp-fw-icon">📁</div>
+                    <div class="dp-fw-hint">点击选择固件</div>
+                    <div class="dp-fw-formats">支持 .bin / .hex / .enc</div>
+                </div>
+                <div id="dp-fw-info" class="dp-fw-info" style="display:none">
+                    <div class="dp-card-header">
+                        <span class="dp-card-label">目标固件</span>
+                        <button onclick="DebugPro.selectFirmware()" class="dp-btn text-xs">更换</button>
+                    </div>
+                    <div class="dp-card-model" id="dp-fw-model">--</div>
+                    <div class="dp-card-id" id="dp-fw-filename">--</div>
+                    <div class="dp-card-version">
+                        <span class="dp-version-label">新版本</span>
+                        <span class="dp-version-value dp-version-new" id="dp-fw-version">--</span>
+                    </div>
+                    <div class="dp-card-footer">
+                        <span>大小: <b id="dp-fw-size">--</b></span>
+                        <span>CRC: <b id="dp-fw-crc">--</b></span>
+                    </div>
+                    <div class="dp-card-footer" style="margin-top:2px">
+                        <span>时间: <b id="dp-fw-time">--</b></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 进度条 -->
+        <div class="dp-upgrade-progress">
+            <div class="dp-progress-header">
+                <span id="dp-upgrade-state">就绪</span>
+                <span id="dp-upgrade-percent">100%</span>
+            </div>
+            <div class="dp-progress-bar">
+                <div id="dp-upgrade-fill" class="dp-progress-fill"></div>
+            </div>
+            <div class="dp-progress-footer">
+                <span id="dp-upgrade-detail" class="dp-progress-detail">请选择固件文件</span>
+                <span id="dp-upgrade-time" style="color:var(--dp-accent);font-size:12px;">耗时: --</span>
+            </div>
+        </div>
+        
+        <!-- 按钮 -->
+        <div class="dp-modal-footer">
+            <button onclick="DebugPro.hideUpgradeDialog()" class="dp-btn">取消</button>
+            <button onclick="DebugPro.selectFirmware()" class="dp-btn">📁 选择固件</button>
+            <button id="dp-btn-upgrade" onclick="DebugPro.startUpgrade()" disabled class="dp-btn-primary">🚀 开始升级</button>
+        </div>
+        
+        <!-- 隐藏的文件输入 -->
+        <input type="file" id="dp-firmware-file" accept=".bin,.hex,.enc" onchange="DebugPro.onFirmwareSelected(event)" style="display:none">
+    </div>
+</div>
+
+<style>
+/* 升级弹窗样式 */
+.dp-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 10001;
+}
+.dp-modal-overlay.show { display: flex; }
+.dp-modal-content {
+    background: var(--dp-bg2);
+    border: 1px solid var(--dp-border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 700px; max-width: 95vw;
+    color: var(--dp-text);
+}
+.dp-modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--dp-border);
+}
+.dp-modal-header h3 { font-size: 18px; font-weight: bold; }
+.dp-modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: transparent; border: none;
+    color: var(--dp-text3); font-size: 20px; cursor: pointer;
+}
+.dp-modal-close:hover { background: var(--dp-bg3); color: var(--dp-text); }
+.dp-modal-footer {
+    display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end;
+}
+.dp-upgrade-cards {
+    display: flex; gap: 16px; margin-bottom: 20px; align-items: stretch;
+}
+.dp-upgrade-card {
+    flex: 1; background: var(--dp-bg3);
+    border: 1px solid var(--dp-border);
+    border-radius: 12px; padding: 16px;
+    display: flex; flex-direction: column;
+}
+.dp-upgrade-arrow {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: var(--dp-text3); padding: 0 8px;
+}
+.dp-card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+}
+.dp-card-label {
+    font-size: 11px; font-weight: bold; text-transform: uppercase;
+    color: var(--dp-text3); letter-spacing: 1px;
+}
+.dp-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    background: var(--dp-bg2); border: 1px solid var(--dp-border);
+    color: var(--dp-text2);
+}
+.dp-card-model {
+    font-size: 20px; font-weight: bold; color: var(--dp-text);
+    margin-bottom: 4px; word-break: break-all;
+}
+.dp-card-id {
+    font-size: 12px; font-family: var(--font-mono);
+    color: var(--dp-text3); margin-bottom: 16px;
+}
+.dp-card-version {
+    margin-bottom: 16px;
+}
+.dp-version-label {
+    display: block; font-size: 11px; color: var(--dp-text3); margin-bottom: 4px;
+}
+.dp-version-value {
+    font-size: 32px; font-weight: bold; font-family: var(--font-mono);
+    color: var(--dp-accent);
+}
+.dp-version-new { color: #a78bfa; }
+.dp-card-footer {
+    margin-top: auto; padding-top: 12px;
+    border-top: 1px solid var(--dp-border);
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--dp-text3);
+}
+.dp-card-footer b { color: var(--dp-text2); font-family: var(--font-mono); }
+.dp-fw-dropzone {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    border: 2px dashed var(--dp-border); border-radius: 8px;
+    padding: 32px; cursor: pointer; min-height: 200px;
+    transition: all 0.2s;
+}
+.dp-fw-dropzone:hover {
+    border-color: var(--dp-accent); background: rgba(0,255,136,0.05);
+}
+.dp-fw-icon { font-size: 40px; margin-bottom: 12px; }
+.dp-fw-hint { font-size: 14px; font-weight: bold; color: var(--dp-text); margin-bottom: 4px; }
+.dp-fw-formats { font-size: 12px; color: var(--dp-text3); }
+.dp-fw-info { flex: 1; display: flex; flex-direction: column; }
+.dp-upgrade-progress {
+    background: var(--dp-bg3); border: 1px solid var(--dp-border);
+    border-radius: 12px; padding: 16px;
+}
+.dp-progress-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; font-size: 13px;
+}
+.dp-progress-header span:first-child { color: var(--dp-text2); }
+.dp-progress-header span:last-child { color: var(--dp-accent); font-weight: bold; font-family: var(--font-mono); }
+.dp-progress-bar {
+    height: 8px; background: var(--dp-bg2); border-radius: 4px; overflow: hidden;
+}
+.dp-progress-fill {
+    height: 100%; width: 0%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--dp-accent), #a78bfa);
+    transition: width 0.3s;
+}
+.dp-progress-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px;
+}
+.dp-progress-detail {
+    font-size: 11px; color: var(--dp-text3);
+    font-family: var(--font-mono);
+}
+
+/* Toast 提示样式 */
+.dp-toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+.dp-toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--dp-bg2, rgba(15, 25, 40, 0.95));
+    border: 1px solid var(--dp-border, rgba(0, 255, 136, 0.3));
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    color: var(--dp-text, #fff);
+    font-size: 14px;
+    pointer-events: auto;
+    animation: dp-toast-in 0.3s ease;
+    max-width: 400px;
+}
+.dp-toast.hiding {
+    animation: dp-toast-out 0.3s ease forwards;
+}
+.dp-toast-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.dp-toast-content {
+    flex: 1;
+    line-height: 1.4;
+}
+.dp-toast-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.dp-toast-msg {
+    font-size: 13px;
+    color: var(--dp-text2, rgba(255,255,255,0.7));
+}
+.dp-toast.success { border-color: var(--dp-success, #00ff88); }
+.dp-toast.success .dp-toast-icon { color: var(--dp-success, #00ff88); }
+.dp-toast.error { border-color: var(--dp-danger, #ff6b6b); }
+.dp-toast.error .dp-toast-icon { color: var(--dp-danger, #ff6b6b); }
+.dp-toast.warning { border-color: #f59e0b; }
+.dp-toast.warning .dp-toast-icon { color: #f59e0b; }
+.dp-toast.info { border-color: #3b82f6; }
+.dp-toast.info .dp-toast-icon { color: #3b82f6; }
+
+@keyframes dp-toast-in {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dp-toast-out {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+</style>
+
+<!-- Toast 容器 -->
+<div id="dp-toast-container" class="dp-toast-container"></div>
+</div>
+
+<script>
+// 动态加载依赖库
+(function() {
+    const scripts = [
+        'js/lib/chart.min.js',
+        'js/lib/hammer.min.js',
+        'js/lib/chartjs-plugin-zoom.min.js'
+    ];
+    
+    let loaded = 0;
+    const checkReady = () => {
+        loaded++;
+        // 不在这里调用 init，由 app.js 统一调用
+    };
+    
+    scripts.forEach(src => {
+        if (document.querySelector(`script[src="${src}"]`)) {
+            checkReady();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = checkReady;
+        script.onerror = () => console.error('Failed to load:', src);
+        document.head.appendChild(script);
+    });
+})();
+
+// ===== Debug Pro 模块 =====
+const DebugPro = {
+    // 状态
+    isConnected: false,
+    connType: null,
+    chart: null,
+    waveData: [],
+    waveHistory: [],
+    cmdList: [],
+    isEditMode: false,
+    txCount: 0,
+    rxCount: 0,
+    fullLogHistory: [],
+    logEntries: [],  // 存储日志条目（包含原始数据）
+    
+    // 波形数据缓冲（用于合并分包数据）
+    waveBuffer: '',
+    waveBufferTimer: null,
+    
+    // 配置存储
+    configStore: {
+        configs: { '默认配置': [] },
+        current: '默认配置'
+    },
+    
+    // 配置文件列表
+    configList: [
+        { name: '默认配置', file: '../commands/default-commands.json' },
+        { name: '超mini', file: '../commands/mini-commands.json' },
+        { name: 'GD32调试', file: '../commands/gd32-basic-commands.json' },
+        { name: '绿光调试', file: '../commands/green-laser-debug.json' }
+    ],
+    
+    // Toast 提示
+    showToast(type, title, msg, duration = 3000) {
+        const container = document.getElementById('dp-toast-container');
+        if (!container) return;
+        
+        const icons = {
+            success: '✓',
+            error: '✗',
+            warning: '⚠',
+            info: 'ℹ'
+        };
+        
+        const toast = document.createElement('div');
+        toast.className = `dp-toast ${type}`;
+        toast.innerHTML = `
+            <span class="dp-toast-icon">${icons[type] || 'ℹ'}</span>
+            <div class="dp-toast-content">
+                <div class="dp-toast-title">${title}</div>
+                ${msg ? `<div class="dp-toast-msg">${msg}</div>` : ''}
+            </div>
+        `;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    },
+    
+    // 停用（离开页面时调用）
+    async deactivate() {
+        // 关闭 WebSocket
+        if (this._ws) {
+            this._ws.close();
+            this._ws = null;
+        }
+        // 移除事件监听器
+        if (this._serialStatusHandler) {
+            window.removeEventListener('serial_status_sync', this._serialStatusHandler);
+            this._serialStatusHandler = null;
+        }
+        // 移除 DeviceHub 状态监听
+        if (this._deviceHubHandler && window.DeviceHub && window.DeviceHub.offStatusChange) {
+            window.DeviceHub.offStatusChange(this._deviceHubHandler);
+            this._deviceHubHandler = null;
+        }
+        // 移除 DeviceConfigManager 订阅
+        if (window.DeviceConfigManager) {
+            if (this._deviceConfigHandler) {
+                DeviceConfigManager.unsubscribe('device-changed', this._deviceConfigHandler);
+                this._deviceConfigHandler = null;
+            }
+            if (this._protocolsHandler) {
+                DeviceConfigManager.unsubscribe('protocols-updated', this._protocolsHandler);
+                DeviceConfigManager.unsubscribe('debug-updated', this._protocolsHandler);
+                this._protocolsHandler = null;
+            }
+        }
+        
+        await this.deactivateDataReceiver();
+        this._initialized = false;  // 重置，下次进入时重新初始化
+    },
+    
+    // 初始化
+    async init() {
+        // 防止重复初始化
+        if (this._initialized) {
+            console.log('DebugPro already initialized, skipping...');
+            return;
+        }
+        this._initialized = true;
+        
+        console.log('DebugPro initializing...');
+        
+        // 初始化设备配置管理器
+        if (window.DeviceConfigManager) {
+            await DeviceConfigManager.init();
+            // 订阅设备变更事件
+            this._deviceConfigHandler = async ({ newDevice }) => {
+                console.log('[DebugPro] 设备切换:', newDevice);
+                await this.onDeviceChanged(newDevice);
+            };
+            DeviceConfigManager.subscribe('device-changed', this._deviceConfigHandler);
+            // 订阅协议配置更新事件
+            this._protocolsHandler = async () => {
+                console.log('[DebugPro] 协议配置已更新');
+                await this.loadAllConfigs();
+                this.renderCmds();
+            };
+            DeviceConfigManager.subscribe('protocols-updated', this._protocolsHandler);
+            DeviceConfigManager.subscribe('debug-updated', this._protocolsHandler);
+        }
+        
+        // 激活数据接收（告诉后端开始推送数据到这个页面）
+        await this.activateDataReceiver();
+        
+        // 加载缓存的配置
+        try {
+            const cached = JSON.parse(localStorage.getItem('dp_cmd_configs') || 'null');
+            if (cached && cached.configs) {
+                this.configStore = cached;
+            }
+        } catch(e) {}
+        
+        // 加载发送历史
+        try {
+            const history = JSON.parse(localStorage.getItem('dp_send_history') || '[]');
+            if (Array.isArray(history)) {
+                this.sendHistory = history;
+                this.historyIndex = history.length;
+            }
+        } catch(e) {}
+        
+        // 尝试从服务器加载配置
+        await this.loadAllConfigs();
+        
+        // 先加载设置（包括上次选择的配置）
+        this.loadSettings();
+        
+        // 然后根据当前配置设置命令列表
+        this.cmdList = [...(this.configStore.configs[this.configStore.current] || [])];
+        this.updateConfigSelect();
+        this.renderCmds();
+        this.initChart();
+        this.loadWaveHistory();
+        this.initResizers();
+        
+        // 同步全局串口状态 - 使用 DeviceHub 或 API
+        await this.syncGlobalSerial();
+        
+        // 监听 DeviceHub 状态变化（自动扫描后会触发）
+        this._deviceHubHandler = (status) => {
+            if (status.serial.connected && !this.isConnected) {
+                this.isConnected = true;
+                this.connType = 'serial';
+                this.setStatus('connected', 'serial');
+                const port = status.serial.info?.port || '串口';
+                this.log('SYS', `✓ DeviceHub 串口已连接: ${port}`);
+                // 激活数据接收
+                this.activateDataReceiver();
+            } else if (!status.serial.connected && this.isConnected) {
+                this.isConnected = false;
+                this.setStatus('disconnected');
+                this.log('SYS', '⚠ DeviceHub 串口已断开');
+            }
+        };
+        if (window.DeviceHub && window.DeviceHub.onStatusChange) {
+            window.DeviceHub.onStatusChange(this._deviceHubHandler);
+        }
+        
+        // 监听串口状态变化（保存引用以便移除）
+        this._serialStatusHandler = (e) => {
+            const { connected, name, type } = e.detail;
+            if (connected) {
+                this.isConnected = true;
+                this.connType = type || 'serial';
+                this.setStatus('connected', this.connType);
+                this.log('SYS', `✓ 串口已同步: ${name}`);
+            }
+        };
+        window.addEventListener('serial_status_sync', this._serialStatusHandler);
+        
+        // WebSocket 实时数据（唯一数据源，比 evaluate_js 快得多）
+        this._connectWebSocket();
+        
+        this.log('SYS', '✓ Debug Pro 就绪');
+    },
+    
+    /**
+     * 设备切换时的处理
+     * @param {string} deviceId 新设备ID
+     */
+    async onDeviceChanged(deviceId) {
+        console.log('[DebugPro] 处理设备切换:', deviceId);
+        
+        // 保存当前配置
+        if (this.configStore.current) {
+            this.configStore.configs[this.configStore.current] = [...this.cmdList];
+        }
+        
+        // 更新当前配置
+        this.configStore.current = deviceId;
+        
+        // 尝试从 DeviceConfigManager 加载命令
+        if (window.DeviceConfigManager) {
+            try {
+                // 尝试加载 debug 配置
+                let config = await DeviceConfigManager.loadConfig('debug', deviceId);
+                
+                // 如果没有 debug 配置，尝试加载 protocols 配置
+                if (!config || !config.commands) {
+                    config = await DeviceConfigManager.loadConfig('protocols', deviceId);
+                }
+                
+                if (config && config.commands) {
+                    // 使用统一的转换方法
+                    const cmdList = this._convertCommandsToDebugFormat(config);
+                    
+                    this.configStore.configs[deviceId] = cmdList;
+                    this.cmdList = [...cmdList];
+                    this.persistConfig();
+                    this.updateConfigSelect();
+                    this.renderCmds();
+                    this.log('SYS', `✓ 已加载设备 ${deviceId} 的 ${cmdList.length} 个命令`);
+                    return;
+                }
+            } catch (e) {
+                console.warn(`[DebugPro] 加载设备 ${deviceId} 配置失败:`, e);
+            }
+        }
+        
+        // 回退：使用本地缓存的配置
+        this.cmdList = [...(this.configStore.configs[deviceId] || [])];
+        this.updateConfigSelect();
+        this.renderCmds();
+        this.log('SYS', `✓ 已切换到设备: ${deviceId}`);
+    },
+    
+    // WebSocket 连接（实时数据流）
+    _connectWebSocket() {
+        if (this._ws && this._ws.readyState === WebSocket.OPEN) return;
+        
+        try {
+            this._ws = new WebSocket('ws://127.0.0.1:8767');
+            
+            this._ws.onopen = () => {
+                console.log('[DebugPro] WebSocket 已连接');
+                // 订阅 debug_rx_batch
+                this._ws.send(JSON.stringify({
+                    type: 'subscribe',
+                    topics: ['debug_rx_batch']
+                }));
+            };
+            
+            this._ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'debug_rx_batch' && msg.data && msg.data.items) {
+                        for (const item of msg.data.items) {
+                            this.onData(item);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[DebugPro] WebSocket 消息解析失败:', e);
+                }
+            };
+            
+            this._ws.onclose = () => {
+                console.log('[DebugPro] WebSocket 断开，3秒后重连...');
+                setTimeout(() => this._connectWebSocket(), 3000);
+            };
+            
+            this._ws.onerror = (err) => {
+                console.warn('[DebugPro] WebSocket 错误:', err);
+            };
+        } catch (e) {
+            console.warn('[DebugPro] WebSocket 连接失败:', e);
+        }
+    },
+    
+    // 同步全局串口状态
+    async syncGlobalSerial() {
+        // 方式1: 检查 DeviceHub 是否已连接
+        if (window.DeviceHub && window.DeviceHub.isSerialConnected && window.DeviceHub.isSerialConnected()) {
+            this.isConnected = true;
+            this.connType = 'serial';
+            this.setStatus('connected', 'serial');
+            const port = window.DeviceHub.status.serial.info.port || '串口';
+            this.log('SYS', `✓ 已同步全局串口: ${port}`);
+            return;
+        }
+        
+        // 方式2: 直接调用后端 API 检查串口状态
+        try {
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            let result;
+            if (api && api.debug_get_status) {
+                result = await api.debug_get_status();
+            } else {
+                const response = await fetch('http://127.0.0.1:8766/api/call', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ method: 'debug_get_status', params: [] })
+                });
+                result = await response.json();
+            }
+            if (result && result.connected) {
+                this.isConnected = true;
+                this.connType = result.type || 'serial';
+                this.setStatus('connected', this.connType);
+                this.log('SYS', `✓ 已同步串口: ${result.name || '串口'}`);
+                return;
+            }
+        } catch (e) {
+            console.warn('[DebugPro] 获取串口状态失败:', e);
+        }
+        
+        // 方式3: 检查 bt 模块
+        if (window.bt && window.bt.isConnected && window.bt.isConnected()) {
+            this.isConnected = true;
+            this.connType = 'serial';
+            this.setStatus('connected', 'serial');
+            this.log('SYS', '✓ 已同步串口连接');
+        }
+    },
+    
+    // 激活数据接收
+    async activateDataReceiver() {
+        try {
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            if (api && api.debug_activate) {
+                await api.debug_activate();
+                console.log('[DebugPro] 数据接收已激活');
+            }
+        } catch (e) {
+            console.warn('[DebugPro] 激活数据接收失败:', e);
+        }
+    },
+    
+    // 停用数据接收（离开页面时调用）
+    async deactivateDataReceiver() {
+        try {
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            if (api && api.debug_deactivate) {
+                await api.debug_deactivate();
+                console.log('[DebugPro] 数据接收已停用');
+            }
+        } catch (e) {
+            console.warn('[DebugPro] 停用数据接收失败:', e);
+        }
+    },
+    
+    // 加载所有配置（从 DeviceConfigManager 加载设备的协议命令）
+    async loadAllConfigs() {
+        try {
+            // 优先从 DeviceConfigManager 加载
+            if (window.DeviceConfigManager) {
+                await DeviceConfigManager.init();
+                const devices = DeviceConfigManager.listDevices();
+                let loadedCount = 0;
+                
+                for (const device of devices) {
+                    // 如果本地已有这个配置且有内容，跳过（保留用户修改）
+                    if (this.configStore.configs[device.id] && this.configStore.configs[device.id].length > 0) {
+                        continue;
+                    }
+                    
+                    try {
+                        // 尝试加载 debug 配置（专门用于调试的命令）
+                        let config = await DeviceConfigManager.loadConfig('debug', device.id);
+                        
+                        // 如果没有 debug 配置，尝试加载 protocols 配置
+                        if (!config || !config.commands) {
+                            config = await DeviceConfigManager.loadConfig('protocols', device.id);
+                        }
+                        
+                        if (config && config.commands) {
+                            // 转换命令格式
+                            const cmdList = this._convertCommandsToDebugFormat(config);
+                            
+                            if (cmdList.length > 0) {
+                                this.configStore.configs[device.id] = cmdList;
+                                loadedCount++;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`[DebugPro] 加载设备 ${device.id} 配置失败:`, e);
+                    }
+                }
+                
+                if (loadedCount > 0) {
+                    this.persistConfig();
+                    this.log('SYS', `✓ 从设备管理器加载了 ${loadedCount} 个配置`);
+                }
+                
+                // 更新配置选择器
+                this.updateConfigSelect();
+                return;
+            }
+            
+            // 回退：从静态文件加载
+            let loadedCount = 0;
+            for (const config of this.configList) {
+                // 如果本地已有这个配置且有内容，跳过（保留用户修改）
+                if (this.configStore.configs[config.name] && this.configStore.configs[config.name].length > 0) {
+                    continue;
+                }
+                const response = await fetch(config.file, { cache: 'no-store' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.commands && Array.isArray(data.commands)) {
+                        this.configStore.configs[config.name] = data.commands.map(cmd => ({
+                            hex: cmd.command,
+                            name: cmd.name,
+                            delay: cmd.interval || 200
+                        }));
+                        loadedCount++;
+                    }
+                }
+            }
+            if (loadedCount > 0) {
+                this.persistConfig();
+                this.log('SYS', `✓ 已加载 ${loadedCount} 个新配置`);
+            }
+        } catch(e) {
+            console.warn('加载配置失败:', e);
+        }
+    },
+    
+    // 将协议配置转换为调试命令格式
+    _convertCommandsToDebugFormat(config) {
+        const cmdList = [];
+        const commands = config.commands;
+        const frameFormat = config.frame_format || {
+            header: 'AA',
+            direction: { send: 'EE' },
+            footer: 'BB FF',
+            checksum: 'XOR'
+        };
+        
+        // 处理数组格式（旧格式，已有完整HEX）
+        if (Array.isArray(commands)) {
+            for (const cmd of commands) {
+                cmdList.push({
+                    hex: cmd.command || cmd.hex || '',
+                    name: cmd.name || cmd.description || '',
+                    delay: cmd.interval || cmd.delay || 200
+                });
+            }
+            return cmdList;
+        }
+        
+        // 处理对象格式（新格式，需要构建HEX）
+        if (typeof commands === 'object') {
+            for (const [cmdId, cmd] of Object.entries(commands)) {
+                // 如果已有完整的hex命令，直接使用
+                if (cmd.hex) {
+                    cmdList.push({
+                        hex: cmd.hex,
+                        name: cmd.name || cmdId,
+                        delay: cmd.timeout || 200
+                    });
+                    continue;
+                }
+                
+                // 根据code和frame_format构建完整HEX命令
+                if (cmd.code) {
+                    const hex = this._buildHexCommand(cmd, frameFormat);
+                    cmdList.push({
+                        hex: hex,
+                        name: `${cmd.icon || ''} ${cmd.name || cmdId}`.trim(),
+                        delay: cmd.timeout || 200
+                    });
+                }
+            }
+        }
+        
+        return cmdList;
+    },
+    
+    // 根据命令定义和帧格式构建完整HEX命令
+    _buildHexCommand(cmd, frameFormat) {
+        const parts = [];
+        
+        // 帧头
+        parts.push(frameFormat.header || 'AA');
+        
+        // 方向（发送）
+        const direction = frameFormat.direction?.send || 'EE';
+        parts.push(direction);
+        
+        // 命令码
+        parts.push(cmd.code);
+        
+        // 参数（使用默认值填充）
+        const params = cmd.send_params || [];
+        const paramBytes = [];
+        
+        for (const param of params) {
+            const value = param.default !== undefined ? param.default : 0;
+            const bytes = this._valueToBytes(value, param.type || 'uint8');
+            paramBytes.push(...bytes);
+        }
+        
+        // 填充到4字节（协议要求）
+        while (paramBytes.length < 4) {
+            paramBytes.push('00');
+        }
+        
+        parts.push(...paramBytes.slice(0, 4));
+        
+        // 计算校验和（XOR）
+        if (frameFormat.checksum === 'XOR') {
+            let xor = 0;
+            // XOR从命令码开始（不包括帧头和方向）
+            xor ^= parseInt(cmd.code, 16);
+            for (const b of paramBytes.slice(0, 4)) {
+                xor ^= parseInt(b, 16);
+            }
+            parts.push(xor.toString(16).toUpperCase().padStart(2, '0'));
+        }
+        
+        // 帧尾
+        const footer = frameFormat.footer || 'BB FF';
+        parts.push(...footer.split(' '));
+        
+        return parts.join(' ');
+    },
+    
+    // 将值转换为字节数组
+    _valueToBytes(value, type) {
+        const bytes = [];
+        switch (type) {
+            case 'uint8':
+            case 'int8':
+                bytes.push((value & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                break;
+            case 'uint16':
+            case 'int16':
+                bytes.push((value & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push(((value >> 8) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                break;
+            case 'uint16_be':
+            case 'int16_be':
+                bytes.push(((value >> 8) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push((value & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                break;
+            case 'uint32':
+            case 'int32':
+                bytes.push((value & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push(((value >> 8) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push(((value >> 16) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push(((value >> 24) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                break;
+            case 'uint32_be':
+            case 'int32_be':
+                bytes.push(((value >> 24) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push(((value >> 16) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push(((value >> 8) & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                bytes.push((value & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+                break;
+            default:
+                bytes.push((value & 0xFF).toString(16).toUpperCase().padStart(2, '0'));
+        }
+        return bytes;
+    },
+    
+    // 保存配置到 DeviceConfigManager（统一管理）
+    async persistConfig() {
+        // 同时保存到 localStorage 作为备份/缓存
+        try {
+            localStorage.setItem('dp_cmd_configs', JSON.stringify(this.configStore));
+        } catch(e) {}
+        
+        // 保存到 DeviceConfigManager（持久化到文件）
+        if (!window.DeviceConfigManager) return;
+        
+        const currentDevice = DeviceConfigManager.getCurrentDevice();
+        if (!currentDevice) return;
+        
+        const cmdList = this.configStore.configs[currentDevice];
+        if (!cmdList || cmdList.length === 0) return;
+        
+        try {
+            // 转换为 debug 配置格式
+            const debugConfig = this._convertToDebugConfig(cmdList);
+            await DeviceConfigManager.saveConfig('debug', debugConfig, currentDevice);
+            console.log('[DebugPro] 配置已保存到设备:', currentDevice);
+        } catch(e) {
+            console.warn('[DebugPro] 保存配置失败:', e);
+        }
+    },
+    
+    // 将命令列表转换为 debug 配置格式
+    _convertToDebugConfig(cmdList) {
+        return {
+            _version: '1.0',
+            saveTime: new Date().toISOString(),
+            commands: cmdList.map((cmd, idx) => ({
+                hex: cmd.hex || '',
+                name: cmd.name || `命令${idx + 1}`,
+                delay: cmd.delay || 200
+            }))
+        };
+    },
+    
+    // 从设备管理器强制刷新配置（清除本地缓存）
+    async loadConfigsFromFolder() {
+        if (!window.DeviceConfigManager) {
+            this.showToast('warning', 'DeviceConfigManager 未初始化', '', 2000);
+            return;
+        }
+        
+        // 清除当前设备的本地缓存
+        const currentDevice = DeviceConfigManager.getCurrentDevice();
+        if (currentDevice && this.configStore.configs[currentDevice]) {
+            delete this.configStore.configs[currentDevice];
+        }
+        
+        // 重新加载
+        try {
+            let config = await DeviceConfigManager.loadConfig('debug', currentDevice);
+            if (!config || !config.commands) {
+                config = await DeviceConfigManager.loadConfig('protocols', currentDevice);
+            }
+            
+            if (config && config.commands) {
+                const cmdList = this._convertCommandsToDebugFormat(config);
+                this.configStore.configs[currentDevice] = cmdList;
+                this.cmdList = [...cmdList];
+                this.persistConfig();
+                this.renderCmds();
+                this.log('SYS', `✓ 已刷新设备 ${currentDevice} 的 ${cmdList.length} 个命令`);
+                this.showToast('success', `已加载 ${cmdList.length} 个命令`, '', 2000);
+            } else {
+                this.showToast('warning', '未找到命令配置', '', 2000);
+            }
+        } catch (e) {
+            console.error('[DebugPro] 刷新配置失败:', e);
+            this.showToast('error', '刷新失败: ' + e.message, '', 3000);
+        }
+    },
+    
+    updateConfigSelect() {
+        const sel = document.getElementById('dp-config-select');
+        if (!sel) return;
+        sel.innerHTML = '';
+        
+        // 优先从 DeviceConfigManager 获取设备列表
+        if (window.DeviceConfigManager) {
+            const devices = DeviceConfigManager.listDevices();
+            const currentDevice = DeviceConfigManager.getCurrentDevice();
+            
+            if (devices.length > 0) {
+                devices.forEach(device => {
+                    const opt = document.createElement('option');
+                    opt.value = device.id;
+                    opt.textContent = device.name || device.id;
+                    if (device.id === currentDevice) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                
+                // 同步当前配置
+                if (currentDevice && this.configStore.current !== currentDevice) {
+                    this.configStore.current = currentDevice;
+                }
+                return;
+            }
+        }
+        
+        // 回退：显示本地配置
+        Object.keys(this.configStore.configs).forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            if (name === this.configStore.current) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    },
+    
+    async switchConfig() {
+        // 保存当前配置
+        this.configStore.configs[this.configStore.current] = [...this.cmdList];
+        
+        const sel = document.getElementById('dp-config-select');
+        const newConfig = sel.value;
+        
+        // 如果使用 DeviceConfigManager，切换设备
+        if (window.DeviceConfigManager) {
+            const devices = DeviceConfigManager.listDevices();
+            if (devices.some(d => d.id === newConfig)) {
+                await DeviceConfigManager.setCurrentDevice(newConfig);
+                // 设备切换会触发 onDeviceChanged，在那里加载命令
+                return;
+            }
+        }
+        
+        // 回退：本地配置切换
+        this.configStore.current = newConfig;
+        this.cmdList = [...(this.configStore.configs[this.configStore.current] || [])];
+        this.persistConfig();
+        this.renderCmds();
+        this.saveSettings();
+        this.log('SYS', `✓ 已切换到：${this.configStore.current}`);
+    },
+
+    addConfig() {
+        const name = prompt('输入新配置名称:', `设备${Object.keys(this.configStore.configs).length + 1}`);
+        if (name && name.trim()) {
+            if (this.configStore.configs[name]) {
+                this.showToast('warning', '配置名称已存在', '', 2000);
+                return;
+            }
+            this.configStore.configs[this.configStore.current] = [...this.cmdList];
+            const copyChoice = confirm('是否复制当前配置？');
+            this.configStore.configs[name] = copyChoice ? [...this.cmdList] : [];
+            this.configStore.current = name;
+            this.cmdList = [...this.configStore.configs[name]];
+            this.persistConfig();
+            this.updateConfigSelect();
+            this.renderCmds();
+            this.log('SYS', `✓ 已创建配置：${name}`);
+        }
+    },
+    
+    deleteConfig() {
+        const name = this.configStore.current;
+        if (name === '默认配置') {
+            this.showToast('warning', '默认配置不能删除', '', 2000);
+            return;
+        }
+        if (confirm(`确定删除配置 "${name}"？`)) {
+            delete this.configStore.configs[name];
+            this.configStore.current = '默认配置';
+            this.cmdList = [...this.configStore.configs[this.configStore.current]];
+            this.persistConfig();
+            this.updateConfigSelect();
+            this.renderCmds();
+            this.log('SYS', `✓ 已删除配置：${name}`);
+        }
+    },
+    
+    // 渲染命令列表
+    renderCmds() {
+        const tbody = document.getElementById('dp-cmd-tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = this.cmdList.map((c, i) => {
+            if (this.isEditMode) {
+                return `<tr>
+                    <td><button onclick="DebugPro.deleteCmd(${i})" class="dp-btn-icon" style="width:20px;height:20px;color:var(--dp-danger)" title="删除">×</button></td>
+                    <td onclick="DebugPro.editCmdDialog(${i})" class="cmd-hex cursor-pointer" style="font-size:11px;word-break:break-all" title="点击编辑">${c.hex}</td>
+                    <td onclick="DebugPro.editCmdDialog(${i})" class="cursor-pointer" style="color:var(--dp-text2);font-size:11px" title="点击编辑">${c.name || ''}</td>
+                    <td onclick="DebugPro.editCmdDialog(${i})" class="cursor-pointer" style="color:var(--dp-text3);font-size:11px;text-align:center" title="点击编辑">${c.delay || 200}</td>
+                </tr>`;
+            } else {
+                return `<tr onclick="DebugPro.quickSend(${i})" class="cursor-pointer" title="单击发送">
+                    <td onclick="event.stopPropagation()"><input type="checkbox" class="cmd-chk" data-i="${i}"></td>
+                    <td class="cmd-hex" style="font-size:11px;word-break:break-all">${c.hex}</td>
+                    <td style="color:var(--dp-text2);font-size:11px">${c.name || ''}</td>
+                    <td style="color:var(--dp-text3);font-size:11px;text-align:center">${c.delay || 200}</td>
+                </tr>`;
+            }
+        }).join('');
+    },
+    
+    // 弹窗编辑命令
+    editCmdDialog(i) {
+        const cmd = this.cmdList[i];
+        if (!cmd) return;
+        
+        // 创建弹窗
+        const modal = document.createElement('div');
+        modal.id = 'dp-cmd-edit-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center';
+        modal.innerHTML = `
+            <div style="background:var(--dp-bg2);border:1px solid var(--dp-border);border-radius:12px;padding:20px;width:450px;max-width:90%">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:16px;font-weight:bold;color:var(--dp-text)">编辑命令</h3>
+                    <button onclick="document.getElementById('dp-cmd-edit-modal').remove()" style="background:none;border:none;cursor:pointer;color:var(--dp-text3);font-size:24px">&times;</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div>
+                        <label style="display:block;font-size:12px;color:var(--dp-text2);margin-bottom:4px">命令 (HEX)</label>
+                        <input type="text" id="dp-edit-hex" value="${cmd.hex}" class="dp-input" style="width:100%;height:36px;font-family:var(--font-mono);font-size:14px">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:12px;color:var(--dp-text2);margin-bottom:4px">说明</label>
+                        <input type="text" id="dp-edit-name" value="${cmd.name || ''}" class="dp-input" style="width:100%;height:36px;font-size:14px">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:12px;color:var(--dp-text2);margin-bottom:4px">延时 (ms)</label>
+                        <input type="number" id="dp-edit-delay" value="${cmd.delay || 200}" class="dp-input" style="width:100%;height:36px;font-size:14px">
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+                    <button onclick="document.getElementById('dp-cmd-edit-modal').remove()" class="dp-btn">取消</button>
+                    <button onclick="DebugPro.saveCmdEdit(${i})" class="dp-btn-primary">保存</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // 聚焦到命令输入框
+        setTimeout(() => document.getElementById('dp-edit-hex').focus(), 100);
+    },
+    
+    // 保存命令编辑
+    saveCmdEdit(i) {
+        const hex = document.getElementById('dp-edit-hex').value.trim();
+        const name = document.getElementById('dp-edit-name').value.trim();
+        const delay = parseInt(document.getElementById('dp-edit-delay').value) || 200;
+        
+        if (!hex) {
+            Utils.toast('命令不能为空', 'error');
+            return;
+        }
+        
+        this.cmdList[i] = { hex, name, delay };
+        this.configStore.configs[this.configStore.current] = [...this.cmdList];
+        this.persistConfig();
+        this.renderCmds();
+        
+        document.getElementById('dp-cmd-edit-modal').remove();
+        Utils.toast('命令已保存', 'success');
+    },
+    
+    // 删除命令
+    deleteCmd(i) {
+        if (confirm('确定删除此命令？')) {
+            this.cmdList.splice(i, 1);
+            this.configStore.configs[this.configStore.current] = [...this.cmdList];
+            this.persistConfig();
+            this.renderCmds();
+            Utils.toast('命令已删除', 'info');
+        }
+    },
+    
+    updateCmd(i, field, value) {
+        if (field === 'delay') value = parseInt(value) || 200;
+        this.cmdList[i][field] = value;
+        this.configStore.configs[this.configStore.current] = [...this.cmdList];
+        this.persistConfig();
+    },
+    
+    addCmd() {
+        // 弹窗添加新命令
+        const modal = document.createElement('div');
+        modal.id = 'dp-cmd-edit-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center';
+        modal.innerHTML = `
+            <div style="background:var(--dp-bg2);border:1px solid var(--dp-border);border-radius:12px;padding:20px;width:450px;max-width:90%">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:16px;font-weight:bold;color:var(--dp-text)">添加命令</h3>
+                    <button onclick="document.getElementById('dp-cmd-edit-modal').remove()" style="background:none;border:none;cursor:pointer;color:var(--dp-text3);font-size:24px">&times;</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div>
+                        <label style="display:block;font-size:12px;color:var(--dp-text2);margin-bottom:4px">命令 (HEX)</label>
+                        <input type="text" id="dp-edit-hex" value="AA EE" class="dp-input" style="width:100%;height:36px;font-family:var(--font-mono);font-size:14px" placeholder="AA EE 01 00 00">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:12px;color:var(--dp-text2);margin-bottom:4px">说明</label>
+                        <input type="text" id="dp-edit-name" value="" class="dp-input" style="width:100%;height:36px;font-size:14px" placeholder="命令说明">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:12px;color:var(--dp-text2);margin-bottom:4px">延时 (ms)</label>
+                        <input type="number" id="dp-edit-delay" value="200" class="dp-input" style="width:100%;height:36px;font-size:14px">
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+                    <button onclick="document.getElementById('dp-cmd-edit-modal').remove()" class="dp-btn">取消</button>
+                    <button onclick="DebugPro.saveNewCmd()" class="dp-btn-primary">添加</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        setTimeout(() => document.getElementById('dp-edit-hex').focus(), 100);
+    },
+    
+    // 保存新命令
+    saveNewCmd() {
+        const hex = document.getElementById('dp-edit-hex').value.trim();
+        const name = document.getElementById('dp-edit-name').value.trim();
+        const delay = parseInt(document.getElementById('dp-edit-delay').value) || 200;
+        
+        if (!hex) {
+            Utils.toast('命令不能为空', 'error');
+            return;
+        }
+        
+        this.cmdList.push({ hex, name, delay });
+        this.configStore.configs[this.configStore.current] = [...this.cmdList];
+        this.persistConfig();
+        this.renderCmds();
+        
+        document.getElementById('dp-cmd-edit-modal').remove();
+        Utils.toast('命令已添加', 'success');
+    },
+    
+    toggleEditMode() {
+        this.isEditMode = !this.isEditMode;
+        const btn = document.getElementById('dp-edit-mode-btn');
+        if (this.isEditMode) {
+            btn.textContent = '✅完成';
+            btn.classList.add('active');
+        } else {
+            btn.textContent = '✏️编辑';
+            btn.classList.remove('active');
+        }
+        this.renderCmds();
+    },
+    
+    // 快速发送
+    quickSend(i) {
+        if (!this.isConnected) {
+            this.log('ERR', '请先连接设备');
+            return;
+        }
+        const cmd = this.cmdList[i];
+        if (cmd) {
+            // 自动波形模式：发送新命令时清空之前的波形数据
+            if (document.getElementById('dp-auto-wave').checked) {
+                this.waveData = [];
+                this.updateChart();
+            }
+            this.sendHex(cmd.hex);
+            this.log('TX', `[${cmd.name || '命令'}] ${cmd.hex}`);
+        }
+    },
+    
+    // 发送选中
+    sendSelected() {
+        const checked = document.querySelectorAll('.cmd-chk:checked');
+        if (checked.length === 0) {
+            this.showToast('info', '请先选择要发送的命令', '', 2000);
+            return;
+        }
+        checked.forEach(chk => {
+            const i = parseInt(chk.dataset.i);
+            this.quickSend(i);
+        });
+    },
+    
+    // 循环发送状态
+    loopSending: false,
+    loopInterval: null,
+    
+    // 循环发送
+    async sendAllSequence() {
+        if (!this.isConnected) {
+            this.log('ERR', '请先连接设备');
+            Utils.toast('请先连接设备', 'error');
+            return;
+        }
+        
+        // 如果正在循环发送，则停止
+        if (this.loopSending) {
+            this.stopLoopSend();
+            return;
+        }
+        
+        const checked = document.querySelectorAll('.cmd-chk:checked');
+        const indices = checked.length > 0 
+            ? Array.from(checked).map(c => parseInt(c.dataset.i))
+            : this.cmdList.map((_, i) => i);
+        
+        if (indices.length === 0) {
+            this.log('ERR', '没有可发送的命令');
+            Utils.toast('没有可发送的命令', 'warning');
+            return;
+        }
+        
+        // 开始循环发送
+        this.loopSending = true;
+        const btn = document.querySelector('button[onclick="DebugPro.sendAllSequence()"]');
+        if (btn) {
+            btn.textContent = '⏹ 停止循环';
+            btn.style.background = 'var(--dp-danger)';
+            btn.style.borderColor = 'var(--dp-danger)';
+            btn.style.color = 'white';
+        }
+        
+        this.log('SYS', `开始循环发送 ${indices.length} 条命令...`);
+        Utils.toast(`开始循环发送 ${indices.length} 条命令`, 'info');
+        
+        // 循环发送
+        const doLoop = async () => {
+            if (!this.loopSending) return;
+            
+            for (const i of indices) {
+                if (!this.loopSending) break;
+                const cmd = this.cmdList[i];
+                if (cmd) {
+                    this.sendHex(cmd.hex);
+                    this.log('TX', `[${cmd.name || '命令'}] ${cmd.hex}`);
+                    await this.sleep(cmd.delay || 200);
+                }
+            }
+            
+            // 继续下一轮
+            if (this.loopSending) {
+                this.loopInterval = setTimeout(doLoop, 100);
+            }
+        };
+        
+        doLoop();
+    },
+    
+    // 停止循环发送
+    stopLoopSend() {
+        this.loopSending = false;
+        if (this.loopInterval) {
+            clearTimeout(this.loopInterval);
+            this.loopInterval = null;
+        }
+        
+        const btn = document.querySelector('button[onclick="DebugPro.sendAllSequence()"]');
+        if (btn) {
+            btn.textContent = '循环发送';
+            btn.style.background = '';
+            btn.style.borderColor = 'var(--dp-accent)';
+            btn.style.color = 'var(--dp-accent)';
+        }
+        
+        this.log('SYS', '循环发送已停止');
+        Utils.toast('循环发送已停止', 'info');
+    },
+    
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    // 发送HEX数据 - 使用 pywebview.api 直接调用后端
+    async sendHex(hexStr) {
+        const cleanHex = hexStr.replace(/\s+/g, '');
+        
+        try {
+            // 优先使用 pywebview.api（和校准页面一样）
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            if (api && api.debug_send) {
+                const result = await api.debug_send(cleanHex, true);
+                if (result && result.success) {
+                    this.txCount++;
+                    document.getElementById('dp-tx-count').textContent = this.txCount;
+                } else {
+                    this.log('ERR', `发送失败: ${result?.message || '未知错误'}`);
+                }
+                return;
+            }
+            
+            // 备用：HTTP API
+            const response = await fetch('http://127.0.0.1:8766/api/call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ method: 'debug_send', params: [cleanHex, true] })
+            });
+            const result = await response.json();
+            if (result && result.success) {
+                this.txCount++;
+                document.getElementById('dp-tx-count').textContent = this.txCount;
+            } else {
+                this.log('ERR', `发送失败: ${result?.message || '未知错误'}`);
+            }
+        } catch (e) {
+            this.log('ERR', `发送失败: ${e.message || e}`);
+        }
+    },
+    
+    // 发送输入框内容
+    sendHistory: [],  // 发送历史
+    historyIndex: -1, // 历史索引
+    
+    send() {
+        const input = document.getElementById('dp-send-input');
+        const text = input.value.trim();
+        if (!text) return;
+        
+        if (!this.isConnected) {
+            this.log('ERR', '请先连接设备');
+            Utils.toast('请先连接设备', 'error');
+            return;
+        }
+        
+        // 保存到历史记录
+        if (this.sendHistory[this.sendHistory.length - 1] !== text) {
+            this.sendHistory.push(text);
+            if (this.sendHistory.length > 50) {
+                this.sendHistory.shift();
+            }
+            // 保存到 localStorage
+            try {
+                localStorage.setItem('dp_send_history', JSON.stringify(this.sendHistory));
+            } catch(e) {}
+        }
+        this.historyIndex = this.sendHistory.length;
+        
+        const isHex = document.getElementById('dp-send-hex').checked;
+        const addNl = document.getElementById('dp-send-nl').checked;
+        
+        // 自动波形模式：发送新命令时清空之前的波形数据
+        if (document.getElementById('dp-auto-wave').checked) {
+            this.waveData = [];
+            this.updateChart();
+        }
+        
+        if (isHex) {
+            this.sendHex(text);
+            this.log('TX', text);
+        } else {
+            let data = text;
+            if (addNl) data += '\n';
+            
+            // 转换为 hex 字符串发送
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(data);
+            const hexStr = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            this.sendHex(hexStr);
+            this.log('TX', text);
+        }
+        // 不清空输入框，保留内容方便再次发送
+        // input.value = '';
+        input.select();  // 选中内容，方便修改
+    },
+    
+    // 输入框键盘事件处理
+    handleInputKeydown(event) {
+        const input = document.getElementById('dp-send-input');
+        
+        if (event.key === 'Enter') {
+            this.send();
+        } else if (event.key === 'ArrowUp') {
+            // 上键：浏览历史
+            event.preventDefault();
+            if (this.sendHistory.length > 0 && this.historyIndex > 0) {
+                this.historyIndex--;
+                input.value = this.sendHistory[this.historyIndex];
+                input.select();
+            }
+        } else if (event.key === 'ArrowDown') {
+            // 下键：浏览历史
+            event.preventDefault();
+            if (this.historyIndex < this.sendHistory.length - 1) {
+                this.historyIndex++;
+                input.value = this.sendHistory[this.historyIndex];
+                input.select();
+            } else if (this.historyIndex === this.sendHistory.length - 1) {
+                this.historyIndex = this.sendHistory.length;
+                input.value = '';
+            }
+        }
+    },
+    
+    // 数据接收处理（后端已按行分割）
+    onData(data) {
+        this.rxCount++;
+        document.getElementById('dp-rx-count').textContent = this.rxCount;
+        
+        // 升级过程中跳过日志显示（避免卡顿）
+        const upgradeState = this.upgrade?.state;
+        if (upgradeState && upgradeState !== 'idle' && upgradeState !== 'ready' && upgradeState !== 'done') {
+            return;
+        }
+        
+        let hexStr = '';
+        let textStr = '';
+        
+        // 支持多种数据格式
+        if (data && typeof data === 'object' && data.hex) {
+            // 后端推送格式: { hex: "AA BB CC", text: "...", bytes: [...] }
+            hexStr = data.hex;
+            textStr = data.text || '';
+        } else if (data instanceof Uint8Array) {
+            hexStr = Array.from(data).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+            try {
+                textStr = new TextDecoder('gbk').decode(data);
+            } catch {
+                textStr = new TextDecoder('utf-8', { fatal: false }).decode(data);
+            }
+        } else {
+            textStr = String(data);
+            try {
+                hexStr = Array.from(new TextEncoder().encode(textStr)).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+            } catch(e) {
+                hexStr = textStr;
+            }
+        }
+        
+        // 存储日志条目
+        const entry = { type: 'RX', hex: hexStr, text: textStr, time: Date.now() };
+        this.logEntries.push(entry);
+        if (this.logEntries.length > 1000) this.logEntries.shift();
+        
+        // 根据 HEX 开关决定显示内容
+        const showHex = document.getElementById('dp-show-hex').checked;
+        let displayText = showHex ? hexStr : ((textStr && textStr.trim().length > 0) ? textStr : hexStr);
+        
+        this.log('RX', displayText, entry);
+        
+        // 自动波形：实时添加数字到波形（不缓冲，参考 pc-wave.html）
+        if (document.getElementById('dp-auto-wave').checked) {
+            this.addNumberToWave(textStr);
+        }
+    },
+    
+    // 实时添加数字到波形（每收到一个数字就添加）
+    addNumberToWave(text) {
+        if (!text || typeof text !== 'string') return;
+        
+        const trimmed = text.trim();
+        
+        // 过滤掉非数字数据
+        if (trimmed.includes('[') || trimmed.includes('INFO') || trimmed.includes('HB ') ||
+            trimmed.includes('RX') || trimmed.includes('TX')) {
+            return;
+        }
+        
+        // 检查是否为纯数字行
+        if (!/^-?\d+\.?\d*$/.test(trimmed)) {
+            return;
+        }
+        
+        const val = parseFloat(trimmed);
+        if (isNaN(val) || !isFinite(val)) return;
+        
+        // 获取过滤范围
+        const filterEnabled = document.getElementById('dp-filter-enable')?.checked ?? true;
+        const filterMin = parseFloat(document.getElementById('dp-filter-min')?.value) || 0;
+        const filterMax = parseFloat(document.getElementById('dp-filter-max')?.value) || 65535;
+        
+        // 根据过滤设置决定是否添加
+        if (filterEnabled && (val <= filterMin || val >= filterMax)) {
+            return;
+        }
+        
+        // 添加到波形
+        this.waveData.push(val);
+        
+        // 限制数据点
+        if (this.waveData.length > 5000) {
+            this.waveData = this.waveData.slice(-5000);
+        }
+        
+        // 实时更新图表（节流：最多每 50ms 更新一次）
+        if (!this._waveUpdateTimer) {
+            this._waveUpdateTimer = setTimeout(() => {
+                this.updateChart();
+                this._waveUpdateTimer = null;
+            }, 50);
+        }
+    },
+    
+    // 日志
+    log(type, msg, entry = null) {
+        const container = document.getElementById('dp-log-content');
+        const empty = document.getElementById('dp-log-empty');
+        if (!container) return;
+        
+        empty.style.display = 'none';
+        container.style.display = 'block';
+        
+        const showTime = document.getElementById('dp-show-timestamp').checked;
+        const time = showTime ? `[${new Date().toLocaleTimeString()}] ` : '';
+        
+        const div = document.createElement('div');
+        div.className = `log-item log-${type.toLowerCase()}`;
+        
+        // RX/TX 不显示类型前缀，用颜色区分
+        if (type === 'RX' || type === 'TX') {
+            div.textContent = `${time}${msg}`;
+        } else {
+            div.textContent = `${time}[${type}] ${msg}`;
+        }
+        
+        // 存储原始数据用于 HEX/文本切换
+        if (entry) {
+            div.dataset.hex = entry.hex || '';
+            div.dataset.text = entry.text || msg;
+            div.dataset.time = entry.time || Date.now();
+        }
+        
+        if (type === 'RX') {
+            div.onclick = () => this.parseAndAddToWave(msg);
+            div.title = '点击添加到波形';
+        }
+        
+        container.appendChild(div);
+        
+        // 记录
+        if (document.getElementById('dp-log-record').checked) {
+            this.fullLogHistory.push({ type, msg, time: Date.now() });
+            if (this.fullLogHistory.length > 10000) {
+                this.fullLogHistory.shift();
+            }
+        }
+        
+        // 自动滚动
+        if (document.getElementById('dp-auto-scroll').checked) {
+            const logContainer = document.getElementById('log-container');
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // 限制显示数量
+        while (container.children.length > 500) {
+            container.removeChild(container.firstChild);
+        }
+    },
+    
+    clearLog() {
+        const container = document.getElementById('dp-log-content');
+        const empty = document.getElementById('dp-log-empty');
+        if (container) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+        }
+        if (empty) empty.style.display = 'flex';
+        this.txCount = 0;
+        this.rxCount = 0;
+        document.getElementById('dp-tx-count').textContent = '0';
+        document.getElementById('dp-rx-count').textContent = '0';
+    },
+    
+    selectAllLog() {
+        const container = document.getElementById('log-container');
+        if (container) {
+            const range = document.createRange();
+            range.selectNodeContents(container);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    },
+    
+    saveLogToFile() {
+        const logs = this.fullLogHistory.length > 0 
+            ? this.fullLogHistory.map(l => `[${new Date(l.time).toLocaleString()}] [${l.type}] ${l.msg}`).join('\n')
+            : document.getElementById('dp-log-content').innerText;
+        
+        const blob = new Blob([logs], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `debug_log_${new Date().toISOString().slice(0,10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+
+    // 连接相关
+    setStatus(status, type) {
+        const dot = document.getElementById('dp-status-dot');
+        const text = document.getElementById('dp-status-text');
+        const sendBtn = document.getElementById('dp-btn-send');
+        
+        if (status === 'connected') {
+            dot.className = 'status-dot online';
+            text.textContent = type === 'ble' ? 'BLE已连接' : type === 'wifi' ? 'WiFi已连接' : '串口已连接';
+            sendBtn.disabled = false;
+            this.isConnected = true;
+        } else if (status === 'connecting') {
+            dot.className = 'status-dot connecting';
+            text.textContent = '连接中...';
+        } else {
+            dot.className = 'status-dot offline';
+            text.textContent = '未连接';
+            sendBtn.disabled = true;
+            this.isConnected = false;
+        }
+    },
+    
+    async connectSerial() {
+        try {
+            this.setStatus('connecting');
+            const baudRate = parseInt(document.getElementById('dp-baud-rate').value);
+            
+            if (window.bt && window.bt.connectSerial) {
+                await window.bt.connectSerial({ baudRate });
+                this.setStatus('connected', 'serial');
+                this.connType = 'serial';
+                this.log('SYS', '✓ 串口已连接');
+            } else if (navigator.serial) {
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate });
+                this.setStatus('connected', 'serial');
+                this.connType = 'serial';
+                this.log('SYS', '✓ 串口已连接');
+            } else {
+                throw new Error('不支持串口API');
+            }
+        } catch(e) {
+            this.setStatus('offline');
+            this.log('ERR', `连接失败: ${e.message}`);
+        }
+    },
+    
+    async connectBLE() {
+        try {
+            this.setStatus('connecting');
+            if (window.bt && window.bt.connectBLE) {
+                await window.bt.connectBLE();
+                this.setStatus('connected', 'ble');
+                this.connType = 'ble';
+                this.log('SYS', '✓ BLE已连接');
+            } else {
+                throw new Error('BLE不可用');
+            }
+        } catch(e) {
+            this.setStatus('offline');
+            this.log('ERR', `BLE连接失败: ${e.message}`);
+        }
+    },
+    
+    async connectWiFi() {
+        const ip = prompt('输入ESP32 IP地址:', localStorage.getItem('esp32_ip') || '192.168.4.1');
+        if (!ip) return;
+        localStorage.setItem('esp32_ip', ip);
+        
+        try {
+            this.setStatus('connecting');
+            if (window.bt && window.bt.connectWiFi) {
+                await window.bt.connectWiFi(ip);
+                this.setStatus('connected', 'wifi');
+                this.connType = 'wifi';
+                this.log('SYS', `✓ WiFi已连接: ${ip}`);
+            } else {
+                throw new Error('WiFi不可用');
+            }
+        } catch(e) {
+            this.setStatus('offline');
+            this.log('ERR', `WiFi连接失败: ${e.message}`);
+        }
+    },
+    
+    quickReconnect() {
+        if (this.connType === 'ble') {
+            this.connectBLE();
+        } else if (this.connType === 'wifi') {
+            this.connectWiFi();
+        } else {
+            this.connectSerial();
+        }
+    },
+    
+    saveBaudRate() {
+        const rate = document.getElementById('dp-baud-rate').value;
+        localStorage.setItem('dp_baud_rate', rate);
+        this.saveSettings();
+    },
+    
+    // 设置保存/加载
+    saveSettings() {
+        const settings = {
+            baudRate: document.getElementById('dp-baud-rate').value,
+            showHex: document.getElementById('dp-show-hex').checked,
+            autoScroll: document.getElementById('dp-auto-scroll').checked,
+            autoWave: document.getElementById('dp-auto-wave').checked,
+            sendHex: document.getElementById('dp-send-hex').checked,
+            sendNl: document.getElementById('dp-send-nl').checked,
+            showTimestamp: document.getElementById('dp-show-timestamp').checked,
+            logRecord: document.getElementById('dp-log-record').checked,
+            lastConfig: this.configStore.current,  // 记忆上次选择的命令列表
+            // 波形过滤设置
+            filterMin: document.getElementById('dp-filter-min').value,
+            filterMax: document.getElementById('dp-filter-max').value,
+            filterEnabled: document.getElementById('dp-filter-enable').checked
+        };
+        localStorage.setItem('dp_settings', JSON.stringify(settings));
+        
+        // HEX 切换时重新渲染日志
+        this.refreshLogDisplay();
+    },
+    
+    // 重新渲染日志显示（HEX/文本切换）
+    refreshLogDisplay() {
+        const container = document.getElementById('dp-log-content');
+        if (!container) return;
+        
+        const showHex = document.getElementById('dp-show-hex').checked;
+        const showTime = document.getElementById('dp-show-timestamp').checked;
+        
+        console.log('[DebugPro] refreshLogDisplay: showHex=', showHex, 'entries=', this.logEntries.length);
+        
+        // 遍历所有 RX 日志条目，更新显示
+        let count = 0;
+        container.querySelectorAll('.log-item.log-rx').forEach(div => {
+            const hex = div.dataset.hex;
+            const text = div.dataset.text;
+            const time = div.dataset.time;
+            
+            // 只要有 hex 数据就可以更新
+            if (hex !== undefined && hex !== '') {
+                const timeStr = showTime && time ? `[${new Date(parseInt(time)).toLocaleTimeString()}] ` : '';
+                // HEX 模式显示 hex，文本模式显示 text（如果 text 有效且非空）
+                let displayText;
+                if (showHex) {
+                    displayText = hex;
+                } else {
+                    // 文本模式：如果 text 存在且不全是不可打印字符，则显示 text
+                    displayText = (text && text.trim().length > 0) ? text : hex;
+                }
+                div.textContent = `${timeStr}${displayText}`;
+                count++;
+            }
+        });
+        console.log('[DebugPro] refreshLogDisplay: 更新了', count, '条日志');
+    },
+    
+    loadSettings() {
+        try {
+            const settings = JSON.parse(localStorage.getItem('dp_settings') || '{}');
+            if (settings.baudRate) document.getElementById('dp-baud-rate').value = settings.baudRate;
+            if (settings.showHex !== undefined) document.getElementById('dp-show-hex').checked = settings.showHex;
+            if (settings.autoScroll !== undefined) document.getElementById('dp-auto-scroll').checked = settings.autoScroll;
+            if (settings.autoWave !== undefined) document.getElementById('dp-auto-wave').checked = settings.autoWave;
+            if (settings.sendHex !== undefined) document.getElementById('dp-send-hex').checked = settings.sendHex;
+            if (settings.sendNl !== undefined) document.getElementById('dp-send-nl').checked = settings.sendNl;
+            if (settings.showTimestamp !== undefined) document.getElementById('dp-show-timestamp').checked = settings.showTimestamp;
+            if (settings.logRecord !== undefined) document.getElementById('dp-log-record').checked = settings.logRecord;
+            
+            // 恢复波形过滤设置
+            if (settings.filterMin !== undefined) document.getElementById('dp-filter-min').value = settings.filterMin;
+            if (settings.filterMax !== undefined) document.getElementById('dp-filter-max').value = settings.filterMax;
+            if (settings.filterEnabled !== undefined) document.getElementById('dp-filter-enable').checked = settings.filterEnabled;
+            
+            // 恢复上次选择的命令列表
+            if (settings.lastConfig && this.configStore.configs[settings.lastConfig]) {
+                this.configStore.current = settings.lastConfig;
+            }
+            
+            console.log('[DebugPro] loadSettings:', settings);
+        } catch(e) {
+            console.error('[DebugPro] loadSettings error:', e);
+        }
+    },
+
+    // 切换波形历史面板
+    toggleWaveHistory() {
+        const panel = document.getElementById('dp-wave-history-panel');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+    },
+
+    // 波形图表
+    initChart() {
+        const canvas = document.getElementById('dp-waveChart');
+        if (!canvas) return;
+        
+        if (this.chart) {
+            this.chart.destroy();
+            this.chart = null;
+        }
+        
+        const s = getComputedStyle(document.documentElement);
+        const accent = s.getPropertyValue('--accent') || '#00ff88';
+        const border = s.getPropertyValue('--border-color') || 'rgba(0,255,136,0.25)';
+        const textDim = s.getPropertyValue('--text-dim') || 'rgba(255,255,255,0.56)';
+        
+        this.chart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: '数据',
+                    data: [],
+                    borderColor: accent,
+                    borderWidth: 1.5,
+                    fill: false,
+                    pointRadius: 0,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        callbacks: {
+                            title: (items) => `索引: ${items[0].label}`,
+                            label: (item) => `值: ${item.raw}`
+                        }
+                    },
+                    zoom: {
+                        pan: { 
+                            enabled: true, 
+                            mode: 'xy',
+                            modifierKey: null  // 不需要按键，直接拖拽
+                        },
+                        zoom: {
+                            wheel: { 
+                                enabled: true, 
+                                speed: 0.1  // 滚轮缩放速度
+                            },
+                            pinch: { enabled: true },
+                            drag: { enabled: false },
+                            mode: 'xy'  // 支持 X 和 Y 轴缩放
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: border },
+                        ticks: { color: textDim, maxTicksLimit: 8, font: { size: 10 } }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        grid: { color: border },
+                        ticks: { color: textDim, font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    },
+    
+    updateChart() {
+        if (!this.chart) return;
+        this.chart.data.labels = this.waveData.map((_, i) => i);
+        this.chart.data.datasets[0].data = this.waveData;
+        this.chart.update('none');
+        this.updateStats();
+    },
+    
+    updateStats() {
+        if (this.waveData.length === 0) {
+            document.getElementById('dp-stat-max').textContent = '--';
+            document.getElementById('dp-stat-min').textContent = '--';
+            document.getElementById('dp-stat-avg').textContent = '--';
+            document.getElementById('dp-stat-count').textContent = '0';
+            return;
+        }
+        const max = Math.max(...this.waveData);
+        const min = Math.min(...this.waveData);
+        const avg = this.waveData.reduce((a, b) => a + b, 0) / this.waveData.length;
+        document.getElementById('dp-stat-max').textContent = max.toFixed(2);
+        document.getElementById('dp-stat-min').textContent = min.toFixed(2);
+        document.getElementById('dp-stat-avg').textContent = avg.toFixed(2);
+        document.getElementById('dp-stat-count').textContent = this.waveData.length;
+    },
+    
+    parseAndAddToWave(text) {
+        // 过滤掉明显不是波形的数据
+        if (text.includes('[RX]') || text.includes('[TX]') || 
+            text.match(/\[\d{2}:\d{2}:\d{2}\]/)) {
+            return;
+        }
+        
+        // 获取过滤范围
+        const filterEnabled = document.getElementById('dp-filter-enable')?.checked ?? true;
+        const filterMin = parseFloat(document.getElementById('dp-filter-min')?.value) || 0;
+        const filterMax = parseFloat(document.getElementById('dp-filter-max')?.value) || 65535;
+        
+        // 按行提取纯数字（更精确的波形数据提取）
+        const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+        let added = 0;
+        
+        for (let line of lines) {
+            const trimmed = line.trim();
+            // 只匹配纯数字行
+            if (/^-?\d+\.?\d*$/.test(trimmed)) {
+                const val = parseFloat(trimmed);
+                if (!isNaN(val) && isFinite(val)) {
+                    // 根据过滤设置决定是否添加
+                    if (!filterEnabled || (val > filterMin && val < filterMax)) {
+                        this.waveData.push(val);
+                        added++;
+                    }
+                }
+            }
+        }
+        
+        // 限制数据点
+        if (this.waveData.length > 5000) {
+            this.waveData = this.waveData.slice(-5000);
+        }
+        
+        if (added > 0) {
+            this.updateChart();
+        }
+    },
+    
+    // 注意：isWaveformData 函数已在上方定义（bufferWaveData 附近），此处不再重复定义
+    
+    parseWaveInput() {
+        const input = document.getElementById('dp-wave-input');
+        const text = input.value.trim();
+        if (!text) return;
+        
+        this.waveData = [];
+        this.parseAndAddToWave(text);
+        input.value = '';
+        this.log('SYS', `✓ 已解析 ${this.waveData.length} 个数据点`);
+    },
+    
+    clearWave() {
+        this.waveData = [];
+        this.updateChart();
+    },
+    
+    setChartMode(mode) {
+        if (!this.chart) return;
+        const panBtn = document.getElementById('dp-btn-pan');
+        const zoomBtn = document.getElementById('dp-btn-zoom');
+        
+        if (mode === 'pan') {
+            this.chart.options.plugins.zoom.pan.enabled = true;
+            this.chart.options.plugins.zoom.zoom.drag.enabled = false;
+            panBtn.classList.add('active');
+            zoomBtn.classList.remove('active');
+        } else {
+            this.chart.options.plugins.zoom.pan.enabled = false;
+            this.chart.options.plugins.zoom.zoom.drag.enabled = true;
+            panBtn.classList.remove('active');
+            zoomBtn.classList.add('active');
+        }
+        this.chart.update();
+    },
+    
+    zoomIn() {
+        if (this.chart) this.chart.zoom(1.2);
+    },
+    
+    zoomOut() {
+        if (this.chart) this.chart.zoom(0.8);
+    },
+    
+    resetZoom() {
+        if (this.chart) this.chart.resetZoom();
+    },
+
+    // 波形保存/导出
+    saveWithNote() {
+        const note = prompt('输入备注:', `波形_${new Date().toLocaleTimeString()}`);
+        if (!note) return;
+        
+        const item = {
+            id: Date.now(),
+            note: note,
+            data: [...this.waveData],
+            time: new Date().toLocaleString()
+        };
+        this.waveHistory.unshift(item);
+        if (this.waveHistory.length > 20) this.waveHistory.pop();
+        this.saveWaveHistory();
+        this.renderWaveHistory();
+        this.log('SYS', `✓ 已保存波形: ${note}`);
+    },
+    
+    exportWaveData() {
+        if (this.waveData.length === 0) {
+            this.showToast('info', '没有数据可导出', '', 2000);
+            return;
+        }
+        const csv = 'Index,Value\n' + this.waveData.map((v, i) => `${i},${v}`).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `wave_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+    
+    saveWaveHistory() {
+        try {
+            localStorage.setItem('dp_wave_history', JSON.stringify(this.waveHistory));
+        } catch(e) {}
+    },
+    
+    loadWaveHistory() {
+        try {
+            this.waveHistory = JSON.parse(localStorage.getItem('dp_wave_history') || '[]');
+            this.renderWaveHistory();
+        } catch(e) {
+            this.waveHistory = [];
+        }
+    },
+    
+    renderWaveHistory() {
+        const list = document.getElementById('dp-wave-history-list');
+        if (!list) return;
+        
+        if (this.waveHistory.length === 0) {
+            list.innerHTML = '<div style="color:var(--dp-text3);font-size:11px;text-align:center;padding:20px">暂无保存的波形</div>';
+            return;
+        }
+        
+        list.innerHTML = this.waveHistory.map(item => `
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--dp-bg3);border-radius:6px;margin-bottom:4px;cursor:pointer" onclick="DebugPro.loadWaveItem(${item.id})">
+                <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.note}</span>
+                <span style="font-size:10px;color:var(--dp-text3)">${item.data.length}点</span>
+                <button onclick="event.stopPropagation();DebugPro.deleteWaveItem(${item.id})" style="background:none;border:none;color:var(--dp-danger);cursor:pointer;font-size:12px">×</button>
+            </div>
+        `).join('');
+    },
+    
+    loadWaveItem(id) {
+        const item = this.waveHistory.find(h => h.id === id);
+        if (item) {
+            this.waveData = [...item.data];
+            this.updateChart();
+            this.log('SYS', `✓ 已加载波形: ${item.note}`);
+        }
+    },
+    
+    deleteWaveItem(id) {
+        this.waveHistory = this.waveHistory.filter(h => h.id !== id);
+        this.saveWaveHistory();
+        this.renderWaveHistory();
+    },
+    
+    // 分隔条拖拽
+    initResizers() {
+        document.querySelectorAll('.debug-pro-page .resizer').forEach(resizer => {
+            let startX, leftW, rightW, leftEl, rightEl;
+            
+            resizer.addEventListener('mousedown', e => {
+                e.preventDefault();
+                startX = e.clientX;
+                leftEl = document.getElementById(resizer.dataset.left);
+                rightEl = document.getElementById(resizer.dataset.right);
+                if (!leftEl || !rightEl) return;
+                leftW = leftEl.offsetWidth;
+                rightW = rightEl.offsetWidth;
+                resizer.classList.add('active');
+                
+                const onMove = (e) => {
+                    const dx = e.clientX - startX;
+                    const newLeftW = leftW + dx;
+                    const newRightW = rightW - dx;
+                    const minL = parseInt(leftEl.style.minWidth) || 200;
+                    const minR = parseInt(rightEl.style.minWidth) || 200;
+                    if (newLeftW >= minL && newRightW >= minR) {
+                        leftEl.style.width = newLeftW + 'px';
+                        leftEl.style.flex = 'none';
+                        if (rightEl.id !== 'dp-panel-log') {
+                            rightEl.style.width = newRightW + 'px';
+                            rightEl.style.flex = 'none';
+                        }
+                    }
+                };
+                
+                const onUp = () => {
+                    resizer.classList.remove('active');
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    // 保存布局
+                    localStorage.setItem('dp_layout', JSON.stringify({
+                        cmd: document.getElementById('dp-panel-cmd').offsetWidth,
+                        wave: document.getElementById('dp-panel-wave').offsetWidth
+                    }));
+                };
+                
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+        });
+        
+        // 恢复布局
+        try {
+            const layout = JSON.parse(localStorage.getItem('dp_layout') || '{}');
+            if (layout.cmd) {
+                document.getElementById('dp-panel-cmd').style.width = layout.cmd + 'px';
+                document.getElementById('dp-panel-cmd').style.flex = 'none';
+            }
+            if (layout.wave) {
+                document.getElementById('dp-panel-wave').style.width = layout.wave + 'px';
+                document.getElementById('dp-panel-wave').style.flex = 'none';
+            }
+        } catch(e) {}
+    },
+    
+    // ========== 升级功能 ==========
+    
+    // 升级状态 (协议与 Bootloader 一致)
+    upgrade: {
+        state: 'idle',
+        firmware: null,
+        firmwareMeta: null,
+        deviceInfo: null,
+        ready: false,
+        CHUNK_SIZE: 512,  // 512 字节/包
+        // 协议常量 (与 Bootloader protocol.h 一致)
+        SOF: 0xAA,
+        EOF: 0x55,
+        // 命令码 (与 Bootloader 一致)
+        CMD_HANDSHAKE: 0x01,
+        CMD_GET_INFO: 0x02,
+        CMD_ENTER_UPGRADE: 0x03,
+        CMD_ERASE: 0x04,
+        CMD_WRITE: 0x05,
+        CMD_VERIFY: 0x06,
+        CMD_RESET: 0x07,
+        // 魔数
+        HANDSHAKE_MAGIC: 0x12345678,
+        RESP_MAGIC_BOOT: 0x87654321,
+        RESP_MAGIC_APP: 0xAA55AA55,
+        // 响应缓冲
+        rxBuffer: [],
+        responseResolver: null,
+        responseTimeout: null
+    },
+    
+    showUpgradeDialog() {
+        if (!this.isConnected) {
+            this.showToast('warning', '请先连接设备', '', 3000);
+            return;
+        }
+        document.getElementById('dp-upgrade-modal').classList.add('show');
+        this.upgrade.state = 'idle';
+        this.upgrade.ready = false;
+        this.upgrade.firmware = null;
+        this.upgrade.firmwareMeta = null;
+        this.upgrade.startTime = null;
+        
+        // 重置UI
+        document.getElementById('dp-fw-select-zone').style.display = 'flex';
+        document.getElementById('dp-fw-info').style.display = 'none';
+        document.getElementById('dp-btn-upgrade').disabled = true;
+        document.getElementById('dp-upgrade-time').textContent = '耗时: --';
+        this.updateUpgradeProgress(0, '初始化...');
+        document.getElementById('dp-upgrade-detail').textContent = '正在连接设备...';
+        
+        // 自动执行握手和获取设备信息
+        this.initUpgradeMode();
+    },
+    
+    hideUpgradeDialog() {
+        document.getElementById('dp-upgrade-modal').classList.remove('show');
+        this.upgrade.state = 'idle';
+        this.upgrade.firmware = null;
+    },
+    
+    updateUpgradeProgress(percent, state, detail) {
+        document.getElementById('dp-upgrade-fill').style.width = percent + '%';
+        document.getElementById('dp-upgrade-percent').textContent = percent + '%';
+        if (state) document.getElementById('dp-upgrade-state').textContent = state;
+        if (detail) document.getElementById('dp-upgrade-detail').textContent = detail;
+        
+        // 更新耗时显示
+        const timeEl = document.getElementById('dp-upgrade-time');
+        if (timeEl && this.upgrade.startTime) {
+            const elapsed = (Date.now() - this.upgrade.startTime) / 1000;
+            if (elapsed < 60) {
+                timeEl.textContent = `耗时: ${elapsed.toFixed(1)}s`;
+            } else {
+                const min = Math.floor(elapsed / 60);
+                const sec = (elapsed % 60).toFixed(0);
+                timeEl.textContent = `耗时: ${min}分${sec}秒`;
+            }
+        }
+    },
+    
+    async initUpgradeMode() {
+        try {
+            // 步骤1: 握手
+            this.upgrade.state = 'handshake';
+            this.updateUpgradeProgress(20, '握手中...', '正在与设备建立连接...');
+            this.log('SYS', '[升级] 握手...');
+            
+            // 握手数据: 大端序 0x12345678
+            const handshakeData = [0x12, 0x34, 0x56, 0x78];
+            const resp1 = await this.sendUpgradeCmd(this.upgrade.CMD_HANDSHAKE, handshakeData, 5000);
+            
+            if (!resp1 || !resp1.success) {
+                throw new Error('握手失败：设备未响应');
+            }
+            
+            // 检测设备模式: Boot返回0x87654321, App返回0xAA55AA55
+            let deviceMode = 'unknown';
+            const payload = resp1.payload || [];
+            if (payload.length >= 4) {
+                // 大端序解析
+                const magic = ((payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3]) >>> 0;
+                if (magic === this.upgrade.RESP_MAGIC_BOOT) deviceMode = 'boot';
+                else if (magic === this.upgrade.RESP_MAGIC_APP) deviceMode = 'app';
+                this.log('SYS', `[升级] 响应魔数: 0x${magic.toString(16).toUpperCase()}`);
+            }
+            
+            document.getElementById('dp-dev-mode').textContent = deviceMode === 'app' ? 'App' : 'Boot';
+            this.log('SYS', `[升级] ✓ 握手成功，模式: ${deviceMode}`);
+            
+            // 步骤2: 获取设备信息
+            this.upgrade.state = 'get_info';
+            this.updateUpgradeProgress(50, '获取设备信息...', '正在读取设备信息...');
+            this.log('SYS', '[升级] 获取设备信息...');
+            
+            const resp2 = await this.sendUpgradeCmd(this.upgrade.CMD_GET_INFO, [], 5000);
+            if (!resp2 || !resp2.success) {
+                throw new Error('获取设备信息超时');
+            }
+            
+            const p = resp2.payload || [];
+            if (p.length < 48) {
+                throw new Error(`设备信息长度错误: ${p.length}`);
+            }
+            
+            // 解析设备信息 (小端序，与 device_info_t 结构体一致)
+            const deviceId = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) >>> 0;
+            const hwVer = p[4] | (p[5] << 8);
+            const swVer = p[6] | (p[7] << 8);
+            const bootVer = p[8] | (p[9] << 8);
+            
+            let modelName = '';
+            for (let i = 12; i < 28 && p[i] !== 0; i++) {
+                modelName += String.fromCharCode(p[i]);
+            }
+            if (!modelName) modelName = 'Unknown';
+            
+            const flashSize = (p[28] | (p[29] << 8) | (p[30] << 16) | (p[31] << 24)) >>> 0;
+            const appStart = (p[32] | (p[33] << 8) | (p[34] << 16) | (p[35] << 24)) >>> 0;
+            const appMaxSize = (p[36] | (p[37] << 8) | (p[38] << 16) | (p[39] << 24)) >>> 0;
+            const appSize = (p[40] | (p[41] << 8) | (p[42] << 16) | (p[43] << 24)) >>> 0;
+            const appCrc = (p[44] | (p[45] << 8) | (p[46] << 16) | (p[47] << 24)) >>> 0;
+            
+            // 更新UI
+            document.getElementById('dp-dev-model').textContent = modelName;
+            document.getElementById('dp-dev-id').textContent = '0x' + deviceId.toString(16).toUpperCase().padStart(8, '0');
+            document.getElementById('dp-dev-version').textContent = swVer > 0 ? `V${(swVer >> 8) & 0xFF}.${swVer & 0xFF}` : '无应用';
+            document.getElementById('dp-dev-boot').textContent = `V${(bootVer >> 8) & 0xFF}.${bootVer & 0xFF}`;
+            document.getElementById('dp-dev-size').textContent = appSize > 0 ? (appSize / 1024).toFixed(1) + ' KB' : '--';
+            document.getElementById('dp-dev-crc').textContent = appCrc > 0 ? '0x' + appCrc.toString(16).toUpperCase() : '--';
+            
+            this.upgrade.deviceInfo = { deviceId, hwVer, swVer, bootVer, modelName, flashSize, appStart, appMaxSize, appSize, appCrc, deviceMode };
+            
+            this.log('SYS', `[升级] ✓ 设备: ${modelName}, 版本: V${(swVer >> 8) & 0xFF}.${swVer & 0xFF}, App区: 0x${appStart.toString(16)}, CRC: 0x${appCrc.toString(16).toUpperCase()}`);
+            
+            // 完成
+            this.upgrade.state = 'ready';
+            this.upgrade.ready = true;
+            this.updateUpgradeProgress(100, '就绪', '请选择固件文件');
+            
+        } catch (err) {
+            console.error('获取设备信息失败:', err);
+            document.getElementById('dp-dev-model').textContent = '读取失败';
+            this.log('ERR', `[升级] ${err.message}`);
+            this.updateUpgradeProgress(0, '连接失败', err.message);
+        }
+    },
+    
+    selectFirmware() {
+        // 直接使用原生文件选择
+        const fileInput = document.getElementById('dp-firmware-file');
+        // 重置 value 以便可以重复选择同一文件
+        fileInput.value = '';
+        fileInput.click();
+    },
+    
+    onFirmwareSelected(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        if (ext !== '.bin' && ext !== '.hex' && ext !== '.enc') {
+            this.showToast('warning', '格式不支持', '请选择 .bin、.hex 或 .enc 格式的固件文件', 3000);
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                let firmware;
+                let isEncrypted = false;
+                
+                if (ext === '.enc') {
+                    // 加密固件文件
+                    const encData = new Uint8Array(e.target.result);
+                    const parsed = this.parseEncFile(encData);
+                    if (!parsed) {
+                        throw new Error('加密固件格式错误');
+                    }
+                    firmware = parsed.data;
+                    isEncrypted = true;
+                    this.upgrade.encHeader = parsed.header;
+                    this.log('SYS', `[升级] 加密固件: 起始=0x${parsed.header.startAddr.toString(16)}, 原始CRC=0x${parsed.header.originalCrc.toString(16).toUpperCase()}`);
+                } else if (ext === '.hex') {
+                    firmware = this.parseIntelHex(e.target.result);
+                } else {
+                    firmware = new Uint8Array(e.target.result);
+                }
+                
+                if (!firmware || firmware.length === 0) {
+                    throw new Error('固件文件为空');
+                }
+                
+                this.upgrade.firmware = firmware;
+                this.upgrade.isEncrypted = isEncrypted;
+                
+                // 更新UI
+                document.getElementById('dp-fw-select-zone').style.display = 'none';
+                document.getElementById('dp-fw-info').style.display = 'flex';
+                document.getElementById('dp-fw-filename').textContent = file.name + (isEncrypted ? ' 🔒' : '');
+                document.getElementById('dp-fw-size').textContent = (firmware.length / 1024).toFixed(1) + ' KB';
+                document.getElementById('dp-fw-time').textContent = new Date(file.lastModified).toLocaleString('zh-CN');
+                
+                // 计算固件大小和 CRC32
+                let fwCrc, fwCrcStr;
+                if (isEncrypted) {
+                    // 加密固件使用头部中的原始CRC
+                    fwCrc = this.upgrade.encHeader.originalCrc;
+                    fwCrcStr = '0x' + fwCrc.toString(16).toUpperCase().padStart(8, '0') + ' (原始)';
+                } else {
+                    fwCrc = this.calcFirmwareCrc(firmware);
+                    fwCrcStr = '0x' + fwCrc.toString(16).toUpperCase().padStart(8, '0');
+                }
+                document.getElementById('dp-fw-size').textContent = (firmware.length / 1024).toFixed(1) + ' KB';
+                document.getElementById('dp-fw-crc').textContent = fwCrcStr;
+                
+                // 尝试读取固件元数据（加密固件无法读取）
+                if (!isEncrypted) {
+                    const meta = this.readFirmwareMeta(firmware);
+                    if (meta) {
+                        this.upgrade.firmwareMeta = meta;
+                        document.getElementById('dp-fw-model').textContent = meta.modelName || 'Unknown';
+                        document.getElementById('dp-fw-version').textContent = meta.versionStr || '--';
+                    } else {
+                        document.getElementById('dp-fw-model').textContent = file.name.replace(/\.[^.]+$/, '');
+                        document.getElementById('dp-fw-version').textContent = '--';
+                    }
+                } else {
+                    // 加密固件：从 V2 头部读取版本信息
+                    const encHeader = this.upgrade.encHeader;
+                    if (encHeader.version === 2 && encHeader.versionStr) {
+                        document.getElementById('dp-fw-model').textContent = encHeader.modelName || '加密固件';
+                        document.getElementById('dp-fw-version').textContent = encHeader.versionStr;
+                        if (encHeader.buildTimeStr) {
+                            document.getElementById('dp-fw-time').textContent = encHeader.buildTimeStr;
+                        }
+                    } else {
+                        document.getElementById('dp-fw-model').textContent = '加密固件 (V1)';
+                        document.getElementById('dp-fw-version').textContent = '--';
+                    }
+                }
+                
+                // 启用升级按钮
+                if (this.upgrade.ready) {
+                    document.getElementById('dp-btn-upgrade').disabled = false;
+                }
+                
+                this.log('SYS', `[升级] 已选择固件: ${file.name} (${(firmware.length / 1024).toFixed(1)} KB)${isEncrypted ? ' [加密]' : ''}`);
+
+                
+            } catch (err) {
+                this.showToast('error', '固件解析失败', err.message, 5000);
+                this.log('ERR', `[升级] 固件解析失败: ${err.message}`);
+            }
+        };
+        
+        if (ext === '.hex') {
+            reader.readAsText(file);
+        } else {
+            reader.readAsArrayBuffer(file);
+        }
+    },
+    
+    readFirmwareMeta(firmware) {
+        // 元数据结构 (64字节，位于固件偏移0x200处):
+        // 0x00: magic (4字节) - "FIRM" = 0x4649524D
+        // 0x04: version (4字节) - Major<<24 | Minor<<16 | Patch<<8 | Build
+        // 0x08: hw_version (4字节)
+        // 0x0C: build_time (4字节) - Unix时间戳
+        // 0x10: model_name (16字节)
+        // 0x20: app_size (4字节) - 由 post_build.py 填充
+        // 0x24: app_crc (4字节) - 由 post_build.py 填充
+        
+        const META_OFFSET = 0x200;
+        const META_MAGIC = 0x4649524D; // "FIRM"
+        
+        if (firmware.length < META_OFFSET + 64) {
+            console.log('[FW Meta] 固件太小，无法包含元数据');
+            return null;
+        }
+        
+        const view = new DataView(firmware.buffer, firmware.byteOffset + META_OFFSET, 64);
+        const magic = view.getUint32(0, true);
+        
+        console.log(`[FW Meta] Magic: 0x${magic.toString(16).toUpperCase()}, 期望: 0x${META_MAGIC.toString(16).toUpperCase()}`);
+        
+        if (magic !== META_MAGIC) {
+            console.log('[FW Meta] Magic不匹配，无元数据');
+            return null;
+        }
+        
+        const version = view.getUint32(4, true);
+        const hwVersion = view.getUint32(8, true);
+        const buildTime = view.getUint32(12, true);
+        
+        // 读取型号名称 (从偏移16开始，16字节)
+        let modelName = '';
+        for (let i = 0; i < 16; i++) {
+            const ch = firmware[META_OFFSET + 16 + i];
+            if (ch === 0) break;
+            modelName += String.fromCharCode(ch);
+        }
+        
+        // 读取 app_size 和 app_crc (由 post_build.py 填充)
+        const appSize = view.getUint32(0x20, true);
+        const appCrc = view.getUint32(0x24, true);
+        
+        const versionStr = `V${(version >> 24) & 0xFF}.${(version >> 16) & 0xFF}.${(version >> 8) & 0xFF}`;
+        
+        console.log(`[FW Meta] 版本: ${versionStr}, 型号: ${modelName}`);
+        console.log(`[FW Meta] app_size: ${appSize} (${(appSize/1024).toFixed(1)}KB), app_crc: 0x${appCrc.toString(16).toUpperCase()}`);
+        
+        return {
+            magic,
+            version,
+            hwVersion,
+            buildTime,
+            modelName: modelName || 'Unknown',
+            appSize,
+            appCrc,
+            versionStr,
+            hwVersionStr: `${(hwVersion >> 8) & 0xFF}.${hwVersion & 0xFF}`,
+            buildTimeStr: buildTime > 0 ? new Date(buildTime * 1000).toLocaleString('zh-CN') : '--',
+            appCrcStr: appCrc !== 0xFFFFFFFF ? `0x${appCrc.toString(16).toUpperCase()}` : '未填充'
+        };
+    },
+    
+    parseIntelHex(hexContent) {
+        const lines = hexContent.split(/\r?\n/).filter(l => l.startsWith(':'));
+        let extAddr = 0;
+        let minAddr = Infinity, maxAddr = 0;
+        const dataMap = new Map();
+        
+        for (const line of lines) {
+            const byteCount = parseInt(line.substr(1, 2), 16);
+            const address = parseInt(line.substr(3, 4), 16);
+            const recordType = parseInt(line.substr(7, 2), 16);
+            const data = line.substr(9, byteCount * 2);
+            
+            if (recordType === 0x00) {
+                const fullAddr = extAddr + address;
+                for (let i = 0; i < byteCount; i++) {
+                    const byte = parseInt(data.substr(i * 2, 2), 16);
+                    dataMap.set(fullAddr + i, byte);
+                    minAddr = Math.min(minAddr, fullAddr + i);
+                    maxAddr = Math.max(maxAddr, fullAddr + i);
+                }
+            } else if (recordType === 0x04) {
+                extAddr = parseInt(data, 16) << 16;
+            }
+        }
+        
+        if (dataMap.size === 0) return null;
+        
+        // 转换为连续数组
+        const size = maxAddr - minAddr + 1;
+        const result = new Uint8Array(size);
+        result.fill(0xFF);
+        for (const [addr, byte] of dataMap) {
+            result[addr - minAddr] = byte;
+        }
+        
+        return result;
+    },
+    
+    /**
+     * 解析加密固件文件 (.enc)
+     * 格式:
+     * [0:4]   魔数 "GENC"
+     * [4:5]   版本号
+     * [5:6]   保留
+     * [6:8]   保留
+     * [8:12]  起始地址 (小端)
+     * [12:16] 数据长度 (小端)
+     * [16:20] 原始CRC32 (小端)
+     * [20:24] 加密后CRC32 (小端)
+     * V2扩展 (48字节头):
+     * [24:28] 固件版本 (Major<<24 | Minor<<16 | Patch<<8 | Build)
+     * [28:44] 型号名称 (16字节)
+     * [44:48] 编译时间 (Unix时间戳)
+     * [头部后...]加密数据
+     */
+    parseEncFile(data) {
+        if (!data || data.length < 24) {
+            console.error('[ENC] 文件太小');
+            return null;
+        }
+        
+        // 检查魔数 "GENC"
+        if (data[0] !== 0x47 || data[1] !== 0x45 || data[2] !== 0x4E || data[3] !== 0x43) {
+            console.error('[ENC] 魔数不匹配:', data.slice(0, 4));
+            return null;
+        }
+        
+        const version = data[4];
+        if (version !== 1 && version !== 2) {
+            console.error('[ENC] 不支持的版本:', version);
+            return null;
+        }
+        
+        // V2 需要 48 字节头
+        const headerSize = (version === 2) ? 48 : 24;
+        if (data.length < headerSize) {
+            console.error('[ENC] 文件太小，无法包含完整头部');
+            return null;
+        }
+        
+        // 解析头部 (小端序)
+        const startAddr = data[8] | (data[9] << 8) | (data[10] << 16) | (data[11] << 24);
+        const dataLen = data[12] | (data[13] << 8) | (data[14] << 16) | (data[15] << 24);
+        const originalCrc = (data[16] | (data[17] << 8) | (data[18] << 16) | (data[19] << 24)) >>> 0;
+        const encryptedCrc = (data[20] | (data[21] << 8) | (data[22] << 16) | (data[23] << 24)) >>> 0;
+        
+        // V2 扩展字段
+        let fwVersion = 0, modelName = '', buildTime = 0;
+        if (version === 2) {
+            fwVersion = data[24] | (data[25] << 8) | (data[26] << 16) | (data[27] << 24);
+            // 读取型号名称 (16字节, null-terminated)
+            for (let i = 0; i < 16; i++) {
+                const ch = data[28 + i];
+                if (ch === 0) break;
+                modelName += String.fromCharCode(ch);
+            }
+            buildTime = data[44] | (data[45] << 8) | (data[46] << 16) | (data[47] << 24);
+        }
+        
+        console.log(`[ENC] V${version} 起始地址: 0x${startAddr.toString(16)}, 数据长度: ${dataLen}`);
+        if (version === 2 && fwVersion) {
+            const vStr = `V${(fwVersion >> 24) & 0xFF}.${(fwVersion >> 16) & 0xFF}.${(fwVersion >> 8) & 0xFF}`;
+            console.log(`[ENC] 固件版本: ${vStr}, 型号: ${modelName}`);
+        }
+        
+        // 基本校验
+        if (dataLen === 0 || dataLen > 256 * 1024) {
+            console.error('[ENC] 数据长度无效:', dataLen);
+            return null;
+        }
+        
+        if (data.length < headerSize + dataLen) {
+            console.error('[ENC] 文件不完整:', data.length, '期望:', headerSize + dataLen);
+            return null;
+        }
+        
+        // 提取加密数据
+        const encryptedData = data.slice(headerSize, headerSize + dataLen);
+        
+        // 验证加密数据 CRC
+        const calcEncCrc = this.crc32(encryptedData);
+        if (calcEncCrc !== encryptedCrc) {
+            console.warn(`[ENC] 加密数据CRC不匹配: 计算=0x${calcEncCrc.toString(16)}, 期望=0x${encryptedCrc.toString(16)}`);
+            // 不阻止，只是警告
+        }
+        
+        return {
+            header: {
+                version,
+                startAddr,
+                dataLen,
+                originalCrc,
+                encryptedCrc,
+                // V2 扩展
+                fwVersion,
+                modelName,
+                buildTime,
+                // 格式化的版本字符串
+                versionStr: fwVersion ? `V${(fwVersion >> 24) & 0xFF}.${(fwVersion >> 16) & 0xFF}.${(fwVersion >> 8) & 0xFF}` : null,
+                buildTimeStr: buildTime > 0 ? new Date(buildTime * 1000).toLocaleString('zh-CN') : null
+            },
+            data: encryptedData  // 返回加密数据，由 Bootloader 解密
+        };
+    },
+    
+    async startUpgrade() {
+        if (!this.upgrade.firmware || !this.upgrade.ready) {
+            this.showToast('warning', '请先选择固件文件', '', 3000);
+            return;
+        }
+        
+        const firmware = this.upgrade.firmware;
+        const info = this.upgrade.deviceInfo;
+        
+        // 记录升级开始时间
+        const upgradeStartTime = Date.now();
+        
+        // 检查固件大小
+        if (info && info.appMaxSize && firmware.length > info.appMaxSize) {
+            this.showToast('error', '固件太大', `固件: ${(firmware.length / 1024).toFixed(1)} KB，最大: ${(info.appMaxSize / 1024).toFixed(1)} KB`, 5000);
+            return;
+        }
+        
+        document.getElementById('dp-btn-upgrade').disabled = true;
+        
+        try {
+            // 修复：旧固件可能返回错误的 appStart (0x08000000)，强制使用 USB Boot 地址
+            let appStart = info?.appStart || 0x08004000;
+            if (appStart === 0x08000000) {
+                this.log('SYS', '[升级] 检测到旧固件返回错误的 appStart，强制使用 0x08004000');
+                appStart = 0x08004000;  // USB Boot 模式的正确地址
+            }
+            const appMaxSize = info?.appMaxSize || (108 * 1024);
+            
+            // 保存开始时间到 upgrade 对象
+            this.upgrade.startTime = upgradeStartTime;
+            
+            // 如果在 App 模式，先进入升级模式
+            if (info && info.deviceMode === 'app') {
+                this.log('SYS', '[升级] 进入升级模式...');
+                this.updateUpgradeProgress(5, '进入升级模式...', '正在切换到Bootloader...');
+                
+                // 记住当前串口号（重连时使用同一个串口号）
+                const api = window.pywebview?.api || window.parent?.pywebview?.api;
+                let originalPort = null;
+                if (api && api.debug_get_status) {
+                    const status = await api.debug_get_status();
+                    if (status && status.name) {
+                        // 从 "串口 (COM92 @ 115200)" 提取 COM92
+                        const match = status.name.match(/COM\d+/i);
+                        if (match) originalPort = match[0];
+                    }
+                }
+                
+                if (!originalPort) {
+                    throw new Error('无法获取当前串口号');
+                }
+                this.log('SYS', `[升级] 当前串口: ${originalPort}`);
+                
+                // 发送进入升级模式命令（不等待响应，因为设备会立即重启）
+                try {
+                    await this.sendUpgradeCmd(this.upgrade.CMD_ENTER_UPGRADE, [], 500);
+                } catch (e) {
+                    // 忽略超时错误，设备重启后 USB 会断开
+                }
+                this.log('SYS', '[升级] 命令已发送，设备将重启...');
+                
+                // USB 会断开重连，等待 200ms 后开始重连
+                this.log('SYS', '[升级] 等待USB重新枚举...');
+                this.updateUpgradeProgress(8, '等待重连...', 'USB设备正在重新枚举...');
+                await this.sleep(200);
+                
+                // 用同一个串口号重连
+                // 每 50ms 尝试一次，最多 40 次（2秒）
+                let bootConnected = false;
+                const maxRetries = 40;
+                const retryInterval = 50;
+                
+                for (let retry = 0; retry < maxRetries; retry++) {
+                    this.updateUpgradeProgress(10 + Math.floor(retry / 3), '重连中...', `尝试 ${retry + 1}/${maxRetries}...`);
+                    
+                    try {
+                        if (api) {
+                            // 用同一个串口号重连（不扫描其他串口）
+                            const connectResult = await api.debug_connect_serial(originalPort, 115200);
+                            if (connectResult && connectResult.success) {
+                                await this.activateDataReceiver();
+                                
+                                // 握手确认是 Bootloader
+                                const resp = await this.sendUpgradeCmd(this.upgrade.CMD_HANDSHAKE, [0x12, 0x34, 0x56, 0x78], 1000);
+                                if (resp && resp.success) {
+                                    const payload = resp.payload || [];
+                                    if (payload.length >= 4) {
+                                        const magic = ((payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3]) >>> 0;
+                                        if (magic === this.upgrade.RESP_MAGIC_BOOT) {
+                                            bootConnected = true;
+                                            this.log('SYS', `[升级] ✓ 已连接到 Bootloader (${originalPort})`);
+                                            this.isConnected = true;
+                                            this.setStatus('connected', 'serial');
+                                            break;
+                                        } else if (magic === this.upgrade.RESP_MAGIC_APP) {
+                                            // 还在 App 模式，继续等待
+                                            this.log('SYS', `[升级] 设备仍在App模式，继续等待...`);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // 连接失败，继续重试
+                    }
+                    
+                    if (bootConnected) break;
+                    await this.sleep(retryInterval);
+                }
+                
+                if (!bootConnected) {
+                    throw new Error(`无法连接Bootloader (${originalPort})，请检查USB连接`);
+                }
+            }
+            
+            // 擦除 Flash
+            this.upgrade.state = 'erase';
+            this.updateUpgradeProgress(15, '擦除中...', `正在擦除Flash (0x${appStart.toString(16)}, ${(appMaxSize/1024).toFixed(0)}KB)...`);
+            this.log('SYS', `[升级] 擦除Flash (0x${appStart.toString(16)}, ${(appMaxSize/1024).toFixed(0)}KB)...`);
+            
+            // 擦除数据: [addr_h, addr_hh, addr_hhh, addr_hhhh, size_h, size_hh, size_hhh, size_hhhh, encrypted_flag] (大端序)
+            const eraseData = [
+                (appStart >> 24) & 0xFF, (appStart >> 16) & 0xFF, (appStart >> 8) & 0xFF, appStart & 0xFF,
+                (appMaxSize >> 24) & 0xFF, (appMaxSize >> 16) & 0xFF, (appMaxSize >> 8) & 0xFF, appMaxSize & 0xFF,
+                this.upgrade.isEncrypted ? 0x01 : 0x00  // 第9字节：加密标志
+            ];
+            
+            const eraseResp = await this.sendUpgradeCmd(this.upgrade.CMD_ERASE, eraseData, 30000);
+            if (!eraseResp || !eraseResp.success) {
+                throw new Error('擦除失败');
+            }
+            this.log('SYS', '[升级] ✓ 擦除完成');
+            
+            // 写入固件
+            this.upgrade.state = 'write';
+            const chunkSize = this.upgrade.CHUNK_SIZE;
+            const totalChunks = Math.ceil(firmware.length / chunkSize);
+            const startTime = Date.now();
+            
+            this.log('SYS', `[升级] 开始写入 ${(firmware.length / 1024).toFixed(1)} KB (${totalChunks} 包)...`);
+            
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            
+            // 暂停串口读取线程（避免竞争）
+            if (api && api.upgrade_start) {
+                await api.upgrade_start();
+            }
+            
+            try {
+            // 使用批量写入 API（后端一次性完成所有写入，减少JS-Python通信开销）
+            if (api && api.upgrade_write_batch) {
+                const firmwareHex = Array.from(firmware).map(b => b.toString(16).padStart(2, '0')).join('');
+                
+                // 启动进度更新定时器
+                const progressInterval = setInterval(() => {
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    this.updateUpgradeProgress(50, '写入中...', `已耗时 ${elapsed.toFixed(1)}s...`);
+                }, 200);
+                
+                const writeResult = await api.upgrade_write_batch(firmwareHex, appStart, chunkSize);
+                
+                clearInterval(progressInterval);
+                
+                if (!writeResult || !writeResult.success) {
+                    throw new Error(writeResult?.error || '批量写入失败');
+                }
+                
+                const elapsed = writeResult.time || ((Date.now() - startTime) / 1000);
+                const speed = writeResult.speed || (firmware.length / 1024 / Math.max(0.1, elapsed));
+                this.log('SYS', `[升级] ✓ 写入完成 (${elapsed.toFixed(1)}s, ${speed.toFixed(1)} KB/s)`);
+                this.updateUpgradeProgress(80, '写入完成', `${speed.toFixed(1)} KB/s`);
+            } else {
+                // 回退：逐包写入
+                let lastProgressUpdate = 0;
+                let consecutiveErrors = 0;
+                const maxConsecutiveErrors = 3;
+                
+                for (let i = 0; i < totalChunks; i++) {
+                    const offset = i * chunkSize;
+                    const addr = appStart + offset;
+                    const chunk = firmware.slice(offset, offset + chunkSize);
+                    
+                    let writeResp;
+                    if (api && api.upgrade_write_chunk) {
+                        const chunkHex = Array.from(chunk).map(b => b.toString(16).padStart(2, '0')).join('');
+                        writeResp = await api.upgrade_write_chunk(addr, chunkHex, 2);
+                    } else {
+                        const writeData = [
+                            (addr >> 24) & 0xFF, (addr >> 16) & 0xFF, (addr >> 8) & 0xFF, addr & 0xFF,
+                            ...chunk
+                        ];
+                        writeResp = await this.sendUpgradeCmd(this.upgrade.CMD_WRITE, writeData, 3000);
+                    }
+                    
+                    if (!writeResp || !writeResp.success) {
+                        consecutiveErrors++;
+                        if (consecutiveErrors >= maxConsecutiveErrors) {
+                            throw new Error(`写入失败 @ 0x${addr.toString(16)}`);
+                        }
+                        await this.sleep(100);
+                        i--;
+                        continue;
+                    }
+                    
+                    consecutiveErrors = 0;
+                    
+                    const now = Date.now();
+                    if (now - lastProgressUpdate > 200 || i === totalChunks - 1) {
+                        lastProgressUpdate = now;
+                        const progress = 20 + Math.floor((i + 1) / totalChunks * 60);
+                        const elapsed = (now - startTime) / 1000;
+                        const speed = (offset + chunk.length) / 1024 / Math.max(0.1, elapsed);
+                        this.updateUpgradeProgress(progress, '写入中...', `${i + 1}/${totalChunks} 包 (${speed.toFixed(1)} KB/s)`);
+                    }
+                }
+                
+                const elapsed = (Date.now() - startTime) / 1000;
+                const avgSpeed = (firmware.length / 1024 / Math.max(0.1, elapsed)).toFixed(1);
+                this.log('SYS', `[升级] ✓ 写入完成 (${elapsed.toFixed(1)}s, ${avgSpeed} KB/s)`);
+            }
+            
+            } finally {
+                // 恢复串口读取线程
+                if (api && api.upgrade_end) {
+                    await api.upgrade_end();
+                }
+            }
+            
+            // 校验固件
+            this.upgrade.state = 'verify';
+            this.updateUpgradeProgress(85, '校验中...', '正在校验固件CRC...');
+            this.log('SYS', '[升级] 校验固件...');
+            
+            // 计算 CRC32
+            // 加密固件：使用头部中的原始CRC（解密后的数据CRC）
+            // 普通固件：直接计算固件数据CRC
+            const actualSize = firmware.length;
+            let crc;
+            if (this.upgrade.isEncrypted && this.upgrade.encHeader) {
+                crc = this.upgrade.encHeader.originalCrc;
+                this.log('SYS', `[升级] 使用加密固件原始CRC: 0x${crc.toString(16).toUpperCase()}`);
+            } else {
+                crc = this.crc32(firmware);
+            }
+            this.log('SYS', `[升级] 固件大小: ${actualSize}, CRC32: 0x${crc.toString(16).toUpperCase()}`);
+            
+            // 校验数据: [addr_h, addr_hh, addr_hhh, addr_hhhh, size_h, size_hh, size_hhh, size_hhhh, crc_h, crc_hh, crc_hhh, crc_hhhh] (大端序)
+            const verifyData = [
+                (appStart >> 24) & 0xFF, (appStart >> 16) & 0xFF, (appStart >> 8) & 0xFF, appStart & 0xFF,
+                (actualSize >> 24) & 0xFF, (actualSize >> 16) & 0xFF, (actualSize >> 8) & 0xFF, actualSize & 0xFF,
+                (crc >> 24) & 0xFF, (crc >> 16) & 0xFF, (crc >> 8) & 0xFF, crc & 0xFF
+            ];
+            
+            const verifyResp = await this.sendUpgradeCmd(this.upgrade.CMD_VERIFY, verifyData, 10000);
+            if (!verifyResp || !verifyResp.success) {
+                throw new Error('校验失败');
+            }
+            this.log('SYS', '[升级] ✓ 校验通过');
+            
+            // 重启设备
+            this.upgrade.state = 'reboot';
+            this.updateUpgradeProgress(95, '重启中...', '正在重启设备...');
+            this.log('SYS', '[升级] 重启设备...');
+            
+            await this.sendUpgradeCmd(this.upgrade.CMD_RESET, [], 1000);
+            
+            // 完成 - 等待设备重启后自动扫描连接
+            this.upgrade.state = 'done';
+            this.updateUpgradeProgress(98, '等待重连...', '设备正在重启...');
+            this.log('SYS', '[升级] ✓ 升级完成，等待设备重启...');
+            
+            // 等待设备重启（USB 重新枚举）
+            await this.sleep(800);
+            
+            // 使用 DeviceHub 自动扫描（带重试）
+            this.updateUpgradeProgress(99, '自动扫描...', '正在扫描并连接设备...');
+            let scanSuccess = false;
+            
+            // 重试扫描，最多 8 次，每次间隔 300ms
+            for (let retry = 0; retry < 8 && !scanSuccess; retry++) {
+                if (retry > 0) {
+                    this.log('SYS', `[升级] 重试扫描 (${retry}/8)...`);
+                    await this.sleep(300);
+                }
+                
+                if (window.DeviceHub && window.DeviceHub.autoScan) {
+                    try {
+                        if (retry === 0) {
+                            this.log('SYS', '[升级] 调用 DeviceHub.autoScan()...');
+                        }
+                        await DeviceHub.autoScan();
+                        // 等待状态刷新
+                        await this.sleep(100);
+                        // 再次刷新确保状态同步
+                        await DeviceHub.refresh();
+                        // 检查是否连接成功
+                        const connected = DeviceHub.isSerialConnected();
+                        if (retry === 0) {
+                            this.log('SYS', `[升级] DeviceHub.isSerialConnected() = ${connected}`);
+                            this.log('SYS', `[升级] DeviceHub.status = ${JSON.stringify(DeviceHub.status)}`);
+                        }
+                        if (connected) {
+                            scanSuccess = true;
+                            this.log('SYS', '[升级] ✓ DeviceHub 自动扫描成功');
+                            // 同步状态到 DebugPro
+                            await this.syncGlobalSerial();
+                            await this.activateDataReceiver();
+                        } else if (retry === 0) {
+                            this.log('SYS', '[升级] DeviceHub 扫描完成但未连接，将重试...');
+                        }
+                    } catch (e) {
+                        if (retry === 0) {
+                            this.log('ERR', `[升级] DeviceHub 自动扫描失败: ${e.message}`);
+                        }
+                    }
+                } else {
+                    // 回退：直接调用后端 API
+                    const api = window.pywebview?.api || window.parent?.pywebview?.api;
+                    if (api && api.cal_auto_scan) {
+                        try {
+                            const result = await api.cal_auto_scan(115200);
+                            if (retry === 0) {
+                                this.log('SYS', `[升级] 自动扫描结果: ${JSON.stringify(result)}`);
+                            }
+                            if (result && result.success) {
+                                scanSuccess = true;
+                                await this.syncGlobalSerial();
+                                await this.activateDataReceiver();
+                            }
+                        } catch (e) {
+                            if (retry === 0) {
+                                this.log('ERR', `[升级] 自动扫描失败: ${e.message}`);
+                            }
+                        }
+                    }
+                    break;  // 没有 DeviceHub 就不重试了
+                }
+            }
+            
+            this.updateUpgradeProgress(100, '升级完成！', scanSuccess ? '已重新连接到新固件' : '请手动连接');
+            this.showToast('success', '固件升级成功！', scanSuccess ? '已自动重新连接' : '请点击重连按钮', 4000);
+            // 不自动关闭升级窗口
+            
+        } catch (err) {
+            console.error('升级失败:', err);
+            this.log('ERR', `[升级] 失败: ${err.message}`);
+            this.updateUpgradeProgress(0, '升级失败', err.message);
+            this.showToast('error', '升级失败', err.message, 5000);
+        }
+        
+        document.getElementById('dp-btn-upgrade').disabled = false;
+    },
+    
+    // 计算 CRC16 (Modbus)
+    crc16(data) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < data.length; i++) {
+            crc ^= data[i];
+            for (let j = 0; j < 8; j++) {
+                if (crc & 0x0001) crc = (crc >> 1) ^ 0xA001;
+                else crc >>= 1;
+            }
+        }
+        return crc;
+    },
+    
+    // 构建升级数据包 (与 Bootloader 协议一致)
+    // 格式: [0xAA] [cmd] [len_h] [len_l] [data...] [crc_h] [crc_l] [0x55]
+    buildUpgradePacket(cmd, data = []) {
+        const len = data.length;
+        // CRC 计算范围: cmd + len_h + len_l + data
+        const crcData = [cmd, (len >> 8) & 0xFF, len & 0xFF, ...data];
+        const crc = this.crc16(crcData);
+        
+        return new Uint8Array([
+            this.upgrade.SOF,
+            cmd,
+            (len >> 8) & 0xFF,
+            len & 0xFF,
+            ...data,
+            (crc >> 8) & 0xFF,
+            crc & 0xFF,
+            this.upgrade.EOF
+        ]);
+    },
+    
+    // 解析升级响应
+    parseUpgradeResponse(data) {
+        // 查找帧头
+        for (let i = 0; i < data.length; i++) {
+            if (data[i] === this.upgrade.SOF && i + 6 < data.length) {
+                const cmd = data[i + 1];
+                // 响应命令 = 请求命令 | 0x80
+                if ((cmd & 0x80) === 0) continue;
+                
+                const len = (data[i + 2] << 8) | data[i + 3];
+                const totalLen = 4 + len + 3; // SOF + CMD + LEN(2) + DATA + CRC(2) + EOF
+                
+                if (i + totalLen <= data.length && data[i + totalLen - 1] === this.upgrade.EOF) {
+                    const payload = data.slice(i + 4, i + 4 + len);
+                    
+                    // 验证 CRC
+                    const recvCrc = (data[i + 4 + len] << 8) | data[i + 5 + len];
+                    const calcCrc = this.crc16(data.slice(i + 1, i + 4 + len));
+                    
+                    if (recvCrc !== calcCrc) {
+                        console.warn('[升级] CRC校验失败:', recvCrc.toString(16), calcCrc.toString(16));
+                        continue;
+                    }
+                    
+                    return { cmd, payload: Array.from(payload) };
+                }
+            }
+        }
+        return null;
+    },
+    
+    async sendUpgradeCmd(cmd, data, timeout = 5000) {
+        const packet = this.buildUpgradePacket(cmd, data);
+        const hexStr = Array.from(packet).map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        console.log(`[升级] TX: CMD=0x${cmd.toString(16).padStart(2,'0')} LEN=${data.length} HEX=${hexStr}`);
+        
+        try {
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            if (api && api.upgrade_send_and_wait) {
+                // 使用专用的升级API（带等待响应）
+                const result = await api.upgrade_send_and_wait(hexStr, timeout);
+                if (result && result.success && result.data) {
+                    // 解析响应
+                    const respBytes = [];
+                    for (let i = 0; i < result.data.length; i += 2) {
+                        respBytes.push(parseInt(result.data.substr(i, 2), 16));
+                    }
+                    const parsed = this.parseUpgradeResponse(respBytes);
+                    if (parsed) {
+                        // 检查错误码 (payload[0] == 0 表示成功)
+                        const errCode = parsed.payload.length > 0 ? parsed.payload[0] : 0;
+                        return { success: errCode === 0, payload: parsed.payload, cmd: parsed.cmd };
+                    }
+                }
+                return result;
+            } else {
+                // 备用：使用 debug_send 并等待响应
+                return await this.sendUpgradeCmdFallback(packet, cmd, timeout);
+            }
+        } catch (e) {
+            console.error('发送升级命令失败:', e);
+            return { success: false, error: e.message };
+        }
+    },
+    
+    // 快速发送：发送后等待固定时间让 Bootloader 处理（用于批量写入）
+    async sendUpgradeCmdFast(cmd, data) {
+        const packet = this.buildUpgradePacket(cmd, data);
+        const hexStr = Array.from(packet).map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        try {
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            if (api && api.upgrade_send_fast) {
+                // 使用专用快速发送 API
+                await api.upgrade_send_fast(hexStr);
+            } else if (api && api.serial_write_hex) {
+                api.serial_write_hex(hexStr);
+                // 等待 Bootloader 处理（Flash 写入约需 2-3ms/512字节）
+                await this.sleep(4);
+            } else {
+                this.sendHex(hexStr);
+                await this.sleep(4);
+            }
+        } catch (e) {
+            console.error('快速发送失败:', e);
+        }
+    },
+    
+    // 批量模式：发送不等待响应（最快）
+    sendUpgradeCmdNoWait(cmd, data) {
+        const packet = this.buildUpgradePacket(cmd, data);
+        const hexStr = Array.from(packet).map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        try {
+            const api = window.pywebview?.api || window.parent?.pywebview?.api;
+            if (api && api.debug_send) {
+                api.debug_send(hexStr);
+            } else {
+                this.sendHex(hexStr);
+            }
+        } catch (e) {
+            console.error('发送失败:', e);
+        }
+    },
+    
+    // 备用发送方法：使用 debug_send 并监听响应
+    async sendUpgradeCmdFallback(packet, cmd, timeout) {
+        return new Promise(async (resolve) => {
+            const hexStr = Array.from(packet).map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            // 清空接收缓冲
+            this.upgrade.rxBuffer = [];
+            
+            // 设置响应处理器
+            const responseHandler = (e) => {
+                if (e.detail && e.detail.bytes) {
+                    this.upgrade.rxBuffer.push(...e.detail.bytes);
+                    
+                    // 尝试解析响应
+                    const parsed = this.parseUpgradeResponse(this.upgrade.rxBuffer);
+                    if (parsed) {
+                        document.removeEventListener('backend:debug_rx', responseHandler);
+                        clearTimeout(timeoutId);
+                        const errCode = parsed.payload.length > 0 ? parsed.payload[0] : 0;
+                        resolve({ success: errCode === 0, payload: parsed.payload, cmd: parsed.cmd });
+                    }
+                }
+            };
+            
+            document.addEventListener('backend:debug_rx', responseHandler);
+            
+            // 设置超时
+            const timeoutId = setTimeout(() => {
+                document.removeEventListener('backend:debug_rx', responseHandler);
+                console.warn('[升级] 响应超时');
+                resolve({ success: false, error: '响应超时' });
+            }, timeout);
+            
+            // 发送数据
+            await this.sendHex(hexStr);
+        });
+    },
+    
+    crc32(data) {
+        let crc = 0xFFFFFFFF;
+        const table = this._crc32Table || (this._crc32Table = this._makeCrc32Table());
+        for (let i = 0; i < data.length; i++) {
+            crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
+        }
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+    },
+    
+    /**
+     * 计算固件 CRC32（与 post_build.py 一致）
+     * 排除元数据中的 app_size 和 app_crc 字段（设为 0xFF）
+     */
+    calcFirmwareCrc(firmware) {
+        const META_OFFSET = 0x200;      // 元数据在固件中的偏移
+        const APP_SIZE_OFFSET = 0x20;   // app_size 在元数据中的偏移
+        const APP_CRC_OFFSET = 0x24;    // app_crc 在元数据中的偏移
+        
+        // 复制固件数据
+        const data = new Uint8Array(firmware);
+        
+        // 将 app_size 和 app_crc 位置设为 0xFF（不参与 CRC 计算）
+        const sizeOffset = META_OFFSET + APP_SIZE_OFFSET;
+        const crcOffset = META_OFFSET + APP_CRC_OFFSET;
+        
+        if (data.length > crcOffset + 4) {
+            for (let i = 0; i < 4; i++) {
+                data[sizeOffset + i] = 0xFF;
+                data[crcOffset + i] = 0xFF;
+            }
+        }
+        
+        return this.crc32(data);
+    },
+    
+    _makeCrc32Table() {
+        const table = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let j = 0; j < 8; j++) {
+                c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            }
+            table[i] = c;
+        }
+        return table;
+    },
+    
+    closeDeviceModal() {
+        document.getElementById('dp-device-modal').style.display = 'none';
+    },
+    
+    scanNewDevice() {
+        this.closeDeviceModal();
+        this.connectSerial();
+    },
+
+    handleImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const text = e.target.result;
+                let cmds = [];
+                
+                if (file.name.endsWith('.json')) {
+                    const data = JSON.parse(text);
+                    if (data.commands) {
+                        cmds = data.commands.map(c => ({
+                            hex: c.command || c.hex,
+                            name: c.name,
+                            delay: c.interval || c.delay || 200
+                        }));
+                    }
+                } else {
+                    // INI/TXT 格式
+                    text.split('\n').forEach(line => {
+                        const match = line.match(/^([^=]+)=(.+)$/);
+                        if (match) {
+                            cmds.push({ hex: match[2].trim(), name: match[1].trim(), delay: 200 });
+                        }
+                    });
+                }
+                
+                if (cmds.length > 0) {
+                    this.cmdList = cmds;
+                    this.configStore.configs[this.configStore.current] = [...this.cmdList];
+                    this.persistConfig();
+                    this.renderCmds();
+                    this.log('SYS', `✓ 已导入 ${cmds.length} 条命令`);
+                }
+            } catch(err) {
+                this.log('ERR', `导入失败: ${err.message}`);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    },
+    
+    exportCmds() {
+        const data = {
+            name: this.configStore.current,
+            commands: this.cmdList.map(c => ({
+                command: c.hex,
+                name: c.name,
+                interval: c.delay
+            }))
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.configStore.current}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+    
+    loadConfigsFromFolder() {
+        this.showToast('info', '请使用"导入"按钮', '选择命令配置文件', 2000);
+    },
+    
+    addSelectionToWave() {
+        const sel = window.getSelection().toString();
+        if (sel) this.parseAndAddToWave(sel);
+    },
+    
+    copySelection() {
+        document.execCommand('copy');
+    }
+};
+
+// 导出到全局
+window.DebugPro = DebugPro;
+
+// init 由 app.js 统一调用，不在这里自动调用
+</script>

@@ -1,0 +1,207 @@
+<div class="help-container">
+    <div class="help-header">
+        <h1>🧪 测试管理 - 使用说明</h1>
+        <button class="close-btn" onclick="switchPage('test_queue')">返回</button>
+    </div>
+
+    <div class="help-content">
+        <section class="help-section">
+            <h2>📌 功能概述</h2>
+            <p>测试管理用于验证研发提交的固件版本，记录测试数据，决定是否发布到生产。</p>
+        </section>
+
+        <section class="help-section">
+            <h2>🚀 快速开始</h2>
+            <div class="steps">
+                <div class="step">
+                    <span class="step-num">1</span>
+                    <div class="step-content">
+                        <h3>查看待测队列</h3>
+                        <p>左侧列表显示所有待测试的固件版本</p>
+                        <p>橙色标记 = 等待测试，蓝色标记 = 测试中</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">2</span>
+                    <div class="step-content">
+                        <h3>执行测试</h3>
+                        <p>点击待测项，中间区域显示测试表单</p>
+                        <p>逐项勾选测试项目，添加测试备注</p>
+                        <p>填写测试数据（激光功率、电机精度等）</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <div class="step-content">
+                        <h3>查看来源信息</h3>
+                        <p>右侧面板显示该版本的构建信息</p>
+                        <p>可查看 Git 提交、编译配置等详情</p>
+                        <p>点击 <code>查看研发详情</code> 跳转到研发页面</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <div class="step-content">
+                        <h3>提交结果</h3>
+                        <p><code>✓ 测试通过</code> - 版本发布到生产端</p>
+                        <p><code>✗ 测试不通过</code> - 退回研发，需输入原因</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="help-section">
+            <h2>📋 测试项目说明</h2>
+            <table class="help-table">
+                <tr><th>测试项</th><th>测试内容</th><th>合格标准</th></tr>
+                <tr><td>基础功能测试</td><td>开机、按键、指示灯</td><td>功能正常</td></tr>
+                <tr><td>激光发射测试</td><td>激光功率、稳定性</td><td>功率误差 ≤ 5%</td></tr>
+                <tr><td>电机控制测试</td><td>角度精度、响应速度</td><td>精度 ≤ 0.5°</td></tr>
+                <tr><td>通讯协议测试</td><td>串口/蓝牙通讯</td><td>延迟 ≤ 10ms</td></tr>
+                <tr><td>功耗测试</td><td>待机电流、工作电流</td><td>待机 ≤ 5mA</td></tr>
+                <tr><td>稳定性测试</td><td>长时间运行</td><td>24h无异常</td></tr>
+            </table>
+        </section>
+
+        <section class="help-section">
+            <h2>📊 测试数据字段</h2>
+            <table class="help-table">
+                <tr><th>字段</th><th>单位</th><th>说明</th></tr>
+                <tr><td>激光功率</td><td>mW</td><td>使用功率计测量</td></tr>
+                <tr><td>电机精度</td><td>°</td><td>角度误差</td></tr>
+                <tr><td>通讯延迟</td><td>ms</td><td>指令响应时间</td></tr>
+                <tr><td>待机电流</td><td>mA</td><td>待机状态电流</td></tr>
+            </table>
+        </section>
+
+        <section class="help-section">
+            <h2>🔄 版本状态流转</h2>
+            <div class="flow-chart">
+                <div class="flow-item">📦 研发构建</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item pending">⏳ 待测试</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item testing">🔄 测试中</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item passed">✓ 通过</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item production">🏭 生产</div>
+            </div>
+            <div class="flow-chart" style="margin-top:12px">
+                <div class="flow-item"></div>
+                <div class="flow-arrow"></div>
+                <div class="flow-item"></div>
+                <div class="flow-arrow"></div>
+                <div class="flow-item"></div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-item failed">✗ 不通过</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item">🔙 退回研发</div>
+            </div>
+        </section>
+
+        <section class="help-section">
+            <h2>🔗 相关页面</h2>
+            <div class="link-cards">
+                <div class="link-card" onclick="switchPage('dev_project')">
+                    <span>💻</span>
+                    <span>研发管理</span>
+                </div>
+                <div class="link-card" onclick="switchPage('prod_flash')">
+                    <span>🏭</span>
+                    <span>生产烧录</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+.help-container {
+    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.help-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.help-header h1 { margin: 0; font-size: 24px; }
+
+.close-btn {
+    padding: 8px 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    cursor: pointer;
+}
+.close-btn:hover { border-color: var(--primary-color); }
+
+.help-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.help-section { margin-bottom: 32px; }
+.help-section:last-child { margin-bottom: 0; }
+.help-section h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+.help-section p { color: var(--text-muted); line-height: 1.6; }
+
+.steps { display: flex; flex-direction: column; gap: 16px; }
+.step {
+    display: flex; gap: 16px; padding: 16px;
+    background: var(--input-bg); border-radius: 8px;
+}
+.step-num {
+    width: 32px; height: 32px; background: var(--primary-color); color: var(--text-on-accent);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; flex-shrink: 0;
+}
+.step-content h3 { margin: 0 0 8px 0; font-size: 14px; }
+.step-content p { margin: 4px 0; font-size: 13px; }
+.step-content code {
+    background: rgba(0, 255, 157, 0.2);
+    padding: 2px 6px; border-radius: 4px; font-size: 12px;
+}
+
+.help-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.help-table th, .help-table td {
+    padding: 10px 12px; text-align: left;
+    border: 1px solid var(--border-color);
+}
+.help-table th { background: var(--input-bg); font-weight: 500; }
+
+.flow-chart { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.flow-item {
+    padding: 8px 16px; border-radius: 6px;
+    background: var(--input-bg); font-size: 13px;
+}
+.flow-item.pending { background: rgba(245, 158, 11, 0.2); }
+.flow-item.testing { background: rgba(59, 130, 246, 0.2); }
+.flow-item.passed { background: rgba(0, 255, 157, 0.2); }
+.flow-item.failed { background: rgba(239, 68, 68, 0.2); }
+.flow-item.production { background: var(--primary-color); color: var(--text-on-accent); }
+.flow-arrow { color: var(--text-muted); }
+
+.link-cards { display: flex; gap: 12px; }
+.link-card {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 20px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+}
+.link-card:hover { border-color: var(--primary-color); transform: translateY(-2px); }
+.link-card span:first-child { font-size: 20px; }
+</style>

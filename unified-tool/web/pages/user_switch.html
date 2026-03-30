@@ -1,0 +1,109 @@
+<!-- 用户切换对话框 -->
+<div class="dialog-overlay" id="user-switch-dialog" style="display:none">
+    <div class="dialog" style="width:400px">
+        <div class="dialog-header">
+            <h3>👤 切换用户</h3>
+            <button class="close-btn" onclick="UserSwitchPage.hide()">×</button>
+        </div>
+        <div class="dialog-body">
+            <div class="form-group">
+                <label>选择用户</label>
+                <select id="switch-user-select" style="width: 100%; padding: 10px; font-size: 14px;">
+                    <option value="">请选择用户</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="font-size: 12px; color: var(--text-muted);">
+                    提示：简化版登录，仅用于标识身份，无需密码
+                </label>
+            </div>
+            <div class="current-user" id="current-user-info" style="margin-top: 16px; padding: 12px; background: var(--input-bg); border-radius: 6px; font-size: 13px;">
+                当前用户：未登录
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn secondary" onclick="UserSwitchPage.hide()">取消</button>
+            <button class="btn primary" onclick="UserSwitchPage.switchUser()" style="flex: 1;">切换用户</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.dialog-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.84); display: flex;
+    align-items: center; justify-content: center; z-index: 1000;
+    backdrop-filter: blur(6px);
+}
+.dialog {
+    background: linear-gradient(180deg, rgba(10, 18, 30, 0.98), rgba(6, 12, 22, 0.985));
+    border: 1px solid rgba(0,255,136,0.16);
+    border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    max-height: 90vh; overflow-y: auto;
+}
+.dialog-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.02);
+}
+.dialog-header h3 {
+    margin: 0; font-size: 16px; font-weight: 600;
+}
+.close-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: transparent; border: none;
+    color: var(--text-muted); font-size: 20px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.close-btn:hover {
+    background: rgba(255,255,255,0.08); color: var(--text-color);
+}
+.dialog-body {
+    padding: 20px;
+    background: rgba(6, 10, 18, 0.55);
+}
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--text-color); margin-bottom: 8px;
+}
+.form-group select {
+    width: 100%; padding: 10px 12px;
+    background: rgba(8, 15, 24, 0.92);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; color: var(--text-color);
+    font-size: 14px;
+}
+.form-group select:focus {
+    outline: none; border-color: var(--primary-color);
+}
+.current-user {
+    background: rgba(8, 15, 24, 0.92) !important;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.dialog-footer {
+    display: flex; justify-content: flex-end; gap: 12px;
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.02);
+}
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.btn.primary {
+    background: var(--primary-color);
+    color: var(--text-on-accent);
+    border: none;
+}
+.btn.secondary {
+    background: rgba(8, 15, 24, 0.9);
+    color: var(--text-color);
+}
+</style>

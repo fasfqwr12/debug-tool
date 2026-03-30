@@ -1,0 +1,23 @@
+<!-- 生产管理页面 -->
+<header class="page-header">
+    <h1>生产管理</h1>
+    <p>程序管理与批量操作</p>
+</header>
+
+<div class="toolbar">
+    <input type="text" id="program-search" placeholder="🔍 搜索程序...">
+    <button class="btn btn-primary" onclick="ProductionPage.create()">➕ 新建程序</button>
+</div>
+
+<div class="split-layout">
+    <div class="card list-card">
+        <div class="card-header"><h4>程序列表</h4></div>
+        <div id="program-list" class="program-list"></div>
+    </div>
+    <div class="card detail-card">
+        <div class="card-header"><h4>程序详情</h4></div>
+        <div id="program-detail">
+            <div class="empty-hint">请选择一个程序</div>
+        </div>
+    </div>
+</div>

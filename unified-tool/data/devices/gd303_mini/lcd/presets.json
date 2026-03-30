@@ -1,0 +1,550 @@
+{
+  "version": "1.0",
+  "description": "LCD界面预设库",
+  "presets": {
+    "boot_init": {
+      "name": "开机初始化",
+      "description": "开机后的初始界面，显示-----",
+      "category": "系统",
+      "components": {
+        "line4": {
+          "preset": "dash",
+          "unit": 0,
+          "dataType": "length"
+        },
+        "line3": {
+          "value": ""
+        },
+        "line2": {
+          "value": ""
+        },
+        "line1": {
+          "value": ""
+        },
+        "battery": {
+          "value": 3
+        },
+        "beep": {
+          "value": 1
+        },
+        "rangefinder": {
+          "visible": true
+        },
+        "base": {
+          "value": 1
+        }
+      }
+    },
+    "unit_select": {
+      "name": "单位选择中",
+      "description": "开机单位选择状态，单位闪烁提示",
+      "category": "系统",
+      "components": {
+        "line4": {
+          "preset": "dash"
+        },
+        "line3": {
+          "value": ""
+        },
+        "line2": {
+          "value": ""
+        },
+        "line1": {
+          "value": ""
+        },
+        "battery": {
+          "value": 3
+        },
+        "rangefinder": {
+          "visible": true
+        }
+      },
+      "behaviors": [
+        "unitSelectAnim"
+      ]
+    },
+    "boot_complete": {
+      "name": "开机完成",
+      "description": "开机流程完成，进入正常待机状态",
+      "category": "系统",
+      "components": {
+        "line4": {
+          "preset": "dash"
+        },
+        "line3": {
+          "value": ""
+        },
+        "line2": {
+          "value": ""
+        },
+        "line1": {
+          "value": ""
+        },
+        "battery": {
+          "value": 3
+        },
+        "signal": {
+          "value": 0
+        },
+        "rangefinder": {
+          "visible": true
+        },
+        "base": {
+          "value": 1
+        },
+        "laser": {
+          "visible": false
+        },
+        "bluetooth": {
+          "visible": false
+        },
+        "wifi": {
+          "visible": false
+        }
+      }
+    },
+    "single_idle": {
+      "name": "单次待机",
+      "description": "单次测量模式，激光关闭，显示-----",
+      "category": "单次测量",
+      "components": {
+        "line4": {
+          "preset": "dash"
+        },
+        "line3": {
+          "value": ""
+        },
+        "line2": {
+          "value": ""
+        },
+        "line1": {
+          "value": ""
+        },
+        "rangefinder": {
+          "visible": true
+        },
+        "base": {
+          "value": 1
+        },
+        "laser": {
+          "visible": false
+        }
+      }
+    },
+    "single_laser_on": {
+      "name": "单次激光开",
+      "description": "单次测量模式，激光开启等待测量",
+      "category": "单次测量",
+      "components": {
+        "line4": {
+          "preset": "dash"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "behaviors": [
+        "laserBlink"
+      ]
+    },
+    "single_result": {
+      "name": "单次结果",
+      "description": "单次测量完成，Line4显示测量结果",
+      "category": "单次测量",
+      "components": {
+        "line4": {
+          "bind": "distance",
+          "dataType": "length"
+        },
+        "signal": {
+          "value": 3
+        },
+        "laser": {
+          "visible": false
+        }
+      }
+    },
+    "continuous_idle": {
+      "name": "连续待机",
+      "description": "连续测量模式初始界面",
+      "category": "连续测量",
+      "components": {
+        "line4": {
+          "preset": "dash"
+        },
+        "line3": {
+          "preset": "dash"
+        },
+        "line2": {
+          "preset": "dash"
+        },
+        "laser": {
+          "visible": false
+        }
+      }
+    },
+    "continuous_measuring": {
+      "name": "连续测量中",
+      "description": "连续测量中，显示MAX/MIN/当前值",
+      "category": "连续测量",
+      "components": {
+        "line2": {
+          "bind": "max_data",
+          "dataType": "length"
+        },
+        "line3": {
+          "bind": "min_data",
+          "dataType": "length"
+        },
+        "line4": {
+          "bind": "distance",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "behaviors": [
+        "laserBlink"
+      ]
+    },
+    "area_idle": {
+      "name": "面积待机",
+      "description": "面积测量模式，等待开始",
+      "category": "面积测量",
+      "components": {
+        "line4": {
+          "preset": "dash",
+          "dataType": "area"
+        },
+        "line3": {
+          "value": ""
+        },
+        "line2": {
+          "value": ""
+        },
+        "laser": {
+          "visible": false
+        }
+      },
+      "elements": [
+        "Mode_Area"
+      ]
+    },
+    "area_step1": {
+      "name": "面积步骤1",
+      "description": "面积测量，等待测量第一边(长)",
+      "category": "面积测量",
+      "components": {
+        "line4": {
+          "preset": "dash",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "elements": [
+        "Mode_Area"
+      ],
+      "behaviors": [
+        "laserBlink"
+      ]
+    },
+    "area_step1_done": {
+      "name": "面积步骤1完成",
+      "description": "面积测量，第一边测量完成，等待第二边",
+      "category": "面积测量",
+      "components": {
+        "line3": {
+          "bind": "length",
+          "dataType": "length"
+        },
+        "line4": {
+          "preset": "dash",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "elements": [
+        "Mode_Area"
+      ],
+      "behaviors": [
+        "laserBlink"
+      ]
+    },
+    "area_step2": {
+      "name": "面积步骤2",
+      "description": "面积测量，等待测量第二边(宽)",
+      "category": "面积测量",
+      "components": {
+        "line3": {
+          "bind": "length",
+          "dataType": "length"
+        },
+        "line4": {
+          "preset": "dash",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "elements": [
+        "Mode_Area"
+      ],
+      "behaviors": [
+        "laserBlink",
+        "areaSide2Blink"
+      ]
+    },
+    "area_result": {
+      "name": "面积结果",
+      "description": "面积测量完成，显示长、宽、面积",
+      "category": "面积测量",
+      "components": {
+        "line2": {
+          "bind": "length",
+          "dataType": "length"
+        },
+        "line3": {
+          "bind": "width",
+          "dataType": "length"
+        },
+        "line4": {
+          "bind": "area_result",
+          "dataType": "area"
+        },
+        "laser": {
+          "visible": false
+        }
+      },
+      "elements": [
+        "Mode_Area"
+      ]
+    },
+    "volume_idle": {
+      "name": "体积待机",
+      "description": "体积测量模式，等待开始",
+      "category": "体积测量",
+      "components": {
+        "line4": {
+          "preset": "dash",
+          "dataType": "volume"
+        },
+        "laser": {
+          "visible": false
+        }
+      },
+      "elements": [
+        "Mode_Volume"
+      ]
+    },
+    "volume_step1": {
+      "name": "体积步骤1",
+      "description": "体积测量，等待测量第一边(长)",
+      "category": "体积测量",
+      "components": {
+        "line4": {
+          "preset": "dash",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "elements": [
+        "Mode_Volume"
+      ],
+      "behaviors": [
+        "laserBlink"
+      ]
+    },
+    "volume_step2": {
+      "name": "体积步骤2",
+      "description": "体积测量，等待测量第二边(宽)",
+      "category": "体积测量",
+      "components": {
+        "line2": {
+          "bind": "length",
+          "dataType": "length"
+        },
+        "line4": {
+          "preset": "dash",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "elements": [
+        "Mode_Volume"
+      ],
+      "behaviors": [
+        "laserBlink"
+      ]
+    },
+    "volume_step3": {
+      "name": "体积步骤3",
+      "description": "体积测量，等待测量第三边(高)",
+      "category": "体积测量",
+      "components": {
+        "line1": {
+          "bind": "length",
+          "dataType": "length"
+        },
+        "line2": {
+          "bind": "width",
+          "dataType": "length"
+        },
+        "line4": {
+          "preset": "dash",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": true
+        }
+      },
+      "elements": [
+        "Mode_Volume"
+      ],
+      "behaviors": [
+        "laserBlink"
+      ]
+    },
+    "volume_result": {
+      "name": "体积结果",
+      "description": "体积测量完成，显示长、宽、高、体积",
+      "category": "体积测量",
+      "components": {
+        "line1": {
+          "bind": "length",
+          "dataType": "length"
+        },
+        "line2": {
+          "bind": "width",
+          "dataType": "length"
+        },
+        "line3": {
+          "bind": "height",
+          "dataType": "length"
+        },
+        "line4": {
+          "bind": "volume_result",
+          "dataType": "volume"
+        },
+        "laser": {
+          "visible": false
+        }
+      },
+      "elements": [
+        "Mode_Volume"
+      ]
+    },
+    "pyth_idle": {
+      "name": "勾股待机",
+      "description": "勾股定理测量模式",
+      "category": "勾股测量",
+      "components": {
+        "line4": {
+          "preset": "dash",
+          "dataType": "length"
+        },
+        "laser": {
+          "visible": false
+        }
+      },
+      "elements": [
+        "Mode_Pyth"
+      ]
+    },
+    "error_display": {
+      "name": "错误显示",
+      "description": "测量错误界面，显示Err",
+      "category": "系统",
+      "components": {
+        "line4": {
+          "preset": "error"
+        },
+        "laser": {
+          "visible": false
+        }
+      }
+    },
+    "charging": {
+      "name": "充电中",
+      "description": "充电状态界面",
+      "category": "系统",
+      "components": {
+        "line4": {
+          "value": ""
+        },
+        "line3": {
+          "value": ""
+        },
+        "line2": {
+          "value": ""
+        },
+        "line1": {
+          "value": ""
+        }
+      },
+      "behaviors": [
+        "chargingAnim"
+      ]
+    },
+    "low_battery": {
+      "name": "低电量",
+      "description": "低电量警告界面",
+      "category": "系统",
+      "components": {
+        "battery": {
+          "value": 0
+        }
+      },
+      "behaviors": [
+        "lowBatteryBlink"
+      ]
+    },
+    "bluetooth_pairing": {
+      "name": "蓝牙配对",
+      "description": "蓝牙搜索配对中",
+      "category": "连接",
+      "components": {
+        "bluetooth": {
+          "visible": true
+        }
+      },
+      "behaviors": [
+        "bluetoothBlink"
+      ]
+    },
+    "wifi_connecting": {
+      "name": "WiFi连接中",
+      "description": "WiFi连接中",
+      "category": "连接",
+      "components": {
+        "wifi": {
+          "visible": true
+        }
+      },
+      "behaviors": [
+        "wifiBlink"
+      ]
+    },
+    "full_display": {
+      "name": "全显测试",
+      "description": "LCD全显测试，点亮所有段码",
+      "category": "测试",
+      "action": "lcd:showAll"
+    },
+    "clear_display": {
+      "name": "清屏",
+      "description": "LCD清屏，熄灭所有段码",
+      "category": "测试",
+      "action": "lcd:clearAll"
+    }
+  }
+}

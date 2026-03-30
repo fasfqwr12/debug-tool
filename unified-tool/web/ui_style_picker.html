@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI样式选择器 - 请选择您喜欢的样式</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #1a1a2e;
+            color: var(--text-on-accent);
+            padding: 30px;
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+        }
+        .section {
+            margin-bottom: 50px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 30px;
+        }
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .num {
+            background: #4a9eff;
+            color: var(--text-on-accent);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .option {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option:hover {
+            border-color: #4a9eff;
+            transform: translateY(-2px);
+        }
+        .option.selected {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+        .option-name {
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .option-name .check {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #555;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .option.selected .check {
+            background: #00ff88;
+            border-color: #00ff88;
+            color: var(--text-on-accent);
+        }
+        .preview { margin-top: 10px; }
+
+        /* ========== 样式A: 简洁清晰 ========== */
+        .style-a-btn {
+            padding: 10px 20px;
+            background: #2563eb;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-on-accent);
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .style-a-input {
+            padding: 10px 14px;
+            background: #fff;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            color: var(--text-color);
+            width: 100%;
+        }
+        .style-a-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            color: var(--text-color);
+        }
+
+        /* ========== 样式B: 深色玻璃 ========== */
+        .style-b-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: var(--text-on-accent);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+        }
+        .style-b-input {
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--text-on-accent);
+            width: 100%;
+        }
+        .style-b-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* ========== 样式C: 霓虹边框 ========== */
+        .style-c-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid #00ff88;
+            border-radius: 6px;
+            color: #00ff88;
+            box-shadow: 0 0 10px rgba(0,255,136,0.3);
+            cursor: pointer;
+        }
+        .style-c-input {
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #00d4ff;
+            border-radius: 6px;
+            color: var(--text-on-accent);
+            width: 100%;
+            box-shadow: 0 0 8px rgba(0,212,255,0.2);
+        }
+        .style-c-card {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 0 15px rgba(255,107,107,0.2);
+        }
+
+        /* ========== 样式D: 渐变现代 ========== */
+        .style-d-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-on-accent);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .style-d-input {
+            padding: 10px 14px;
+            background: linear-gradient(180deg, rgba(30,30,50,1) 0%, rgba(20,20,40,1) 100%);
+            border: 2px solid rgba(102,126,234,0.5);
+            border-radius: 8px;
+            color: var(--text-on-accent);
+            width: 100%;
+        }
+        .style-d-card {
+            background: linear-gradient(135deg, rgba(40,40,80,0.9) 0%, rgba(30,30,60,0.95) 100%);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        /* ========== 样式E: 扁平Material ========== */
+        .style-e-btn {
+            padding: 10px 24px;
+            background: #6200ee;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-on-accent);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .style-e-input {
+            padding: 12px 14px;
+            background: #1e1e1e;
+            border: none;
+            border-bottom: 2px solid #6200ee;
+            border-radius: 4px 4px 0 0;
+            color: var(--text-on-accent);
+            width: 100%;
+        }
+        .style-e-card {
+            background: #2d2d2d;
+            border: none;
+            border-radius: 4px;
+            padding: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        /* ========== 样式F: 柔和圆润 ========== */
+        .style-f-btn {
+            padding: 12px 24px;
+            background: #10b981;
+            border: none;
+            border-radius: 25px;
+            color: var(--text-on-accent);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .style-f-input {
+            padding: 12px 18px;
+            background: #374151;
+            border: 2px solid #4b5563;
+            border-radius: 25px;
+            color: var(--text-on-accent);
+            width: 100%;
+        }
+        .style-f-card {
+            background: #374151;
+            border: none;
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .demo-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        /* 背景样式预览 */
+        .bg-preview {
+            height: 120px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-on-accent);
+        }
+        .bg-a { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+        .bg-b { background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f2027 100%); }
+        .bg-c { background: linear-gradient(180deg, #0d1117 0%, #161b22 100%); }
+        .bg-d { background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%); }
+        .bg-e { background: #121212; }
+        .bg-f { background: linear-gradient(135deg, #134e5e 0%, #71b280 100%); }
+
+        /* 底部确认区 */
+        .confirm-section {
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent, #1a1a2e 20%);
+            padding: 30px 0 20px;
+            text-align: center;
+        }
+        .confirm-btn {
+            padding: 16px 60px;
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+            border: none;
+            border-radius: 30px;
+            color: var(--text-on-accent);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,255,136,0.4);
+        }
+        .confirm-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(0,255,136,0.5);
+        }
+
+        .selected-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,255,136,0.1);
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 10px;
+            display: none;
+        }
+        .selected-summary.show { display: block; }
+    </style>
+</head>
+<body>
+    <h1>🎨 UI样式选择器</h1>
+    <p class="subtitle">请为每个组件选择您喜欢的样式，选好后点击底部确认按钮</p>
+
+    <!-- 1. 背景风格 -->
+    <div class="section">
+        <div class="section-title"><span class="num">1</span> 整体背景风格</div>
+        <div class="options" data-group="background">
+            <div class="option" data-value="dark-purple" onclick="selectOption(this)">
+                <div class="option-name">深紫渐变 <span class="check">✓</span></div>
+                <div class="bg-preview bg-a">深色 + 紫色调</div>
+            </div>
+            <div class="option" data-value="dark-blue" onclick="selectOption(this)">
+                <div class="option-name">深蓝科技 <span class="check">✓</span></div>
+                <div class="bg-preview bg-b">深色 + 蓝色调</div>
+            </div>
+            <div class="option" data-value="github-dark" onclick="selectOption(this)">
+                <div class="option-name">GitHub Dark <span class="check">✓</span></div>
+                <div class="bg-preview bg-c">经典深灰</div>
+            </div>
+            <div class="option" data-value="ocean" onclick="selectOption(this)">
+                <div class="option-name">海洋深蓝 <span class="check">✓</span></div>
+                <div class="bg-preview bg-d">深蓝渐变</div>
+            </div>
+            <div class="option" data-value="pure-dark" onclick="selectOption(this)">
+                <div class="option-name">纯黑简约 <span class="check">✓</span></div>
+                <div class="bg-preview bg-e">Material纯黑</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 按钮样式 -->
+    <div class="section">
+        <div class="section-title"><span class="num">2</span> 按钮样式</div>
+        <div class="options" data-group="button">
+            <div class="option" data-value="simple" onclick="selectOption(this)">
+                <div class="option-name">简洁实色 <span class="check">✓</span></div>
+                <div class="preview">
+                    <button class="style-a-btn">主要按钮</button>
+                    <button class="style-a-btn" style="background:#6b7280">次要按钮</button>
+                </div>
+            </div>
+            <div class="option" data-value="glass" onclick="selectOption(this)">
+                <div class="option-name">玻璃透明 <span class="check">✓</span></div>
+                <div class="preview">
+                    <button class="style-b-btn">主要按钮</button>
+                    <button class="style-b-btn">次要按钮</button>
+                </div>
+            </div>
+            <div class="option" data-value="neon" onclick="selectOption(this)">
+                <div class="option-name">霓虹发光 <span class="check">✓</span></div>
+                <div class="preview">
+                    <button class="style-c-btn">主要按钮</button>
+                    <button class="style-c-btn" style="border-color:#ff6b6b;color:#ff6b6b;box-shadow:0 0 10px rgba(255,107,107,0.3)">次要按钮</button>
+                </div>
+            </div>
+            <div class="option" data-value="gradient" onclick="selectOption(this)">
+                <div class="option-name">渐变现代 <span class="check">✓</span></div>
+                <div class="preview">
+                    <button class="style-d-btn">主要按钮</button>
+                    <button class="style-d-btn" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)">次要按钮</button>
+                </div>
+            </div>
+            <div class="option" data-value="material" onclick="selectOption(this)">
+                <div class="option-name">Material <span class="check">✓</span></div>
+                <div class="preview">
+                    <button class="style-e-btn">PRIMARY</button>
+                    <button class="style-e-btn" style="background:#03dac6;color:var(--text-on-accent)">SECONDARY</button>
+                </div>
+            </div>
+            <div class="option" data-value="rounded" onclick="selectOption(this)">
+                <div class="option-name">圆润胶囊 <span class="check">✓</span></div>
+                <div class="preview">
+                    <button class="style-f-btn">主要按钮</button>
+                    <button class="style-f-btn" style="background:#6366f1">次要按钮</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 输入框样式 -->
+    <div class="section">
+        <div class="section-title"><span class="num">3</span> 输入框/下拉框样式</div>
+        <div class="options" data-group="input">
+            <div class="option" data-value="light" onclick="selectOption(this)">
+                <div class="option-name">浅色清晰 <span class="check">✓</span></div>
+                <div class="preview">
+                    <input class="style-a-input" placeholder="输入文字..." readonly>
+                </div>
+            </div>
+            <div class="option" data-value="dark-glass" onclick="selectOption(this)">
+                <div class="option-name">深色半透明 <span class="check">✓</span></div>
+                <div class="preview">
+                    <input class="style-b-input" placeholder="输入文字..." readonly>
+                </div>
+            </div>
+            <div class="option" data-value="neon-border" onclick="selectOption(this)">
+                <div class="option-name">霓虹边框 <span class="check">✓</span></div>
+                <div class="preview">
+                    <input class="style-c-input" placeholder="输入文字..." readonly>
+                </div>
+            </div>
+            <div class="option" data-value="gradient-border" onclick="selectOption(this)">
+                <div class="option-name">渐变边框 <span class="check">✓</span></div>
+                <div class="preview">
+                    <input class="style-d-input" placeholder="输入文字..." readonly>
+                </div>
+            </div>
+            <div class="option" data-value="underline" onclick="selectOption(this)">
+                <div class="option-name">底部线条 <span class="check">✓</span></div>
+                <div class="preview">
+                    <input class="style-e-input" placeholder="输入文字..." readonly>
+                </div>
+            </div>
+            <div class="option" data-value="pill" onclick="selectOption(this)">
+                <div class="option-name">圆润胶囊 <span class="check">✓</span></div>
+                <div class="preview">
+                    <input class="style-f-input" placeholder="输入文字..." readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 卡片/面板样式 -->
+    <div class="section">
+        <div class="section-title"><span class="num">4</span> 卡片/面板样式</div>
+        <div class="options" data-group="card">
+            <div class="option" data-value="light-card" onclick="selectOption(this)">
+                <div class="option-name">浅色卡片 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div class="style-a-card">
+                        <strong>卡片标题</strong>
+                        <p style="color:#666;font-size:13px;margin-top:8px">卡片内容示例</p>
+                    </div>
+                </div>
+            </div>
+            <div class="option" data-value="glass-card" onclick="selectOption(this)">
+                <div class="option-name">玻璃卡片 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div class="style-b-card">
+                        <strong>卡片标题</strong>
+                        <p style="color:#aaa;font-size:13px;margin-top:8px">卡片内容示例</p>
+                    </div>
+                </div>
+            </div>
+            <div class="option" data-value="neon-card" onclick="selectOption(this)">
+                <div class="option-name">霓虹边框卡片 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div class="style-c-card">
+                        <strong style="color:#ff6b6b">卡片标题</strong>
+                        <p style="color:#aaa;font-size:13px;margin-top:8px">卡片内容示例</p>
+                    </div>
+                </div>
+            </div>
+            <div class="option" data-value="gradient-card" onclick="selectOption(this)">
+                <div class="option-name">渐变卡片 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div class="style-d-card">
+                        <strong>卡片标题</strong>
+                        <p style="color:#aaa;font-size:13px;margin-top:8px">卡片内容示例</p>
+                    </div>
+                </div>
+            </div>
+            <div class="option" data-value="material-card" onclick="selectOption(this)">
+                <div class="option-name">Material卡片 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div class="style-e-card">
+                        <strong>卡片标题</strong>
+                        <p style="color:#aaa;font-size:13px;margin-top:8px">卡片内容示例</p>
+                    </div>
+                </div>
+            </div>
+            <div class="option" data-value="soft-card" onclick="selectOption(this)">
+                <div class="option-name">柔和圆角 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div class="style-f-card">
+                        <strong>卡片标题</strong>
+                        <p style="color:#aaa;font-size:13px;margin-top:8px">卡片内容示例</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 边框风格 -->
+    <div class="section">
+        <div class="section-title"><span class="num">5</span> 边框风格</div>
+        <div class="options" data-group="border">
+            <div class="option" data-value="none" onclick="selectOption(this)">
+                <div class="option-name">无边框(阴影) <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="background:#374151;padding:15px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.4)">示例元素</div>
+                </div>
+            </div>
+            <div class="option" data-value="thin" onclick="selectOption(this)">
+                <div class="option-name">细边框 1px <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="background:#1e1e1e;padding:15px;border-radius:8px;border:1px solid #444">示例元素</div>
+                </div>
+            </div>
+            <div class="option" data-value="medium" onclick="selectOption(this)">
+                <div class="option-name">中等边框 2px <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="background:#1e1e1e;padding:15px;border-radius:8px;border:2px solid #555">示例元素</div>
+                </div>
+            </div>
+            <div class="option" data-value="glow" onclick="selectOption(this)">
+                <div class="option-name">发光边框 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="background:#1e1e1e;padding:15px;border-radius:8px;border:2px solid #00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3)">示例元素</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 强调色 -->
+    <div class="section">
+        <div class="section-title"><span class="num">6</span> 强调色/主题色</div>
+        <div class="options" data-group="accent">
+            <div class="option" data-value="green" onclick="selectOption(this)">
+                <div class="option-name">科技绿 #00ff88 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="width:100%;height:40px;background:#00ff88;border-radius:6px"></div>
+                </div>
+            </div>
+            <div class="option" data-value="blue" onclick="selectOption(this)">
+                <div class="option-name">天空蓝 #4a9eff <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="width:100%;height:40px;background:#4a9eff;border-radius:6px"></div>
+                </div>
+            </div>
+            <div class="option" data-value="purple" onclick="selectOption(this)">
+                <div class="option-name">梦幻紫 #8b5cf6 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="width:100%;height:40px;background:#8b5cf6;border-radius:6px"></div>
+                </div>
+            </div>
+            <div class="option" data-value="cyan" onclick="selectOption(this)">
+                <div class="option-name">青色 #00d4ff <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="width:100%;height:40px;background:#00d4ff;border-radius:6px"></div>
+                </div>
+            </div>
+            <div class="option" data-value="orange" onclick="selectOption(this)">
+                <div class="option-name">活力橙 #ff9500 <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="width:100%;height:40px;background:#ff9500;border-radius:6px"></div>
+                </div>
+            </div>
+            <div class="option" data-value="pink" onclick="selectOption(this)">
+                <div class="option-name">粉红 #ff6b9d <span class="check">✓</span></div>
+                <div class="preview">
+                    <div style="width:100%;height:40px;background:#ff6b9d;border-radius:6px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认区 -->
+    <div class="confirm-section">
+        <div class="selected-summary" id="summary">
+            <strong>您的选择：</strong>
+            <span id="summary-text"></span>
+        </div>
+        <br>
+        <button class="confirm-btn" onclick="confirmSelection()">✅ 确认选择，应用样式</button>
+        <p style="color:#666;margin-top:15px;font-size:13px">选择完成后点击此按钮，我会根据您的选择修改全局样式</p>
+    </div>
+
+    <script>
+        const selections = {};
+        
+        function selectOption(el) {
+            const group = el.parentElement.dataset.group;
+            // 取消同组其他选中
+            el.parentElement.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            // 选中当前
+            el.classList.add('selected');
+            selections[group] = {
+                value: el.dataset.value,
+                name: el.querySelector('.option-name').textContent.replace('✓','').trim()
+            };
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const text = document.getElementById('summary-text');
+            const items = [];
+            for(let key in selections) {
+                items.push(`${key}: ${selections[key].name}`);
+            }
+            if(items.length > 0) {
+                text.textContent = items.join(' | ');
+                summary.classList.add('show');
+            }
+        }
+
+        function confirmSelection() {
+            if(Object.keys(selections).length < 6) {
+                alert('请完成所有6项选择！');
+                return;
+            }
+            const result = JSON.stringify(selections, null, 2);
+            alert('您的选择已记录！请将以下内容复制给AI：\n\n' + result);
+            console.log('用户选择:', selections);
+        }
+    </script>
+</body>
+</html>

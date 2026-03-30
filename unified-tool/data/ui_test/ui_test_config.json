@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "description": "UI测试配置汇总",
+  "devices": [
+    "default",
+    "gd303"
+  ],
+  "actions_file": "actions.json",
+  "keymap_files": {
+    "default": "keymap_default.json",
+    "gd303": "keymap_gd303.json"
+  }
+}

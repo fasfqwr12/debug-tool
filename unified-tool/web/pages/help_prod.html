@@ -1,0 +1,240 @@
+<div class="help-container">
+    <div class="help-header">
+        <h1>🏭 生产烧录 - 使用说明</h1>
+        <button class="close-btn" onclick="switchPage('prod_flash')">返回</button>
+    </div>
+
+    <div class="help-content">
+        <section class="help-section">
+            <h2>📌 功能概述</h2>
+            <p>生产烧录用于将测试通过的固件烧录到产品中，并记录每个产品的序列号和烧录状态。</p>
+        </section>
+
+        <section class="help-section">
+            <h2>🚀 快速开始</h2>
+            <div class="steps">
+                <div class="step">
+                    <span class="step-num">1</span>
+                    <div class="step-content">
+                        <h3>选择固件版本</h3>
+                        <p>左侧列表显示所有测试通过的固件版本</p>
+                        <p>带 <code>生产中</code> 标记的是当前激活版本</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">2</span>
+                    <div class="step-content">
+                        <h3>配置烧录参数</h3>
+                        <p><b>烧录工具</b>：选择 J-Link 或 ST-Link</p>
+                        <p><b>芯片型号</b>：确认目标芯片型号</p>
+                        <p><b>序列号</b>：点击"生成"自动生成，或手动输入</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <div class="step-content">
+                        <h3>执行烧录</h3>
+                        <p>连接烧录器和目标板</p>
+                        <p>点击 <code>🔥 开始烧录</code></p>
+                        <p>等待进度完成</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <div class="step-content">
+                        <h3>查看追溯信息</h3>
+                        <p>右侧面板显示该版本的完整追溯链</p>
+                        <p>包含测试数据、构建信息、时间线</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="help-section">
+            <h2>🔧 烧录工具配置</h2>
+            <table class="help-table">
+                <tr><th>工具</th><th>默认路径</th><th>支持芯片</th></tr>
+                <tr>
+                    <td>J-Link</td>
+                    <td><code>C:\Program Files\SEGGER\JLink\JLink.exe</code></td>
+                    <td>STM32、GD32、NRF52等</td>
+                </tr>
+                <tr>
+                    <td>ST-Link</td>
+                    <td><code>C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe</code></td>
+                    <td>STM32系列</td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="help-section">
+            <h2>🏷️ 序列号规则</h2>
+            <div class="code-block">
+                <code>产品代号-日期-序号</code>
+                <p>示例: <code>GL100-20251210-0001</code></p>
+            </div>
+            <ul>
+                <li><b>产品代号</b>：工程ID，如 GL100</li>
+                <li><b>日期</b>：烧录日期，格式 YYYYMMDD</li>
+                <li><b>序号</b>：当日顺序号，4位数字</li>
+            </ul>
+        </section>
+
+        <section class="help-section">
+            <h2>📊 生产统计</h2>
+            <table class="help-table">
+                <tr><th>指标</th><th>说明</th></tr>
+                <tr><td>今日产量</td><td>今天成功烧录的数量</td></tr>
+                <tr><td>良品率</td><td>成功烧录 / 总烧录次数 × 100%</td></tr>
+                <tr><td>累计产量</td><td>该版本总烧录成功数量</td></tr>
+            </table>
+        </section>
+
+        <section class="help-section">
+            <h2>🔍 版本追溯</h2>
+            <p>每个烧录的产品都可以追溯到：</p>
+            <div class="trace-flow">
+                <div class="trace-item">
+                    <span class="icon">🏭</span>
+                    <span>产品序列号</span>
+                </div>
+                <div class="trace-arrow">↓</div>
+                <div class="trace-item">
+                    <span class="icon">📦</span>
+                    <span>固件版本</span>
+                </div>
+                <div class="trace-arrow">↓</div>
+                <div class="trace-item">
+                    <span class="icon">🧪</span>
+                    <span>测试报告</span>
+                </div>
+                <div class="trace-arrow">↓</div>
+                <div class="trace-item">
+                    <span class="icon">💻</span>
+                    <span>源代码提交</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="help-section">
+            <h2>⚠️ 常见问题</h2>
+            <div class="faq">
+                <div class="faq-item">
+                    <h4>Q: 烧录失败怎么办？</h4>
+                    <p>A: 检查烧录器连接、芯片供电、SWD接口是否正确</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Q: 找不到J-Link怎么办？</h4>
+                    <p>A: 确保已安装 SEGGER J-Link 软件，或修改配置文件中的路径</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Q: 如何切换生产版本？</h4>
+                    <p>A: 在左侧列表选择新版本，系统会自动将其设为当前生产版本</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="help-section">
+            <h2>🔗 相关页面</h2>
+            <div class="link-cards">
+                <div class="link-card" onclick="switchPage('dev_project')">
+                    <span>💻</span>
+                    <span>研发管理</span>
+                </div>
+                <div class="link-card" onclick="switchPage('test_queue')">
+                    <span>🧪</span>
+                    <span>测试管理</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+.help-container { padding: 24px; max-width: 900px; margin: 0 auto; }
+.help-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px;
+}
+.help-header h1 { margin: 0; font-size: 24px; }
+.close-btn {
+    padding: 8px 16px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); cursor: pointer;
+}
+.close-btn:hover { border-color: var(--primary-color); }
+
+.help-content {
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 24px;
+}
+.help-section { margin-bottom: 32px; }
+.help-section:last-child { margin-bottom: 0; }
+.help-section h2 {
+    font-size: 16px; margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border-color);
+}
+.help-section p { color: var(--text-muted); line-height: 1.6; }
+
+.steps { display: flex; flex-direction: column; gap: 16px; }
+.step {
+    display: flex; gap: 16px; padding: 16px;
+    background: var(--input-bg); border-radius: 8px;
+}
+.step-num {
+    width: 32px; height: 32px; background: var(--primary-color); color: var(--text-on-accent);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; flex-shrink: 0;
+}
+.step-content h3 { margin: 0 0 8px 0; font-size: 14px; }
+.step-content p { margin: 4px 0; font-size: 13px; }
+.step-content code, .help-section code {
+    background: rgba(0, 255, 157, 0.2);
+    padding: 2px 6px; border-radius: 4px; font-size: 12px;
+}
+
+.help-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.help-table th, .help-table td {
+    padding: 10px 12px; text-align: left; border: 1px solid var(--border-color);
+}
+.help-table th { background: var(--input-bg); font-weight: 500; }
+
+.code-block {
+    background: var(--input-bg); padding: 16px; border-radius: 8px;
+    margin-bottom: 12px;
+}
+.code-block code { font-size: 16px; }
+.code-block p { margin: 8px 0 0 0; }
+
+.help-section ul { margin: 0; padding-left: 20px; }
+.help-section li { margin: 8px 0; color: var(--text-muted); font-size: 13px; }
+
+.trace-flow {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 20px; background: var(--input-bg); border-radius: 8px;
+}
+.trace-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px; background: var(--card-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+}
+.trace-item .icon { font-size: 18px; }
+.trace-arrow { color: var(--primary-color); font-size: 18px; }
+
+.faq { display: flex; flex-direction: column; gap: 12px; }
+.faq-item {
+    padding: 16px; background: var(--input-bg); border-radius: 8px;
+}
+.faq-item h4 { margin: 0 0 8px 0; font-size: 13px; color: var(--primary-color); }
+.faq-item p { margin: 0; font-size: 13px; color: var(--text-muted); }
+
+.link-cards { display: flex; gap: 12px; }
+.link-card {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 20px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+}
+.link-card:hover { border-color: var(--primary-color); transform: translateY(-2px); }
+.link-card span:first-child { font-size: 20px; }
+</style>

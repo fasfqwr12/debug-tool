@@ -1,0 +1,98 @@
+{
+  "tests": {
+    "test_20251210104419": {
+      "id": "test_20251210104419",
+      "version_id": "绿光150m_1.0.0_20251210104412",
+      "project_id": "绿光150m",
+      "version_number": "1.0.0",
+      "status": "pending",
+      "tester_id": "",
+      "tester_name": "",
+      "submit_time": "2025-12-10 10:44:19",
+      "start_time": "",
+      "end_time": "",
+      "checklist": [
+        {
+          "name": "基础功能测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "激光发射测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "电机控制测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "通讯协议测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "功耗测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "稳定性测试",
+          "checked": false,
+          "note": ""
+        }
+      ],
+      "test_data": {},
+      "remark": "",
+      "fail_reason": ""
+    },
+    "test_20251216155945": {
+      "id": "test_20251216155945",
+      "version_id": "150m绿光重构版_1.2.0_20251216135049",
+      "project_id": "150m绿光重构版",
+      "version_number": "1.2.0",
+      "status": "pending",
+      "tester_id": "",
+      "tester_name": "",
+      "submit_time": "2025-12-16 15:59:45",
+      "start_time": "",
+      "end_time": "",
+      "checklist": [
+        {
+          "name": "基础功能测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "激光发射测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "电机控制测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "通讯协议测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "功耗测试",
+          "checked": false,
+          "note": ""
+        },
+        {
+          "name": "稳定性测试",
+          "checked": false,
+          "note": ""
+        }
+      ],
+      "test_data": {},
+      "remark": "",
+      "fail_reason": ""
+    }
+  }
+}

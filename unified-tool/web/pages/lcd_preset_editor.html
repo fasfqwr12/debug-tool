@@ -1,0 +1,421 @@
+<!-- LCD界面预设编辑器 - 定义界面状态快照 -->
+<style>
+    .preset-container {
+        display: grid;
+        grid-template-columns: 280px 1fr 320px;
+        grid-template-rows: 40px 1fr;
+        height: 100%;
+        background: var(--bg-primary);
+    }
+    
+    /* 工具栏 */
+    .preset-toolbar {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        gap: 10px;
+    }
+    .preset-toolbar h1 { font-size: 14px; margin: 0; }
+    .preset-toolbar-sep { width: 1px; height: 20px; background: var(--border-color); }
+    .preset-btn {
+        padding: 5px 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .preset-btn:hover { border-color: var(--accent-color); }
+    .preset-btn.primary { background: var(--accent-color); border-color: var(--accent-color); }
+    
+    /* 左侧面板 */
+    .preset-left {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    .preset-panel-header {
+        padding: 8px 10px;
+        background: var(--bg-tertiary);
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .preset-panel-content { flex: 1; overflow-y: auto; padding: 8px; }
+    
+    /* 分类标题 */
+    .preset-category {
+        font-size: 10px;
+        color: var(--text-muted);
+        padding: 8px 4px 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .preset-category:first-child { padding-top: 0; }
+    
+    /* 预设列表项 */
+    .preset-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        font-size: 12px;
+    }
+    .preset-item:hover { border-color: var(--accent-color); }
+    .preset-item.selected { border-color: var(--accent-color); background: rgba(6,182,212,0.1); }
+    .preset-item .icon { font-size: 14px; }
+    .preset-item .name { flex: 1; }
+    .preset-item .behavior-count {
+        font-size: 9px;
+        padding: 2px 6px;
+        background: #ec4899;
+        color: #fff;
+        border-radius: 8px;
+    }
+    .preset-item .delete { color: #ef4444; cursor: pointer; opacity: 0.6; }
+    .preset-item .delete:hover { opacity: 1; }
+    
+    /* 中间预览区 */
+    .preset-preview {
+        display: flex;
+        flex-direction: column;
+        background: #0a0a0a;
+        overflow: hidden;
+    }
+    .preset-preview-header {
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+    }
+    .preset-preview-canvas {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+    #preset-lcd-canvas {
+        background: #1a1a2e;
+    }
+    
+    /* 右侧属性面板 */
+    .preset-right {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    .preset-right .preset-panel-content { padding: 10px; }
+    
+    /* 表单 */
+    .preset-form-group { margin-bottom: 12px; }
+    .preset-form-group label {
+        display: block;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    .preset-input, .preset-select, .preset-textarea {
+        width: 100%;
+        padding: 6px 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    .preset-textarea { min-height: 50px; resize: vertical; }
+    .preset-input:focus, .preset-select:focus, .preset-textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    
+    /* 组件状态编辑 */
+    .preset-section {
+        background: var(--bg-primary);
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border: 1px solid var(--border-color);
+    }
+    .preset-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 10px;
+        background: var(--bg-tertiary);
+        border-radius: 6px 6px 0 0;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .preset-section-header:hover { background: var(--bg-secondary); }
+    .preset-section-content {
+        padding: 8px;
+        display: none;
+    }
+    .preset-section.expanded .preset-section-content { display: block; }
+    .preset-section-header .toggle { font-size: 10px; color: var(--text-muted); }
+    
+    /* 组件状态项 */
+    .comp-state-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 6px;
+        font-size: 11px;
+        border: 1px solid var(--border-color);
+    }
+    .comp-state-item:hover {
+        border-color: var(--accent-color);
+    }
+    .comp-state-item .comp-icon {
+        font-size: 14px;
+    }
+    .comp-state-item .comp-name {
+        font-weight: 600;
+        color: var(--accent-color);
+        flex: 1;
+    }
+    .comp-state-item .comp-type-label {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: #3b82f6;
+        color: #fff;
+    }
+    .comp-state-item .delete {
+        color: #ef4444;
+        cursor: pointer;
+        opacity: 0.6;
+        font-size: 14px;
+    }
+    .comp-state-item .delete:hover {
+        opacity: 1;
+    }
+    .comp-state-item .state-type {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: #3b82f6;
+        color: #fff;
+    }
+    .comp-state-item .state-type.preset { background: #8b5cf6; }
+    .comp-state-item .state-type.bind { background: #f59e0b; }
+    .comp-state-item .state-value { flex: 1; }
+    .comp-state-item .delete { color: #ef4444; cursor: pointer; }
+    
+    /* 图标开关 */
+    .icon-toggle-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        font-size: 11px;
+    }
+    .icon-toggle-item .icon-name { flex: 1; }
+    .icon-toggle-item .toggle-switch {
+        width: 36px;
+        height: 18px;
+        background: #ef4444;
+        border-radius: 9px;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .icon-toggle-item .toggle-switch.on { background: #22c55e; }
+    
+    /* 独立的开关样式 */
+    .toggle-switch {
+        width: 36px;
+        height: 18px;
+        background: #ef4444;
+        border-radius: 9px;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-block;
+    }
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: left 0.2s;
+    }
+    .toggle-switch.on { background: #22c55e; }
+    .toggle-switch.on::after { left: 20px; }
+    .icon-toggle-item .toggle-switch::after {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: left 0.2s;
+    }
+    .icon-toggle-item .toggle-switch.on::after { left: 20px; }
+    
+    /* 行为标签 */
+    .behavior-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: #ec489930;
+        color: #ec4899;
+        border-radius: 12px;
+        font-size: 11px;
+        margin: 2px;
+    }
+    .behavior-tag .remove { cursor: pointer; }
+    
+    /* 元素标签 */
+    .element-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: #3b82f630;
+        color: #3b82f6;
+        border-radius: 12px;
+        font-size: 11px;
+        margin: 2px;
+    }
+    .element-tag .remove { cursor: pointer; }
+    
+    /* 空状态 */
+    .preset-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 20px;
+    }
+    .preset-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    
+    /* 添加按钮 */
+    .add-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px;
+        background: var(--bg-tertiary);
+        border: 1px dashed var(--border-color);
+        border-radius: 4px;
+        color: var(--text-muted);
+        font-size: 11px;
+        cursor: pointer;
+        margin-top: 6px;
+    }
+    .add-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+    }
+    
+    /* 组件状态编辑控件 */
+    .comp-state-select, .comp-state-input {
+        padding: 4px 8px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 11px;
+        flex: 1;
+    }
+    .comp-state-select:focus, .comp-state-input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    .comp-state-edit {
+        border-top: 1px solid var(--border-color);
+        padding-top: 6px;
+    }
+</style>
+
+<div class="preset-container">
+    <!-- 工具栏 -->
+    <div class="preset-toolbar">
+        <h1>📋 界面预设库</h1>
+        <div class="preset-toolbar-sep"></div>
+        <div id="preset-device-selector"></div>
+        <div style="flex:1;"></div>
+        <button class="preset-btn" onclick="PresetEditor.duplicate()">📄 复制</button>
+        <button class="preset-btn primary" onclick="PresetEditor.save()">💾 保存</button>
+    </div>
+    
+    <!-- 左侧预设列表 -->
+    <div class="preset-left">
+        <div class="preset-panel-header">
+            <span>预设列表</span>
+            <button class="preset-btn" style="padding:2px 8px;font-size:10px;" onclick="PresetEditor.showAddDialog()">+ 新建</button>
+        </div>
+        <div class="preset-panel-content" id="preset-list"></div>
+    </div>
+    
+    <!-- 中间预览 -->
+    <div class="preset-preview">
+        <div class="preset-preview-header">
+            <span>👁️ 预览</span>
+            <span id="preset-preview-name" style="color:var(--accent-color);"></span>
+            <div style="flex:1;"></div>
+            <span style="font-size:10px;color:var(--text-muted);">💡 点击图像选择元素</span>
+            <button class="preset-btn" style="padding:2px 8px;" onclick="PresetEditor.testPreset()">▶️ 测试</button>
+        </div>
+        <div class="preset-preview-canvas">
+            <canvas id="preset-lcd-canvas" width="600" height="400"></canvas>
+        </div>
+    </div>
+    
+    <!-- 右侧属性 -->
+    <div class="preset-right">
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+            <div class="preset-panel-header">
+                <span>⚙️ 预设属性</span>
+            </div>
+            <div class="preset-panel-content" id="preset-properties" style="flex:1;overflow-y:auto;">
+                <div class="preset-empty">
+                    <div class="preset-empty-icon">📋</div>
+                    <div>选择或创建预设</div>
+                    <div style="font-size:11px;margin-top:8px;">预设定义界面状态快照<br>包含组件值、图标、动画</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/pages/lcd_preset_editor.js"></script>

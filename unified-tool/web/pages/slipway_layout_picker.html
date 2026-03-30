@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Slipway 布局选择（可复制HTML）</title>
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --panel: rgba(255,255,255,0.06);
+      --panel-strong: rgba(255,255,255,0.10);
+      --accent: #00ff88;
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.6);
+      --border: rgba(255,255,255,0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px;
+      background: #0b0f1a;
+      color: var(--text);
+      font-family: "Source Han Sans SC", "Microsoft YaHei UI", sans-serif;
+    }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    .hint { color: var(--muted); font-size: 12px; margin-bottom: 12px; line-height: 1.5; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .seg {
+      display: inline-flex;
+      gap: 6px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px;
+    }
+    .seg button {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .seg button.active {
+      color: var(--accent);
+      border-color: rgba(0,255,136,0.45);
+      background: rgba(0,255,136,0.10);
+    }
+    .btn {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn:hover { border-color: rgba(255,255,255,0.25); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 14px; }
+    .badge { display: inline-block; padding: 2px 6px; border: 1px solid var(--border); border-radius: 999px; font-size: 11px; color: var(--muted); }
+
+    /* 预览区：用独立的最小CSS，让你能看出排版 */
+    .preview-wrap {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(0,0,0,0.25);
+    }
+    .preview-title { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+    .preview {
+      width: 100%;
+      height: 640px;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 10px;
+      overflow: auto;
+      background: rgba(10,15,30,0.85);
+    }
+
+    /* 仅用于预览的基础控件样式（真实项目仍然走 style.css） */
+    .slipway-container { display: grid; gap: 10px; padding: 10px; min-width: 980px; }
+    .panel { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 10px; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row input, .row select, .row textarea { flex: 1; background: rgba(0,0,0,0.30); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 8px; color: var(--text); }
+    .row button { border: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.25); color: var(--text); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+    .title { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+    .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    .stat { background: rgba(0,0,0,0.20); border: 1px solid rgba(255,255,255,0.10); border-radius: 10px; padding: 8px; text-align: center; }
+    .stat .n { font-weight: 700; color: var(--accent); }
+    .table { height: 260px; background: rgba(0,0,0,0.20); border: 1px solid rgba(255,255,255,0.10); border-radius: 10px; }
+    .chart { height: 220px; background: rgba(0,0,0,0.20); border: 1px solid rgba(255,255,255,0.10); border-radius: 10px; }
+
+    .code {
+      width: 100%;
+      min-height: 420px;
+      resize: vertical;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 10px;
+      color: rgba(255,255,255,0.88);
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      white-space: pre;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Slipway 布局选择（具体HTML，可直接复制替换）</h1>
+  <div class="hint">
+    1) 先在下面选 A/B/C，右侧会出现对应“真实结构”的预览。
+    2) 下方会生成可复制的 HTML（不带外层 <code>&lt;html&gt;</code>），你可以直接用它替换 <code>web/pages/slipway.html</code> 的主体内容。
+  </div>
+
+  <div class="toolbar">
+    <div class="seg" role="tablist" aria-label="layout picker">
+      <button id="pick-a" class="active" onclick="pickLayout('A')">方案 A</button>
+      <button id="pick-b" onclick="pickLayout('B')">方案 B</button>
+      <button id="pick-c" onclick="pickLayout('C')">方案 C</button>
+    </div>
+    <button class="btn" onclick="copyHtml()">复制当前HTML</button>
+    <button class="btn" onclick="selectAllHtml()">全选HTML</button>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>预览 <span class="badge" id="layout-badge">A</span></h3>
+      <div class="preview-wrap">
+        <div class="preview-title">预览仅用于看布局，真实样式以项目里的 style.css 为准</div>
+        <div id="preview" class="preview"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>可复制HTML</h3>
+      <textarea id="out" class="code" spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <template id="tplA">
+    <div class="slipway-container" style="grid-template-columns: 280px 1fr; grid-template-rows: 1fr 240px;">
+      <div class="panel" style="grid-row: 1 / 3;">
+        <div class="title">左侧：控制 + 配置 + 标签</div>
+        <div class="panel" style="margin-bottom:10px;">
+          <div class="title">🎮 运动控制</div>
+          <div class="row">
+            <input id="slipway-target" type="number" value="5000" placeholder="目标位置(mm)">
+            <button onclick="SlipwayPage.moveSlipway()">GO</button>
+            <button onclick="SlipwayPage.homeSlipway()">🏠</button>
+            <button onclick="SlipwayPage.stopSlipway()">⏹</button>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <span style="width:44px;color:var(--muted);">步进</span>
+            <select id="jog-step-select" onchange="SlipwayPage.setJogStep(this.value)">
+              <option value="0.1">0.1</option><option value="1">1</option><option value="10" selected>10</option><option value="50">50</option><option value="100">100</option><option value="500">500</option><option value="1000">1000</option>
+            </select>
+            <button onclick="SlipwayPage.jogNeg()">◀</button>
+            <button onclick="SlipwayPage.jogPos()">▶</button>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <select id="rotary-ref-select" onchange="SlipwayPage.setReflectance(this.value)">
+              <option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90" selected>90%</option>
+            </select>
+            <button onclick="SlipwayPage.homeRotary()">🔄</button>
+            <span id="rotary-ref-val" style="width:48px;color:var(--accent);text-align:right;">90%</span>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:10px;">
+          <div class="title">📊 测试配置（基础/高级）</div>
+          <div class="row">
+            <button id="mode-basic-btn" onclick="SlipwayPage.switchMode('basic')">基础</button>
+            <button id="mode-advanced-btn" onclick="SlipwayPage.switchMode('advanced')">高级</button>
+          </div>
+          <div id="basic-mode-panel" style="margin-top:8px;">
+            <div class="row"><input id="test-start" type="number" value="0"><input id="test-end" type="number" value="38000"></div>
+            <div class="row" style="margin-top:8px;"><input id="test-step" type="number" value="1000"><input id="test-repeats" type="number" value="5"></div>
+          </div>
+          <div id="advanced-mode-panel" style="display:none; margin-top:8px;">
+            <div class="row"><select id="adv-config-select" onchange="SlipwayPage.loadAdvConfig(this.value)"><option value="default">默认配置</option></select><button onclick="SlipwayPage.saveAdvConfigAs()">💾</button><button onclick="SlipwayPage.deleteAdvConfig()">🗑</button></div>
+            <div id="seg-preview" class="table" style="height:90px;margin-top:8px;"></div>
+            <div class="row" style="margin-top:8px;"><input id="err-threshold" type="number" value="5"><input id="point-time" type="number" value="3"></div>
+            <button style="margin-top:8px;width:100%;" onclick="SlipwayPage.openPlanConfig()">🧩 配置流程段</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="title">🏷️ 标签</div>
+          <div class="row"><input id="test-alias" type="text" placeholder="如: 1#机"></div>
+          <div class="row" style="margin-top:8px;"><input id="test-temperature" type="number" value="25"><span style="width:28px;color:var(--muted);">℃</span></div>
+          <div class="row" style="margin-top:8px;"><textarea id="test-remark" rows="2" placeholder="备注..."></textarea></div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button style="flex:1;" onclick="SlipwayPage.startTest()">▶ 开始测试</button>
+          <button style="flex:1;" onclick="SlipwayPage.stopTest()">⏹ 停止</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="title">右侧：统计 + 表格</div>
+        <div class="stats">
+          <div class="stat"><div class="n" id="stat-pos">0.000</div><div class="title">位置</div></div>
+          <div class="stat"><div class="n" id="stat-avg">--</div><div class="title">平均误差</div></div>
+          <div class="stat"><div class="n" id="stat-max">--</div><div class="title">最大误差</div></div>
+          <div class="stat"><div class="n" id="stat-std">--</div><div class="title">标准差</div></div>
+          <div class="stat"><div class="n" id="stat-pass">--</div><div class="title">通过率</div></div>
+          <div class="stat"><div class="n" id="stat-status">基础</div><div class="title">模式</div></div>
+        </div>
+        <div id="failed-bar" class="panel" style="display:none;margin-top:10px;"></div>
+        <div class="table" style="margin-top:10px;">
+          <div id="segment-tabs" class="row" style="padding:8px;overflow:auto;"><button onclick="SlipwayPage.switchSegmentTab('all')">全部</button></div>
+          <div id="results-tbody" style="padding:10px;color:var(--muted);">（结果表格区域）</div>
+        </div>
+        <div class="row" style="margin-top:10px; justify-content: space-between;">
+          <div>共 <b id="total-records">0</b> 条</div>
+          <div class="row" style="gap:6px;">
+            <button onclick="SlipwayPage.exportResults()">📊 导出</button>
+            <button onclick="SlipwayPage.clearResults()">🗑 清空</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="grid-column: 1 / 3;">
+        <div class="title">底部：误差曲线</div>
+        <div id="error-chart-panel" class="chart">
+          <canvas id="error-chart" style="width:100%;height:200px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tplB">
+    <div class="slipway-container" style="grid-template-columns: 280px 1fr 360px; grid-template-rows: 1fr;">
+      <div class="panel">
+        <div class="title">左侧：控制/配置</div>
+        <div class="row"><input id="slipway-target" type="number" value="5000"><button onclick="SlipwayPage.moveSlipway()">GO</button><button onclick="SlipwayPage.homeSlipway()">🏠</button><button onclick="SlipwayPage.stopSlipway()">⏹</button></div>
+        <div class="row" style="margin-top:8px;"><select id="jog-step-select" onchange="SlipwayPage.setJogStep(this.value)"><option value="0.1">0.1</option><option value="1">1</option><option value="10" selected>10</option><option value="50">50</option><option value="100">100</option></select><button onclick="SlipwayPage.jogNeg()">◀</button><button onclick="SlipwayPage.jogPos()">▶</button></div>
+        <div class="row" style="margin-top:10px;"><select id="rotary-ref-select" onchange="SlipwayPage.setReflectance(this.value)"><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90" selected>90%</option></select><button onclick="SlipwayPage.homeRotary()">🔄</button><span id="rotary-ref-val" style="width:48px;color:var(--accent);text-align:right;">90%</span></div>
+
+        <div class="panel" style="margin-top:10px;">
+          <div class="title">测试配置</div>
+          <div class="row"><button id="mode-basic-btn" onclick="SlipwayPage.switchMode('basic')">基础</button><button id="mode-advanced-btn" onclick="SlipwayPage.switchMode('advanced')">高级</button></div>
+          <div id="basic-mode-panel" style="margin-top:8px;">
+            <div class="row"><input id="test-start" type="number" value="0"><input id="test-end" type="number" value="38000"></div>
+            <div class="row" style="margin-top:8px;"><input id="test-step" type="number" value="1000"><input id="test-repeats" type="number" value="5"></div>
+          </div>
+          <div id="advanced-mode-panel" style="display:none; margin-top:8px;">
+            <div class="row"><select id="adv-config-select" onchange="SlipwayPage.loadAdvConfig(this.value)"><option value="default">默认配置</option></select><button onclick="SlipwayPage.saveAdvConfigAs()">💾</button><button onclick="SlipwayPage.deleteAdvConfig()">🗑</button></div>
+            <div id="seg-preview" class="table" style="height:90px;margin-top:8px;"></div>
+            <div class="row" style="margin-top:8px;"><input id="err-threshold" type="number" value="5"><input id="point-time" type="number" value="3"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:10px;">
+          <div class="title">标签</div>
+          <div class="row"><input id="test-alias" type="text" placeholder="如: 1#机"></div>
+          <div class="row" style="margin-top:8px;"><input id="test-temperature" type="number" value="25"><span style="width:28px;color:var(--muted);">℃</span></div>
+          <div class="row" style="margin-top:8px;"><textarea id="test-remark" rows="2" placeholder="备注..."></textarea></div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button style="flex:1;" onclick="SlipwayPage.startTest()">▶ 开始</button>
+          <button style="flex:1;" onclick="SlipwayPage.stopTest()">⏹ 停止</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="title">中间：统计 + 表格</div>
+        <div class="stats">
+          <div class="stat"><div class="n" id="stat-pos">0.000</div><div class="title">位置</div></div>
+          <div class="stat"><div class="n" id="stat-avg">--</div><div class="title">平均</div></div>
+          <div class="stat"><div class="n" id="stat-max">--</div><div class="title">最大</div></div>
+          <div class="stat"><div class="n" id="stat-std">--</div><div class="title">标准差</div></div>
+          <div class="stat"><div class="n" id="stat-pass">--</div><div class="title">通过率</div></div>
+          <div class="stat"><div class="n" id="stat-status">基础</div><div class="title">模式</div></div>
+        </div>
+        <div class="table" style="margin-top:10px;">
+          <div id="segment-tabs" class="row" style="padding:8px;overflow:auto;"><button onclick="SlipwayPage.switchSegmentTab('all')">全部</button></div>
+          <div id="results-tbody" style="padding:10px;color:var(--muted);">（结果表格区域）</div>
+        </div>
+        <div class="row" style="margin-top:10px; justify-content: space-between;">
+          <div>共 <b id="total-records">0</b> 条</div>
+          <div class="row" style="gap:6px;"><button onclick="SlipwayPage.exportResults()">📊 导出</button><button onclick="SlipwayPage.clearResults()">🗑 清空</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="title">右侧：图表 + 失败点</div>
+        <div id="failed-bar" class="panel" style="display:none;margin-bottom:10px;"></div>
+        <div id="error-chart-panel" class="chart">
+          <canvas id="error-chart" style="width:100%;height:200px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tplC">
+    <div class="slipway-container" style="grid-template-columns: 1fr; grid-template-rows: auto 1fr;">
+      <div class="panel">
+        <div class="title">顶部：统计条（固定在最上）</div>
+        <div class="stats">
+          <div class="stat"><div class="n" id="stat-pos">0.000</div><div class="title">位置</div></div>
+          <div class="stat"><div class="n" id="stat-avg">--</div><div class="title">平均</div></div>
+          <div class="stat"><div class="n" id="stat-max">--</div><div class="title">最大</div></div>
+          <div class="stat"><div class="n" id="stat-std">--</div><div class="title">标准差</div></div>
+          <div class="stat"><div class="n" id="stat-pass">--</div><div class="title">通过率</div></div>
+          <div class="stat"><div class="n" id="stat-status">基础</div><div class="title">模式</div></div>
+        </div>
+      </div>
+
+      <div class="panel" style="display:grid;grid-template-columns: 320px 1fr; gap: 10px;">
+        <div class="panel">
+          <div class="title">左侧：控制/配置/标签</div>
+          <div class="row"><input id="slipway-target" type="number" value="5000"><button onclick="SlipwayPage.moveSlipway()">GO</button><button onclick="SlipwayPage.homeSlipway()">🏠</button><button onclick="SlipwayPage.stopSlipway()">⏹</button></div>
+          <div class="row" style="margin-top:8px;"><select id="jog-step-select" onchange="SlipwayPage.setJogStep(this.value)"><option value="0.1">0.1</option><option value="1">1</option><option value="10" selected>10</option><option value="50">50</option><option value="100">100</option></select><button onclick="SlipwayPage.jogNeg()">◀</button><button onclick="SlipwayPage.jogPos()">▶</button></div>
+          <div class="row" style="margin-top:10px;"><select id="rotary-ref-select" onchange="SlipwayPage.setReflectance(this.value)"><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90" selected>90%</option></select><button onclick="SlipwayPage.homeRotary()">🔄</button><span id="rotary-ref-val" style="width:48px;color:var(--accent);text-align:right;">90%</span></div>
+
+          <div class="panel" style="margin-top:10px;">
+            <div class="title">测试配置</div>
+            <div class="row"><button id="mode-basic-btn" onclick="SlipwayPage.switchMode('basic')">基础</button><button id="mode-advanced-btn" onclick="SlipwayPage.switchMode('advanced')">高级</button></div>
+            <div id="basic-mode-panel" style="margin-top:8px;">
+              <div class="row"><input id="test-start" type="number" value="0"><input id="test-end" type="number" value="38000"></div>
+              <div class="row" style="margin-top:8px;"><input id="test-step" type="number" value="1000"><input id="test-repeats" type="number" value="5"></div>
+            </div>
+            <div id="advanced-mode-panel" style="display:none; margin-top:8px;">
+              <div class="row"><select id="adv-config-select" onchange="SlipwayPage.loadAdvConfig(this.value)"><option value="default">默认配置</option></select><button onclick="SlipwayPage.saveAdvConfigAs()">💾</button><button onclick="SlipwayPage.deleteAdvConfig()">🗑</button></div>
+              <div id="seg-preview" class="table" style="height:90px;margin-top:8px;"></div>
+              <div class="row" style="margin-top:8px;"><input id="err-threshold" type="number" value="5"><input id="point-time" type="number" value="3"></div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:10px;">
+            <div class="title">标签</div>
+            <div class="row"><input id="test-alias" type="text" placeholder="如: 1#机"></div>
+            <div class="row" style="margin-top:8px;"><input id="test-temperature" type="number" value="25"><span style="width:28px;color:var(--muted);">℃</span></div>
+            <div class="row" style="margin-top:8px;"><textarea id="test-remark" rows="2" placeholder="备注..."></textarea></div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button style="flex:1;" onclick="SlipwayPage.startTest()">▶ 开始</button>
+            <button style="flex:1;" onclick="SlipwayPage.stopTest()">⏹ 停止</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="title">右侧：表格在上，图表在下</div>
+          <div id="failed-bar" class="panel" style="display:none;margin-bottom:10px;"></div>
+          <div class="table">
+            <div id="segment-tabs" class="row" style="padding:8px;overflow:auto;"><button onclick="SlipwayPage.switchSegmentTab('all')">全部</button></div>
+            <div id="results-tbody" style="padding:10px;color:var(--muted);">（结果表格区域）</div>
+          </div>
+          <div class="row" style="margin-top:10px; justify-content: space-between;">
+            <div>共 <b id="total-records">0</b> 条</div>
+            <div class="row" style="gap:6px;"><button onclick="SlipwayPage.exportResults()">📊 导出</button><button onclick="SlipwayPage.clearResults()">🗑 清空</button></div>
+          </div>
+          <div id="error-chart-panel" class="chart" style="margin-top:10px;">
+            <canvas id="error-chart" style="width:100%;height:200px;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    function _setActive(id) {
+      ['pick-a','pick-b','pick-c'].forEach(x => {
+        const el = document.getElementById(x);
+        if (!el) return;
+        el.classList.toggle('active', x === id);
+      });
+    }
+
+    function _tpl(layout) {
+      const id = layout === 'B' ? 'tplB' : (layout === 'C' ? 'tplC' : 'tplA');
+      return document.getElementById(id);
+    }
+
+    function _render(layout) {
+      const badge = document.getElementById('layout-badge');
+      if (badge) badge.textContent = layout;
+
+      const tpl = _tpl(layout);
+      const html = tpl ? tpl.innerHTML.trim() : '';
+
+      const preview = document.getElementById('preview');
+      if (preview) preview.innerHTML = html;
+
+      const out = document.getElementById('out');
+      if (out) out.value = html;
+    }
+
+    function pickLayout(layout) {
+      _setActive(layout === 'B' ? 'pick-b' : (layout === 'C' ? 'pick-c' : 'pick-a'));
+      _render(layout);
+    }
+
+    function selectAllHtml() {
+      const out = document.getElementById('out');
+      if (!out) return;
+      out.focus();
+      out.select();
+    }
+
+    async function copyHtml() {
+      const out = document.getElementById('out');
+      if (!out) return;
+      try {
+        await navigator.clipboard.writeText(out.value);
+      } catch (e) {
+        selectAllHtml();
+      }
+    }
+
+    // default
+    pickLayout('A');
+  </script>
+</body>
+</html>

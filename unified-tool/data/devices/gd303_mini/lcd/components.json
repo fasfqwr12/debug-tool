@@ -1,0 +1,729 @@
+{
+  "version": "2.0",
+  "saveTime": "2025-12-31T06:03:23.085Z",
+  "components": {
+    "line4": {
+      "type": "Line",
+      "description": "第4行数字显示 (主显示行)",
+      "digits": [
+        {
+          "element": "Line4_D1",
+          "position": 0
+        },
+        {
+          "element": "Line4_D2",
+          "position": 1
+        },
+        {
+          "element": "Line4_D3",
+          "position": 2
+        },
+        {
+          "element": "Line4_D4",
+          "position": 3
+        },
+        {
+          "element": "Line4_D5",
+          "position": 4
+        }
+      ],
+      "dots": [
+        {
+          "element": "Line4_DP1",
+          "afterDigit": 1
+        },
+        {
+          "element": "Line4_DP2",
+          "afterDigit": 2
+        },
+        {
+          "element": "Line4_DP3",
+          "afterDigit": 3
+        }
+      ],
+      "minus": null,
+      "units": {
+        "base": {
+          "m": [
+            "Line4_Unit_U2"
+          ],
+          "ft": [
+            "Line4_Unit_U0"
+          ],
+          "in": [
+            "Line4_Unit_U1"
+          ]
+        },
+        "exp": {
+          "sq": [
+            "Line4_Unit_Sq",
+            "Line4_Exp"
+          ],
+          "cu": [
+            "Line4_Unit_Cu",
+            "Line4_Exp"
+          ]
+        },
+        "symbol": {
+          "ft_mark": [],
+          "in_mark": [],
+          "slash": []
+        },
+        "fraction": {
+          "numerator": [],
+          "denominator": []
+        }
+      },
+      "digitCount": 5,
+      "hasSign": false,
+      "unitConfig": {
+        "length": {
+          "m": {
+            "factor": 1,
+            "decimals": 3,
+            "min": 0.05,
+            "max": 99.999
+          },
+          "ft": {
+            "factor": 3.28084,
+            "decimals": 3,
+            "min": 0.164,
+            "max": 328.08
+          },
+          "in": {
+            "factor": 39.3701,
+            "decimals": 2,
+            "min": 1.97,
+            "max": 3937
+          },
+          "ft_in": {
+            "factor": 1,
+            "decimals": 0,
+            "min": 0.05,
+            "max": 99.999,
+            "format": "ft_in"
+          }
+        },
+        "area": {
+          "m2": {
+            "factor": 1,
+            "decimals": 3,
+            "min": 0,
+            "max": 999.99
+          },
+          "ft2": {
+            "factor": 10.7639,
+            "decimals": 2,
+            "min": 0,
+            "max": 9999.9
+          },
+          "in2": {
+            "factor": 1550.003,
+            "decimals": 1,
+            "min": 0,
+            "max": 99999
+          }
+        },
+        "volume": {
+          "m3": {
+            "factor": 1,
+            "decimals": 3,
+            "min": 0,
+            "max": 999.99
+          },
+          "ft3": {
+            "factor": 35.3147,
+            "decimals": 2,
+            "min": 0,
+            "max": 9999.9
+          },
+          "in3": {
+            "factor": 61023.744,
+            "decimals": 0,
+            "min": 0,
+            "max": 99999
+          }
+        }
+      }
+    },
+    "line3": {
+      "type": "Line",
+      "description": "第3行数字显示",
+      "digits": [
+        {
+          "element": "Line3_D1",
+          "position": 0
+        },
+        {
+          "element": "Line3_D2",
+          "position": 1
+        },
+        {
+          "element": "Line3_D3",
+          "position": 2
+        },
+        {
+          "element": "Line3_D4",
+          "position": 3
+        },
+        {
+          "element": "Line3_D5",
+          "position": 4
+        }
+      ],
+      "dots": [
+        {
+          "element": "Line3_DP1",
+          "afterDigit": 1
+        },
+        {
+          "element": "Line3_DP2",
+          "afterDigit": 2
+        },
+        {
+          "element": "Line3_DP3",
+          "afterDigit": 3
+        }
+      ],
+      "minus": null,
+      "units": {
+        "base": {
+          "m": [
+            "Line3_Unit_U2"
+          ],
+          "ft": [
+            "Line3_Unit_U0"
+          ],
+          "in": [
+            "Line3_Unit_U1"
+          ]
+        },
+        "exp": {
+          "sq": [],
+          "cu": []
+        },
+        "symbol": {
+          "ft_mark": [],
+          "in_mark": [],
+          "slash": []
+        },
+        "fraction": {
+          "numerator": [],
+          "denominator": []
+        }
+      },
+      "digitCount": 5,
+      "hasSign": false
+    },
+    "line2": {
+      "type": "Line",
+      "description": "第2行数字显示",
+      "digits": [
+        {
+          "element": "Line2_D1",
+          "position": 0
+        },
+        {
+          "element": "Line2_D2",
+          "position": 1
+        },
+        {
+          "element": "Line2_D3",
+          "position": 2
+        },
+        {
+          "element": "Line2_D4",
+          "position": 3
+        },
+        {
+          "element": "Line2_D5",
+          "position": 4
+        }
+      ],
+      "dots": [
+        {
+          "element": "Line2_DP1",
+          "afterDigit": 1
+        },
+        {
+          "element": "Line2_DP2",
+          "afterDigit": 2
+        },
+        {
+          "element": "Line2_DP3",
+          "afterDigit": 3
+        }
+      ],
+      "minus": null,
+      "units": {
+        "base": {
+          "m": [
+            "Line2_Unit_U2"
+          ],
+          "ft": [
+            "Line2_Unit_U0"
+          ],
+          "in": [
+            "Line2_Unit_U1"
+          ]
+        },
+        "exp": {
+          "sq": [],
+          "cu": []
+        },
+        "symbol": {
+          "ft_mark": [],
+          "in_mark": [],
+          "slash": []
+        },
+        "fraction": {
+          "numerator": [],
+          "denominator": []
+        }
+      },
+      "digitCount": 5,
+      "hasSign": false
+    },
+    "line1": {
+      "type": "Line",
+      "description": "第1行数字显示 (顶部小字)",
+      "digits": [
+        {
+          "element": "Line1_D1",
+          "position": 0
+        },
+        {
+          "element": "Line1_D2",
+          "position": 1
+        },
+        {
+          "element": "Line1_D3",
+          "position": 2
+        },
+        {
+          "element": "Line1_D4",
+          "position": 3
+        },
+        {
+          "element": "Line1_D5",
+          "position": 4
+        }
+      ],
+      "dots": [
+        {
+          "element": "Line1_DP1",
+          "afterDigit": 1
+        },
+        {
+          "element": "Line1_DP2",
+          "afterDigit": 2
+        },
+        {
+          "element": "Line1_DP3",
+          "afterDigit": 3
+        }
+      ],
+      "minus": null,
+      "units": {
+        "base": {
+          "m": [
+            "Line1_Unit_U2"
+          ],
+          "ft": [
+            "Line1_Unit_U0"
+          ],
+          "in": [
+            "Line1_Unit_U1"
+          ]
+        },
+        "exp": {
+          "sq": [],
+          "cu": []
+        },
+        "symbol": {
+          "ft_mark": [],
+          "in_mark": [],
+          "slash": []
+        },
+        "fraction": {
+          "numerator": [],
+          "denominator": []
+        }
+      },
+      "digitCount": 5,
+      "hasSign": false
+    },
+    "unit": {
+      "type": "Selector",
+      "description": "单位选择",
+      "options": [
+        {
+          "key": "M",
+          "value": 0,
+          "elements": [
+            "Unit_m"
+          ]
+        },
+        {
+          "key": "FT",
+          "value": 1,
+          "elements": [
+            "Unit_ft"
+          ]
+        },
+        {
+          "key": "IN",
+          "value": 2,
+          "elements": [
+            "Unit_in"
+          ]
+        },
+        {
+          "key": "FT_IN",
+          "value": 3,
+          "elements": [
+            "Unit_ft",
+            "Unit_in_mark"
+          ]
+        }
+      ],
+      "frame": [],
+      "default": 0,
+      "triggerRefresh": true
+    },
+    "battery": {
+      "type": "Selector",
+      "description": "电量指示",
+      "options": [
+        {
+          "key": "EMPTY",
+          "value": 0,
+          "elements": []
+        },
+        {
+          "key": "LOW",
+          "value": 1,
+          "elements": [
+            "Battery_Grid1"
+          ]
+        },
+        {
+          "key": "MID",
+          "value": 2,
+          "elements": [
+            "Battery_Grid1",
+            "Battery_Grid2"
+          ]
+        },
+        {
+          "key": "FULL",
+          "value": 3,
+          "elements": [
+            "Battery_Grid1",
+            "Battery_Grid2",
+            "Battery_Grid3"
+          ]
+        }
+      ],
+      "frame": [
+        "Battery_Frame"
+      ],
+      "default": 3,
+      "triggerRefresh": false,
+      "onSet": {
+        "0": {
+          "anim": {
+            "id": "lowBatteryBlink",
+            "interval": 200,
+            "timeout": 3000
+          },
+          "hardware": "Turn_off_the_device"
+        }
+      }
+    },
+    "signal": {
+      "type": "Selector",
+      "description": "信号强度",
+      "options": [
+        {
+          "key": "L0",
+          "value": 0,
+          "elements": []
+        },
+        {
+          "key": "L1",
+          "value": 1,
+          "elements": [
+            "Signal_1"
+          ]
+        },
+        {
+          "key": "L2",
+          "value": 2,
+          "elements": [
+            "Signal_1",
+            "Signal_2"
+          ]
+        },
+        {
+          "key": "L3",
+          "value": 3,
+          "elements": [
+            "Signal_1",
+            "Signal_2",
+            "Signal_3"
+          ]
+        },
+        {
+          "key": "L4",
+          "value": 4,
+          "elements": [
+            "Signal_1",
+            "Signal_2",
+            "Signal_3",
+            "Signal_4"
+          ]
+        },
+        {
+          "key": "L5",
+          "value": 5,
+          "elements": [
+            "Signal_1",
+            "Signal_2",
+            "Signal_3",
+            "Signal_4",
+            "Signal_5"
+          ]
+        }
+      ],
+      "frame": [],
+      "default": 0,
+      "triggerRefresh": false
+    },
+    "base": {
+      "type": "Selector",
+      "description": "基准模式",
+      "options": [
+        {
+          "key": "FRONT",
+          "value": 0,
+          "elements": [
+            "Base_s2",
+            "Base_s20"
+          ]
+        },
+        {
+          "key": "BEHIND",
+          "value": 1,
+          "elements": [
+            "Base_s22",
+            "Base_s2",
+            "Base_s25",
+            "Base_s28"
+          ]
+        }
+      ],
+      "frame": [],
+      "default": 1,
+      "triggerRefresh": false
+    },
+    "beep": {
+      "type": "Selector",
+      "description": "蜂鸣器模式",
+      "options": [
+        {
+          "key": "OFF",
+          "value": 0,
+          "elements": [
+            "Beep_Off"
+          ]
+        },
+        {
+          "key": "ON",
+          "value": 1,
+          "elements": [
+            "Beep_On"
+          ]
+        }
+      ],
+      "frame": [],
+      "default": 1,
+      "triggerRefresh": false,
+      "onSet": {
+        "0": {
+          "hardware": "beep_off"
+        },
+        "1": {
+          "hardware": "beep_on"
+        }
+      }
+    },
+    "laser": {
+      "type": "Icon",
+      "description": "激光图标",
+      "elements": [
+        "Base_s19",
+        "Base_s1"
+      ],
+      "default": false,
+      "onSet": {
+        "true": {
+          "anim": {
+            "id": "laserBlink",
+            "interval": 300,
+            "timeout": 15000
+          },
+          "hardware": "laser_on"
+        },
+        "false": {
+          "anim": {
+            "action": "stop"
+          },
+          "hardware": "laser_off"
+        }
+      }
+    },
+    "bluetooth": {
+      "type": "Icon",
+      "description": "蓝牙图标",
+      "elements": [
+        "Bluetooth"
+      ],
+      "default": false
+    },
+    "wifi": {
+      "type": "Icon",
+      "description": "WiFi图标",
+      "elements": [
+        "WiFi"
+      ],
+      "default": false
+    },
+    "rangefinder": {
+      "type": "Icon",
+      "description": "测距仪图标 (常显)",
+      "elements": [
+        "Base_s21"
+      ],
+      "default": true
+    },
+    "mode_selection": {
+      "type": "Selector",
+      "description": "模式选择",
+      "options": [
+        {
+          "key": "SINGLE",
+          "value": 0,
+          "elements": []
+        },
+        {
+          "key": "CONTINUOUS",
+          "value": 1,
+          "elements": []
+        },
+        {
+          "key": "AREA",
+          "value": 2,
+          "elements": [
+            "Mode_s_2_x",
+            "Mode_s_2_y",
+            "Mode_s_1_y",
+            "Mode_s_1_x"
+          ]
+        },
+        {
+          "key": "VOLUME",
+          "value": 3,
+          "elements": [
+            "Mode_s_3_y1",
+            "Mode_s_2_x",
+            "Mode_s_3_x",
+            "Mode_s_3_y2",
+            "Mode_s_2_y",
+            "Mode_s_1_x",
+            "Mode_s_1_y",
+            "Mode_s_1_z",
+            "Mode_s_3_h"
+          ]
+        },
+        {
+          "key": "PYTHAGOREAN1",
+          "value": 4,
+          "elements": [
+            "Mode_s_1_x",
+            "Mode_s_2_z",
+            "Mode_s_3_w"
+          ]
+        },
+        {
+          "key": "PYTHAGOREAN2",
+          "value": 5,
+          "elements": [
+            "Mode_s_1_x",
+            "Mode_s_2_z",
+            "Mode_s_3_w",
+            "Mode_s_3_z",
+            "Mode_s_2_h"
+          ]
+        },
+        {
+          "key": "PYTHAGOREAN3",
+          "value": 6,
+          "elements": [
+            "Mode_s_2_w",
+            "Mode_s_2_h",
+            "Mode_s_2_z",
+            "Mode_s_1_x",
+            "Mode_s_3_w",
+            "Mode_s_3_z"
+          ]
+        }
+      ],
+      "frame": [],
+      "default": 0,
+      "triggerRefresh": false
+    }
+  },
+  "behaviors": {
+    "bluetoothBlink": {
+      "type": "Blink",
+      "targets": [
+        "bluetooth"
+      ],
+      "interval": 500,
+      "enabled": false,
+      "description": "蓝牙搜索时闪烁"
+    },
+    "laserBlink": {
+      "type": "Blink",
+      "targets": [
+        "laser"
+      ],
+      "interval": 300,
+      "enabled": false,
+      "description": "激光开启时闪烁"
+    }
+  },
+  "hardwareCallbacks": [
+    {
+      "name": "laser_on",
+      "description": "开激光"
+    },
+    {
+      "name": "laser_off",
+      "description": "关激光"
+    },
+    {
+      "name": "beep_on",
+      "description": "蜂鸣器开"
+    },
+    {
+      "name": "beep_off",
+      "description": "蜂鸣器关"
+    },
+    {
+      "name": "Turn_off_the_device",
+      "description": "关机"
+    }
+  ]
+}

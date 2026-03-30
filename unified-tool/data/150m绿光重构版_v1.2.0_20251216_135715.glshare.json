@@ -1,0 +1,53 @@
+{
+  "format_version": "1.0",
+  "share_id": "ccdcb88e-5cda-41af-813c-094ed2befedb",
+  "type": "test_package",
+  "created_at": "2025-12-16T13:57:15.845935",
+  "created_by": "Administrator",
+  "machine": "MYDIANNAO",
+  "manifest": {
+    "project_id": "150m绿光重构版",
+    "project_name": "150m绿光重构版",
+    "project_code": "150M绿光重构版",
+    "version_id": "150m绿光重构版_1.2.0_20251216135049",
+    "version": "1.2.0",
+    "git_commit": "5304c0f",
+    "git_branch": "HEAD",
+    "expected_crc": "0x44769D9F",
+    "hex_file": "D:\\GreenLaser-Project\\firmware\\gd303_refactor\\project\\output\\gd303.hex",
+    "release_note": "",
+    "fw_version": "V1.2.0.1",
+    "fw_model": "GD303-80M",
+    "fw_hw_version": "1.0"
+  },
+  "assignment": {
+    "assigned_to": "",
+    "assigned_by": "",
+    "assigned_at": "",
+    "due_date": "",
+    "priority": "medium",
+    "status": "created"
+  },
+  "workflow": {
+    "stage": "submitted",
+    "history": [
+      {
+        "time": "2025-12-16T13:57:15.845935",
+        "user": "Administrator",
+        "action": "created",
+        "notes": "从版本 1.2.0 创建共享文件"
+      }
+    ]
+  },
+  "results": {
+    "status": "pending",
+    "notes": "",
+    "test_results": {},
+    "issues": [],
+    "custom_items": []
+  },
+  "data": {
+    "sessions": [],
+    "data_points": []
+  }
+}

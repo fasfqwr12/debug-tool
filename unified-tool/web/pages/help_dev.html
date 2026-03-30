@@ -1,0 +1,256 @@
+<div class="help-container">
+    <div class="help-header">
+        <h1>💻 研发管理 - 使用说明</h1>
+        <button class="close-btn" onclick="switchPage('dev_project')">返回</button>
+    </div>
+
+    <div class="help-content">
+        <section class="help-section">
+            <h2>📌 功能概述</h2>
+            <p>研发管理用于管理单片机工程的源代码、Git版本控制和编译构建。</p>
+        </section>
+
+        <section class="help-section">
+            <h2>🚀 快速开始</h2>
+            <div class="steps">
+                <div class="step">
+                    <span class="step-num">1</span>
+                    <div class="step-content">
+                        <h3>添加工程</h3>
+                        <p>点击右上角 <code>➕ 新建工程</code> 按钮</p>
+                        <p>选择本地的Keil/IAR/GCC工程目录</p>
+                        <p>输入工程名称和目标芯片型号</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">2</span>
+                    <div class="step-content">
+                        <h3>Git操作</h3>
+                        <p>如果工程包含 <code>.git</code> 目录，会自动显示Git信息</p>
+                        <p>点击 <code>🔄 Git Pull</code> 拉取最新代码</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <div class="step-content">
+                        <h3>编译构建</h3>
+                        <p>选择工程后，系统会自动检测编译器类型</p>
+                        <p>输入版本号（如 1.0.0），点击编译</p>
+                        <p>编译成功后会生成 HEX 文件</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <div class="step-content">
+                        <h3>提交测试</h3>
+                        <p>在版本历史中选择编译成功的版本</p>
+                        <p>点击 <code>📤 提交到测试</code></p>
+                        <p>版本会自动进入测试队列</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="help-section">
+            <h2>📂 支持的工程类型</h2>
+            <table class="help-table">
+                <tr><th>类型</th><th>识别方式</th><th>编译命令</th></tr>
+                <tr><td>Keil MDK</td><td>.uvprojx 文件</td><td>UV4.exe -b project.uvprojx</td></tr>
+                <tr><td>IAR</td><td>.ewp 文件</td><td>iarbuild project.ewp</td></tr>
+                <tr><td>GCC/Makefile</td><td>Makefile 文件</td><td>make</td></tr>
+            </table>
+        </section>
+
+        <section class="help-section">
+            <h2>⚠️ 注意事项</h2>
+            <ul>
+                <li>确保 Keil 安装在默认路径 <code>C:\Keil_v5\UV4\UV4.exe</code></li>
+                <li>Git 操作需要系统已安装 Git 并配置环境变量</li>
+                <li>编译输出的 HEX 文件需在 Objects/Output/Build 目录下</li>
+            </ul>
+        </section>
+
+        <section class="help-section">
+            <h2>🔗 相关页面</h2>
+            <div class="link-cards">
+                <div class="link-card" onclick="switchPage('test_queue')">
+                    <span>🧪</span>
+                    <span>测试管理</span>
+                </div>
+                <div class="link-card" onclick="switchPage('prod_flash')">
+                    <span>🏭</span>
+                    <span>生产烧录</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+.help-container {
+    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.help-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.help-header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.close-btn {
+    padding: 8px 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    border-color: var(--primary-color);
+}
+
+.help-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.help-section {
+    margin-bottom: 32px;
+}
+
+.help-section:last-child {
+    margin-bottom: 0;
+}
+
+.help-section h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.help-section p {
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* 步骤 */
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.step {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: var(--input-bg);
+    border-radius: 8px;
+}
+
+.step-num {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    color: var(--text-on-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.step-content h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+}
+
+.step-content p {
+    margin: 4px 0;
+    font-size: 13px;
+}
+
+.step-content code {
+    background: rgba(0, 255, 157, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* 表格 */
+.help-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.help-table th, .help-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+}
+
+.help-table th {
+    background: var(--input-bg);
+    font-weight: 500;
+}
+
+/* 列表 */
+.help-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.help-section li {
+    margin: 8px 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.help-section li code {
+    background: rgba(0, 255, 157, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* 链接卡片 */
+.link-cards {
+    display: flex;
+    gap: 12px;
+}
+
+.link-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.link-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.link-card span:first-child {
+    font-size: 20px;
+}
+</style>

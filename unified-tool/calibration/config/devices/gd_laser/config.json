@@ -1,0 +1,26 @@
+{
+  "id": "gd_laser",
+  "name": "GD激光测距模块",
+  "icon": "📡",
+  "color": "#10b981",
+  "protocol": "gd_v1",
+  "serial": {
+    "baudrate": 115200,
+    "databits": 8,
+    "stopbits": 1,
+    "parity": "none"
+  },
+  "frame": {
+    "header": "AA",
+    "footer": "BB FF",
+    "checksum": "XOR"
+  },
+  "max_range": 30000,
+  "commands": [
+    "laser_on", "laser_off", 
+    "calibrate_p1", "calibrate_p2", "calibrate_p3",
+    "measure", "laser_blink", "get_info", "heartbeat"
+  ],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01"
+}

@@ -1,0 +1,1458 @@
+/* ========================================================================
+   专业级主题系统 - 基于 HMI/SCADA 设计最佳实践
+   参考: ISO 9241-110, Siemens HMI Template Suite, High-Performance HMI
+   ======================================================================== */
+
+/* ======================== 主题 1: Industrial Pro ========================
+   特点: 高对比度、清晰可读、专业工业风、无多余装饰
+   适用: 生产环境、需要长时间注视的场景
+   ======================================================================== */
+[data-theme="industrial-pro"] {
+    /* 功能性配色 - 遵循工业标准 */
+    --accent: #2196F3;           /* 主操作蓝 - 清晰可辨 */
+    --accent-hover: #1976D2;
+    --accent-glow: rgba(33, 150, 243, 0.3);
+    --accent-dim: rgba(33, 150, 243, 0.15);
+    
+    /* 状态色 - 符合工业标准 */
+    --color-success: #4CAF50;    /* 正常/运行 */
+    --color-warning: #FF9800;    /* 警告 */
+    --color-danger: #F44336;     /* 故障/停止 */
+    --color-info: #00BCD4;       /* 信息 */
+    
+    /* 文字 - 高可读性 */
+    --text-color: #ECEFF1;
+    --text-accent: #2196F3;
+    --text-muted: #90A4AE;
+    --text-dim: #607D8B;
+    
+    /* 背景 - 纯色无渐变 */
+    --bg-primary: #1A1D21;
+    --bg-secondary: #22262B;
+    --bg-tertiary: #2A2F35;
+    
+    /* 卡片 */
+    --card-bg: #22262B;
+    --card-bg-hover: #2A2F35;
+    --panel-bg: #1A1D21;
+    --sidebar-bg: #15181C;
+    --input-bg: #1A1D21;
+    
+    /* 边框 - 简洁分割线 */
+    --border-color: #3A3F45;
+    --border-highlight: #2196F3;
+    
+    /* 无背景渐变 */
+    --bg-grad-1: none;
+    --bg-grad-2: none;
+    --bg-grad-3: none;
+    
+    /* 按钮 */
+    --btn-primary-bg: #2196F3;
+    --btn-primary-hover: #1976D2;
+    --btn-secondary-bg: #37474F;
+    --btn-danger-bg: #F44336;
+    
+    /* 发光效果 - 极简 */
+    --glow-color: transparent;
+    
+    /* 字体 */
+    --font-family: 'Segoe UI', 'Roboto', sans-serif;
+    --font-mono: 'Consolas', 'Monaco', monospace;
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 13px;
+    --font-size-lg: 14px;
+    --font-size-xl: 16px;
+    
+    /* 圆角 - 极小 */
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    
+    /* 间距 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+}
+
+[data-theme="industrial-pro"] body {
+    background: var(--bg-primary);
+    font-family: var(--font-family);
+}
+
+[data-theme="industrial-pro"] .card,
+[data-theme="industrial-pro"] .panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    backdrop-filter: none;
+    box-shadow: none;
+}
+
+[data-theme="industrial-pro"] .btn {
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+}
+
+[data-theme="industrial-pro"] .btn:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* ======================== 主题 2: Midnight Glass ========================
+   特点: 现代玻璃拟态、优雅渐变、适度模糊效果
+   适用: 展示场景、演示环境
+   ======================================================================== */
+[data-theme="midnight-glass"] {
+    /* 配色 - 冷色调优雅 */
+    --accent: #7C3AED;           /* 紫罗兰 */
+    --accent-hover: #6D28D9;
+    --accent-glow: rgba(124, 58, 237, 0.4);
+    --accent-dim: rgba(124, 58, 237, 0.2);
+    
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
+    --color-info: #06B6D4;
+    
+    /* 文字 */
+    --text-color: #F8FAFC;
+    --text-accent: #A78BFA;
+    --text-muted: #94A3B8;
+    --text-dim: #64748B;
+    
+    /* 背景 - 深邃渐变 */
+    --bg-primary: #0F172A;
+    --bg-secondary: #1E293B;
+    --bg-tertiary: #334155;
+    
+    /* 玻璃卡片 */
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --card-bg-hover: rgba(51, 65, 85, 0.7);
+    --panel-bg: rgba(15, 23, 42, 0.8);
+    --sidebar-bg: rgba(15, 23, 42, 0.95);
+    --input-bg: rgba(15, 23, 42, 0.6);
+    
+    /* 边框 - 微妙发光 */
+    --border-color: rgba(148, 163, 184, 0.2);
+    --border-highlight: rgba(124, 58, 237, 0.6);
+    
+    /* 背景渐变 */
+    --bg-grad-1: radial-gradient(ellipse at 0% 0%, rgba(124, 58, 237, 0.15), transparent 50%);
+    --bg-grad-2: radial-gradient(ellipse at 100% 100%, rgba(6, 182, 212, 0.1), transparent 50%);
+    --bg-grad-3: none;
+    
+    --glow-color: rgba(124, 58, 237, 0.3);
+    
+    --font-family: 'Inter', 'SF Pro Display', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 13px;
+    --font-size-lg: 15px;
+    --font-size-xl: 17px;
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+}
+
+[data-theme="midnight-glass"] body {
+    background: var(--bg-primary);
+}
+
+[data-theme="midnight-glass"] body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--bg-grad-1), var(--bg-grad-2);
+    pointer-events: none;
+    z-index: -1;
+}
+
+[data-theme="midnight-glass"] .card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+[data-theme="midnight-glass"] .card:hover {
+    border-color: var(--border-highlight);
+}
+
+
+/* ======================== 主题 3: Matrix Terminal ========================
+   特点: 终端风格、等宽字体、高科技感、绿色荧光
+   适用: 技术人员、开发调试环境
+   ======================================================================== */
+[data-theme="matrix-terminal"] {
+    /* 经典终端绿 */
+    --accent: #00FF41;
+    --accent-hover: #00CC33;
+    --accent-glow: rgba(0, 255, 65, 0.4);
+    --accent-dim: rgba(0, 255, 65, 0.15);
+    
+    --color-success: #00FF41;
+    --color-warning: #FFFF00;
+    --color-danger: #FF0040;
+    --color-info: #00FFFF;
+    
+    /* 文字 - 终端风格 */
+    --text-color: #00FF41;
+    --text-accent: #00FF41;
+    --text-muted: #00AA2A;
+    --text-dim: #006618;
+    
+    /* 纯黑背景 */
+    --bg-primary: #000000;
+    --bg-secondary: #0A0A0A;
+    --bg-tertiary: #111111;
+    
+    --card-bg: rgba(0, 20, 0, 0.9);
+    --card-bg-hover: rgba(0, 40, 0, 0.9);
+    --panel-bg: #000000;
+    --sidebar-bg: #000000;
+    --input-bg: #000000;
+    
+    --border-color: #003300;
+    --border-highlight: #00FF41;
+    
+    --bg-grad-1: none;
+    --bg-grad-2: none;
+    
+    --glow-color: rgba(0, 255, 65, 0.5);
+    
+    /* 等宽字体 */
+    --font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    --font-mono: 'Consolas', 'Monaco', monospace;
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 13px;
+    --font-size-lg: 14px;
+    --font-size-xl: 16px;
+    
+    --radius-sm: 0;
+    --radius-md: 0;
+    --radius-lg: 0;
+}
+
+[data-theme="matrix-terminal"] body {
+    background: #000;
+}
+
+[data-theme="matrix-terminal"] * {
+    font-family: var(--font-family) !important;
+}
+
+[data-theme="matrix-terminal"] .card {
+    border: 1px solid var(--border-color);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+}
+
+[data-theme="matrix-terminal"] .btn {
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    text-transform: uppercase;
+}
+
+[data-theme="matrix-terminal"] .btn:hover {
+    background: rgba(0, 255, 65, 0.2);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+}
+
+[data-theme="matrix-terminal"] input,
+[data-theme="matrix-terminal"] select {
+    border: 1px solid var(--border-color);
+    color: var(--accent);
+    caret-color: var(--accent);
+}
+
+[data-theme="matrix-terminal"] input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+/* 扫描线效果 */
+[data-theme="matrix-terminal"] body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1) 0px,
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 9999;
+}
+
+
+/* ======================== 主题 4: Carbon Premium ========================
+   特点: 高端碳纤维质感、精致细节、企业级专业
+   适用: 商务演示、客户展示
+   ======================================================================== */
+[data-theme="carbon-premium"] {
+    /* 配色 - 金属质感 */
+    --accent: #3B82F6;
+    --accent-hover: #2563EB;
+    --accent-glow: rgba(59, 130, 246, 0.25);
+    --accent-dim: rgba(59, 130, 246, 0.1);
+    
+    --accent-gold: #D4AF37;
+    --accent-silver: #C0C0C0;
+    
+    --color-success: #22C55E;
+    --color-warning: #EAB308;
+    --color-danger: #DC2626;
+    --color-info: #0EA5E9;
+    
+    /* 文字 - 清晰专业 */
+    --text-color: #E5E7EB;
+    --text-accent: #60A5FA;
+    --text-muted: #9CA3AF;
+    --text-dim: #6B7280;
+    
+    /* 碳纤维背景 */
+    --bg-primary: #111111;
+    --bg-secondary: #1A1A1A;
+    --bg-tertiary: #222222;
+    
+    --card-bg: linear-gradient(145deg, #1A1A1A, #141414);
+    --card-bg-hover: linear-gradient(145deg, #222222, #1A1A1A);
+    --panel-bg: #111111;
+    --sidebar-bg: #0A0A0A;
+    --input-bg: #0D0D0D;
+    
+    --border-color: #2A2A2A;
+    --border-highlight: #3B82F6;
+    
+    --bg-grad-1: none;
+    --bg-grad-2: none;
+    
+    --glow-color: rgba(59, 130, 246, 0.2);
+    
+    --font-family: 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', monospace;
+    --font-size-xs: 10px;
+    --font-size-sm: 11px;
+    --font-size-base: 12px;
+    --font-size-lg: 14px;
+    --font-size-xl: 16px;
+    
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+[data-theme="carbon-premium"] body {
+    background: var(--bg-primary);
+    /* 碳纤维纹理 */
+    background-image: 
+        linear-gradient(45deg, #151515 25%, transparent 25%),
+        linear-gradient(-45deg, #151515 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #151515 75%),
+        linear-gradient(-45deg, transparent 75%, #151515 75%);
+    background-size: 4px 4px;
+    background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+}
+
+[data-theme="carbon-premium"] .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.3),
+        0 2px 4px -1px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="carbon-premium"] .btn {
+    background: linear-gradient(180deg, #2A2A2A, #1A1A1A);
+    border: 1px solid #333;
+    box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="carbon-premium"] .btn:hover {
+    background: linear-gradient(180deg, #333, #222);
+}
+
+[data-theme="carbon-premium"] .btn.primary {
+    background: linear-gradient(180deg, #3B82F6, #2563EB);
+    border-color: #1D4ED8;
+}
+
+/* ======================== 主题 5: Arctic Clean ========================
+   特点: 浅色主题、高对比度、护眼、适合明亮环境
+   适用: 办公环境、长时间使用
+   ======================================================================== */
+[data-theme="arctic-clean"] {
+    --accent: #0066CC;
+    --accent-hover: #0052A3;
+    --accent-glow: rgba(0, 102, 204, 0.2);
+    --accent-dim: rgba(0, 102, 204, 0.1);
+    
+    --color-success: #059669;
+    --color-warning: #D97706;
+    --color-danger: #DC2626;
+    --color-info: #0891B2;
+    
+    /* 深色文字 */
+    --text-color: #1F2937;
+    --text-accent: #0066CC;
+    --text-muted: #6B7280;
+    --text-dim: #9CA3AF;
+    
+    /* 浅色背景 */
+    --bg-primary: #F8FAFC;
+    --bg-secondary: #FFFFFF;
+    --bg-tertiary: #F1F5F9;
+    
+    --card-bg: #FFFFFF;
+    --card-bg-hover: #F8FAFC;
+    --panel-bg: #F8FAFC;
+    --sidebar-bg: #FFFFFF;
+    --input-bg: #FFFFFF;
+    
+    --border-color: #E2E8F0;
+    --border-highlight: #0066CC;
+    
+    --bg-grad-1: none;
+    --bg-grad-2: none;
+    
+    --glow-color: transparent;
+    
+    --font-family: 'Inter', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 13px;
+    --font-size-lg: 14px;
+    --font-size-xl: 16px;
+    
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+[data-theme="arctic-clean"] body {
+    background: var(--bg-primary);
+    color: var(--text-color);
+}
+
+[data-theme="arctic-clean"] .sidebar {
+    border-right: 1px solid var(--border-color);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="arctic-clean"] .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="arctic-clean"] .btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="arctic-clean"] .btn:hover {
+    background: var(--border-color);
+}
+
+[data-theme="arctic-clean"] .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+
+/* ======================== 主题 6: Dracula ======================== */
+[data-theme="dracula"] {
+    --accent: #BD93F9;
+    --accent-hover: #A77BF3;
+    --accent-glow: rgba(189, 147, 249, 0.4);
+    --accent-dim: rgba(189, 147, 249, 0.15);
+    
+    --color-success: #50FA7B;
+    --color-warning: #FFB86C;
+    --color-danger: #FF5555;
+    --color-info: #8BE9FD;
+    
+    --text-color: #F8F8F2;
+    --text-accent: #BD93F9;
+    --text-muted: #6272A4;
+    --text-dim: #44475A;
+    
+    --bg-primary: #282A36;
+    --bg-secondary: #21222C;
+    --bg-tertiary: #343746;
+    
+    --card-bg: #21222C;
+    --card-bg-hover: #343746;
+    --panel-bg: #282A36;
+    --sidebar-bg: #21222C;
+    --input-bg: #21222C;
+    
+    --border-color: #44475A;
+    --border-highlight: #BD93F9;
+    
+    --glow-color: rgba(189, 147, 249, 0.3);
+}
+
+/* ======================== 主题 7: Tokyo Night ======================== */
+[data-theme="tokyo-night"] {
+    --accent: #7AA2F7;
+    --accent-hover: #5D8BF4;
+    --accent-glow: rgba(122, 162, 247, 0.4);
+    --accent-dim: rgba(122, 162, 247, 0.15);
+    
+    --color-success: #9ECE6A;
+    --color-warning: #E0AF68;
+    --color-danger: #F7768E;
+    --color-info: #7DCFFF;
+    
+    --text-color: #C0CAF5;
+    --text-accent: #7AA2F7;
+    --text-muted: #565F89;
+    --text-dim: #414868;
+    
+    --bg-primary: #1A1B26;
+    --bg-secondary: #16161E;
+    --bg-tertiary: #24283B;
+    
+    --card-bg: #16161E;
+    --card-bg-hover: #24283B;
+    --panel-bg: #1A1B26;
+    --sidebar-bg: #16161E;
+    --input-bg: #16161E;
+    
+    --border-color: #414868;
+    --border-highlight: #7AA2F7;
+    
+    --glow-color: rgba(122, 162, 247, 0.3);
+}
+
+/* ======================== 主题 8: Synthwave ======================== */
+[data-theme="synthwave"] {
+    --accent: #FF7EDB;
+    --accent-hover: #FF5ECF;
+    --accent-glow: rgba(255, 126, 219, 0.5);
+    --accent-dim: rgba(255, 126, 219, 0.15);
+    
+    --color-success: #72F1B8;
+    --color-warning: #FEDE5D;
+    --color-danger: #FE4450;
+    --color-info: #36F9F6;
+    
+    --text-color: #F4EEE4;
+    --text-accent: #FF7EDB;
+    --text-muted: #848BBC;
+    --text-dim: #495495;
+    
+    --bg-primary: #262335;
+    --bg-secondary: #1E1A2E;
+    --bg-tertiary: #34294F;
+    
+    --card-bg: #1E1A2E;
+    --card-bg-hover: #34294F;
+    --panel-bg: #262335;
+    --sidebar-bg: #1E1A2E;
+    --input-bg: #1E1A2E;
+    
+    --border-color: #495495;
+    --border-highlight: #FF7EDB;
+    
+    --glow-color: rgba(255, 126, 219, 0.4);
+}
+
+/* ======================== 全局覆盖 - 确保所有元素使用主题变量 ======================== */
+
+/* Body 背景覆盖 */
+[data-theme="neon-blade"] body,
+[data-theme="neon-blade"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="industrial-pro"] body,
+[data-theme="industrial-pro"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="midnight-glass"] body,
+[data-theme="midnight-glass"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="matrix-terminal"] body,
+[data-theme="matrix-terminal"] #page-container {
+    background: #000 !important;
+}
+
+[data-theme="carbon-premium"] body,
+[data-theme="carbon-premium"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="arctic-clean"] body,
+[data-theme="arctic-clean"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+/* 新主题 Body 覆盖 */
+[data-theme="dracula"] body,
+[data-theme="dracula"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="tokyo-night"] body,
+[data-theme="tokyo-night"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="synthwave"] body,
+[data-theme="synthwave"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="dracula"] body,
+[data-theme="tokyo-night"] body,
+[data-theme="synthwave"] body {
+    background: var(--bg-primary) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="nord"] body,
+[data-theme="nord"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="rose-pine"] body,
+[data-theme="rose-pine"] #page-container {
+    background: var(--bg-primary) !important;
+}
+
+/* 禁用动态光晕 - 专业主题 */
+[data-theme="industrial-pro"] body::before,
+[data-theme="industrial-pro"] body::after,
+[data-theme="industrial-pro"] .main-content::before,
+[data-theme="carbon-premium"] body::before,
+[data-theme="carbon-premium"] body::after,
+[data-theme="carbon-premium"] .main-content::before,
+[data-theme="arctic-clean"] body::before,
+[data-theme="arctic-clean"] body::after,
+[data-theme="arctic-clean"] .main-content::before,
+[data-theme="matrix-terminal"] body::before,
+[data-theme="matrix-terminal"] body::after,
+[data-theme="matrix-terminal"] .main-content::before {
+    display: none !important;
+}
+
+/* 侧边栏覆盖 */
+[data-theme="industrial-pro"] .sidebar,
+[data-theme="carbon-premium"] .sidebar,
+[data-theme="arctic-clean"] .sidebar,
+[data-theme="matrix-terminal"] .sidebar,
+[data-theme="dracula"] .sidebar,
+[data-theme="tokyo-night"] .sidebar,
+[data-theme="synthwave"] .sidebar,
+[data-theme="nord"] .sidebar,
+[data-theme="rose-pine"] .sidebar {
+    background: var(--sidebar-bg) !important;
+    backdrop-filter: none !important;
+}
+
+[data-theme="arctic-clean"] .sidebar {
+    border-right: 1px solid var(--border-color) !important;
+}
+
+/* 导航项覆盖 */
+[data-theme="industrial-pro"] .nav-item,
+[data-theme="carbon-premium"] .nav-item,
+[data-theme="arctic-clean"] .nav-item,
+[data-theme="matrix-terminal"] .nav-item {
+    color: var(--text-muted);
+    border-radius: var(--radius-sm, 4px);
+}
+
+[data-theme="industrial-pro"] .nav-item:hover,
+[data-theme="carbon-premium"] .nav-item:hover,
+[data-theme="arctic-clean"] .nav-item:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-color);
+}
+
+[data-theme="industrial-pro"] .nav-item.active,
+[data-theme="carbon-premium"] .nav-item.active,
+[data-theme="arctic-clean"] .nav-item.active {
+    background: var(--accent) !important;
+    color: var(--text-on-accent) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+[data-theme="matrix-terminal"] .nav-item.active {
+    background: transparent !important;
+    border: 1px solid var(--accent) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 0 10px var(--accent-glow) !important;
+}
+
+/* 卡片覆盖 */
+[data-theme="industrial-pro"] .card,
+[data-theme="carbon-premium"] .card,
+[data-theme="arctic-clean"] .card,
+[data-theme="matrix-terminal"] .card,
+[data-theme="dracula"] .card,
+[data-theme="tokyo-night"] .card,
+[data-theme="synthwave"] .card,
+[data-theme="nord"] .card,
+[data-theme="rose-pine"] .card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-md, 6px) !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+[data-theme="industrial-pro"] .card:hover,
+[data-theme="carbon-premium"] .card:hover,
+[data-theme="arctic-clean"] .card:hover {
+    border-color: var(--border-highlight) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+[data-theme="matrix-terminal"] .card {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="matrix-terminal"] .card:hover {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 15px var(--accent-glow) !important;
+}
+
+/* 卡片头部 */
+[data-theme="industrial-pro"] .card-header,
+[data-theme="carbon-premium"] .card-header,
+[data-theme="arctic-clean"] .card-header,
+[data-theme="matrix-terminal"] .card-header {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="arctic-clean"] .card-header h4 {
+    color: var(--text-color) !important;
+}
+
+/* 按钮覆盖 */
+[data-theme="industrial-pro"] .btn,
+[data-theme="carbon-premium"] .btn,
+[data-theme="arctic-clean"] .btn {
+    background: var(--btn-secondary-bg, var(--bg-tertiary)) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+    border-radius: var(--radius-sm, 4px) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="industrial-pro"] .btn:hover,
+[data-theme="carbon-premium"] .btn:hover,
+[data-theme="arctic-clean"] .btn:hover {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: var(--text-on-accent) !important;
+    transform: none !important;
+}
+
+[data-theme="matrix-terminal"] .btn {
+    background: transparent !important;
+    border: 1px solid var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+[data-theme="matrix-terminal"] .btn:hover {
+    background: rgba(0, 255, 65, 0.15) !important;
+    box-shadow: 0 0 10px var(--accent-glow) !important;
+}
+
+/* 输入框覆盖 */
+[data-theme="industrial-pro"] input,
+[data-theme="industrial-pro"] select,
+[data-theme="industrial-pro"] textarea,
+[data-theme="carbon-premium"] input,
+[data-theme="carbon-premium"] select,
+[data-theme="carbon-premium"] textarea,
+[data-theme="arctic-clean"] input,
+[data-theme="arctic-clean"] select,
+[data-theme="arctic-clean"] textarea,
+[data-theme="matrix-terminal"] input,
+[data-theme="matrix-terminal"] select,
+[data-theme="matrix-terminal"] textarea {
+    background: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+    border-radius: var(--radius-sm, 4px) !important;
+}
+
+[data-theme="industrial-pro"] input:focus,
+[data-theme="industrial-pro"] select:focus,
+[data-theme="carbon-premium"] input:focus,
+[data-theme="carbon-premium"] select:focus,
+[data-theme="arctic-clean"] input:focus,
+[data-theme="arctic-clean"] select:focus {
+    border-color: var(--accent) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--accent-dim) !important;
+}
+
+[data-theme="matrix-terminal"] input:focus,
+[data-theme="matrix-terminal"] select:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 8px var(--accent-glow) !important;
+}
+
+/* 新主题输入框覆盖 */
+[data-theme="dracula"] input,
+[data-theme="dracula"] select,
+[data-theme="dracula"] textarea,
+[data-theme="tokyo-night"] input,
+[data-theme="tokyo-night"] select,
+[data-theme="tokyo-night"] textarea,
+[data-theme="synthwave"] input,
+[data-theme="synthwave"] select,
+[data-theme="synthwave"] textarea,
+[data-theme="nord"] input,
+[data-theme="nord"] select,
+[data-theme="nord"] textarea,
+[data-theme="rose-pine"] input,
+[data-theme="rose-pine"] select,
+[data-theme="rose-pine"] textarea {
+    background: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+    border-radius: 4px !important;
+}
+
+[data-theme="dracula"] input:focus,
+[data-theme="dracula"] select:focus,
+[data-theme="tokyo-night"] input:focus,
+[data-theme="tokyo-night"] select:focus,
+[data-theme="synthwave"] input:focus,
+[data-theme="synthwave"] select:focus,
+[data-theme="nord"] input:focus,
+[data-theme="nord"] select:focus,
+[data-theme="rose-pine"] input:focus,
+[data-theme="rose-pine"] select:focus {
+    border-color: var(--accent) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--accent-dim) !important;
+}
+
+/* 新主题按钮覆盖 */
+[data-theme="dracula"] .btn,
+[data-theme="tokyo-night"] .btn,
+[data-theme="synthwave"] .btn,
+[data-theme="nord"] .btn,
+[data-theme="rose-pine"] .btn {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+    border-radius: 4px !important;
+}
+
+[data-theme="dracula"] .btn:hover,
+[data-theme="tokyo-night"] .btn:hover,
+[data-theme="synthwave"] .btn:hover,
+[data-theme="nord"] .btn:hover,
+[data-theme="rose-pine"] .btn:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+/* 表格覆盖 */
+[data-theme="industrial-pro"] .table-card,
+[data-theme="carbon-premium"] .table-card,
+[data-theme="arctic-clean"] .table-card,
+[data-theme="matrix-terminal"] .table-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .table-header,
+[data-theme="carbon-premium"] .table-header,
+[data-theme="arctic-clean"] .table-header {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-muted) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="arctic-clean"] .table-header {
+    color: var(--text-color) !important;
+}
+
+[data-theme="matrix-terminal"] .table-header {
+    background: transparent !important;
+    color: var(--accent) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .table-row,
+[data-theme="carbon-premium"] .table-row,
+[data-theme="arctic-clean"] .table-row,
+[data-theme="matrix-terminal"] .table-row {
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .table-row:hover,
+[data-theme="carbon-premium"] .table-row:hover,
+[data-theme="arctic-clean"] .table-row:hover {
+    background: var(--bg-tertiary) !important;
+}
+
+[data-theme="matrix-terminal"] .table-row:hover {
+    background: rgba(0, 255, 65, 0.1) !important;
+}
+
+/* 统计卡片覆盖 */
+[data-theme="industrial-pro"] .stat-box,
+[data-theme="carbon-premium"] .stat-box,
+[data-theme="arctic-clean"] .stat-box,
+[data-theme="matrix-terminal"] .stat-box {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .stat-num,
+[data-theme="carbon-premium"] .stat-num,
+[data-theme="arctic-clean"] .stat-num,
+[data-theme="matrix-terminal"] .stat-num {
+    color: var(--accent) !important;
+}
+
+[data-theme="industrial-pro"] .stat-label,
+[data-theme="carbon-premium"] .stat-label,
+[data-theme="arctic-clean"] .stat-label,
+[data-theme="matrix-terminal"] .stat-label {
+    color: var(--text-muted) !important;
+}
+
+/* 首页卡片覆盖 */
+[data-theme="industrial-pro"] .home-card,
+[data-theme="carbon-premium"] .home-card,
+[data-theme="arctic-clean"] .home-card,
+[data-theme="matrix-terminal"] .home-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .home-card:hover,
+[data-theme="carbon-premium"] .home-card:hover,
+[data-theme="arctic-clean"] .home-card:hover {
+    border-color: var(--accent) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
+}
+
+[data-theme="matrix-terminal"] .home-card:hover {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 20px var(--accent-glow) !important;
+}
+
+[data-theme="arctic-clean"] .home-card h3 {
+    color: var(--text-color) !important;
+}
+
+/* 页面标题覆盖 */
+[data-theme="industrial-pro"] .page-header h1,
+[data-theme="carbon-premium"] .page-header h1,
+[data-theme="arctic-clean"] .page-header h1,
+[data-theme="matrix-terminal"] .page-header h1 {
+    color: var(--text-color) !important;
+}
+
+[data-theme="matrix-terminal"] .page-header h1 {
+    color: var(--accent) !important;
+}
+
+/* 设置页面覆盖 */
+[data-theme="industrial-pro"] .settings-grid,
+[data-theme="carbon-premium"] .settings-grid,
+[data-theme="arctic-clean"] .settings-grid,
+[data-theme="matrix-terminal"] .settings-grid {
+    gap: 16px;
+}
+
+[data-theme="industrial-pro"] .setting-item label,
+[data-theme="carbon-premium"] .setting-item label,
+[data-theme="arctic-clean"] .setting-item label,
+[data-theme="matrix-terminal"] .setting-item label {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="industrial-pro"] .info-label,
+[data-theme="carbon-premium"] .info-label,
+[data-theme="arctic-clean"] .info-label,
+[data-theme="matrix-terminal"] .info-label {
+    color: var(--text-dim) !important;
+}
+
+[data-theme="industrial-pro"] .info-value,
+[data-theme="carbon-premium"] .info-value,
+[data-theme="arctic-clean"] .info-value,
+[data-theme="matrix-terminal"] .info-value {
+    color: var(--text-color) !important;
+}
+
+/* Slipway 页面覆盖 */
+[data-theme="industrial-pro"] .slipway-header,
+[data-theme="carbon-premium"] .slipway-header,
+[data-theme="arctic-clean"] .slipway-header,
+[data-theme="matrix-terminal"] .slipway-header {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .slipway-header .header-title,
+[data-theme="carbon-premium"] .slipway-header .header-title,
+[data-theme="arctic-clean"] .slipway-header .header-title {
+    color: var(--text-color) !important;
+}
+
+[data-theme="matrix-terminal"] .slipway-header .header-title {
+    color: var(--accent) !important;
+}
+
+[data-theme="industrial-pro"] .slipway-log,
+[data-theme="carbon-premium"] .slipway-log,
+[data-theme="arctic-clean"] .slipway-log,
+[data-theme="matrix-terminal"] .slipway-log {
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* 控制按钮覆盖 */
+[data-theme="industrial-pro"] .ctrl-btn,
+[data-theme="carbon-premium"] .ctrl-btn,
+[data-theme="arctic-clean"] .ctrl-btn {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="industrial-pro"] .ctrl-btn:hover,
+[data-theme="carbon-premium"] .ctrl-btn:hover,
+[data-theme="arctic-clean"] .ctrl-btn:hover {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: var(--text-on-accent) !important;
+}
+
+[data-theme="matrix-terminal"] .ctrl-btn {
+    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--accent) !important;
+}
+
+[data-theme="matrix-terminal"] .ctrl-btn:hover {
+    border-color: var(--accent) !important;
+    background: rgba(0, 255, 65, 0.1) !important;
+}
+
+/* 大按钮覆盖 */
+[data-theme="industrial-pro"] .big-btn,
+[data-theme="carbon-premium"] .big-btn,
+[data-theme="arctic-clean"] .big-btn {
+    border-radius: var(--radius-sm, 4px) !important;
+}
+
+[data-theme="industrial-pro"] .big-btn.start,
+[data-theme="carbon-premium"] .big-btn.start {
+    background: var(--color-success) !important;
+    border-color: var(--color-success) !important;
+    color: var(--text-on-danger) !important;
+}
+
+[data-theme="industrial-pro"] .big-btn.stop,
+[data-theme="carbon-premium"] .big-btn.stop {
+    background: var(--color-danger) !important;
+    border-color: var(--color-danger) !important;
+    color: var(--text-on-danger) !important;
+}
+
+/* 反射率按钮覆盖 */
+[data-theme="industrial-pro"] .ref-btn,
+[data-theme="carbon-premium"] .ref-btn,
+[data-theme="arctic-clean"] .ref-btn {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="industrial-pro"] .ref-btn.active,
+[data-theme="carbon-premium"] .ref-btn.active,
+[data-theme="arctic-clean"] .ref-btn.active {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #fff !important;
+}
+
+[data-theme="matrix-terminal"] .ref-btn {
+    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-muted) !important;
+}
+
+[data-theme="matrix-terminal"] .ref-btn.active {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 0 8px var(--accent-glow) !important;
+}
+
+/* Tab 导航覆盖 */
+[data-theme="industrial-pro"] .tab-nav,
+[data-theme="carbon-premium"] .tab-nav,
+[data-theme="arctic-clean"] .tab-nav {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .tab-btn,
+[data-theme="carbon-premium"] .tab-btn,
+[data-theme="arctic-clean"] .tab-btn {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="industrial-pro"] .tab-btn.active,
+[data-theme="carbon-premium"] .tab-btn.active,
+[data-theme="arctic-clean"] .tab-btn.active {
+    color: var(--accent) !important;
+    border-bottom-color: var(--accent) !important;
+}
+
+[data-theme="matrix-terminal"] .tab-btn.active {
+    color: var(--accent) !important;
+    border-bottom-color: var(--accent) !important;
+    text-shadow: 0 0 8px var(--accent-glow) !important;
+}
+
+/* 点动步进按钮覆盖 */
+[data-theme="industrial-pro"] .jog-step-group,
+[data-theme="carbon-premium"] .jog-step-group,
+[data-theme="arctic-clean"] .jog-step-group {
+    background: var(--border-color) !important;
+}
+
+[data-theme="industrial-pro"] .jog-step-btn,
+[data-theme="carbon-premium"] .jog-step-btn,
+[data-theme="arctic-clean"] .jog-step-btn {
+    background: var(--card-bg) !important;
+    color: var(--text-muted) !important;
+}
+
+[data-theme="industrial-pro"] .jog-step-btn.active,
+[data-theme="carbon-premium"] .jog-step-btn.active,
+[data-theme="arctic-clean"] .jog-step-btn.active {
+    background: var(--accent) !important;
+    color: var(--text-on-accent) !important;
+}
+
+[data-theme="matrix-terminal"] .jog-step-btn.active {
+    background: var(--accent) !important;
+    color: var(--text-on-accent) !important;
+}
+
+/* 状态指示器标准化 */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-sm);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.online { background: var(--color-success); }
+.status-dot.offline { background: var(--text-dim); }
+.status-dot.warning { background: var(--color-warning); }
+.status-dot.error { background: var(--color-danger); }
+
+/* 数值显示标准化 */
+.value-display {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.value-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 数据表格标准化 */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.data-table th {
+    background: var(--bg-tertiary);
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.data-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-family: var(--font-mono);
+}
+
+.data-table tr:hover td {
+    background: var(--card-bg-hover);
+}
+
+/* 按钮状态标准化 */
+.btn-group {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+}
+
+/* 输入框标准化 */
+.input-field {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-color);
+    font-size: var(--font-size-base);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.input-field:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 统计卡片标准化 */
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-align: center;
+}
+
+.stat-card .stat-value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-card .stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 日志面板标准化 */
+.log-panel {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    overflow-y: auto;
+    max-height: 200px;
+}
+
+.log-entry {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.log-time {
+    color: var(--text-dim);
+    flex-shrink: 0;
+}
+
+.log-tx { color: var(--color-info); }
+.log-rx { color: var(--color-success); }
+.log-error { color: var(--color-danger); }
+.log-warn { color: var(--color-warning); }
+
+/* ========== Arctic Clean 浅色主题完整覆盖 ========== */
+[data-theme="arctic-clean"] .panel,
+[data-theme="arctic-clean"] .git-layout .panel {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="arctic-clean"] .panel-header {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="arctic-clean"] .project-card,
+[data-theme="arctic-clean"] .commit-item,
+[data-theme="arctic-clean"] .change-item {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="arctic-clean"] .project-card:hover,
+[data-theme="arctic-clean"] .commit-item:hover {
+    background: var(--border-color) !important;
+}
+
+[data-theme="arctic-clean"] .project-card.active {
+    background: rgba(0, 102, 204, 0.1) !important;
+    border-left-color: var(--accent) !important;
+}
+
+[data-theme="arctic-clean"] .git-btn,
+[data-theme="arctic-clean"] .mini-btn,
+[data-theme="arctic-clean"] .init-btn {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="arctic-clean"] .git-btn:hover,
+[data-theme="arctic-clean"] .mini-btn:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+[data-theme="arctic-clean"] .git-btn.primary {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: var(--text-on-accent) !important;
+}
+
+[data-theme="arctic-clean"] .status-badge {
+    background: var(--bg-tertiary) !important;
+}
+
+[data-theme="arctic-clean"] .status-badge.clean {
+    background: rgba(5, 150, 105, 0.15) !important;
+    color: #059669 !important;
+}
+
+[data-theme="arctic-clean"] .status-badge.dirty {
+    background: rgba(217, 119, 6, 0.15) !important;
+    color: #D97706 !important;
+}
+
+[data-theme="arctic-clean"] .git-info-bar {
+    background: var(--bg-tertiary) !important;
+}
+
+[data-theme="arctic-clean"] .git-info-item select {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="arctic-clean"] .badge {
+    background: var(--accent) !important;
+    color: var(--text-on-accent) !important;
+}
+
+[data-theme="arctic-clean"] .commit-item .hash {
+    background: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="arctic-clean"] .text-btn {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="arctic-clean"] .text-btn:hover {
+    color: var(--accent) !important;
+}
+
+[data-theme="arctic-clean"] h1,
+[data-theme="arctic-clean"] h2,
+[data-theme="arctic-clean"] h3,
+[data-theme="arctic-clean"] h4 {
+    color: var(--text-color) !important;
+}
+
+[data-theme="arctic-clean"] .theme-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="arctic-clean"] .theme-card:hover {
+    border-color: var(--accent) !important;
+}
+
+/* ========== 全局字体继承（最后加载，确保用户选择的字体能覆盖所有元素） ========== */
+button,
+input,
+select,
+textarea,
+option,
+.btn,
+.ctrl-btn,
+.pro-btn,
+.btn-tiny,
+.btn-primary,
+.btn-danger,
+.btn-base,
+h1, h2, h3, h4, h5, h6,
+.card-header h4,
+.panel-header,
+.panel-header span {
+    font-family: var(--font-ui) !important;
+}

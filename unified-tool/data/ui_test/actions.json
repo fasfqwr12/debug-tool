@@ -1,0 +1,217 @@
+{
+  "version": "1.0",
+  "description": "UI测试动作定义 (从 input_api.h 自动生成)",
+  "command_code": "0xD0",
+  "event_types": [
+    {
+      "id": 0,
+      "name": "INPUT",
+      "label": "按键事件"
+    },
+    {
+      "id": 1,
+      "name": "UI_SET",
+      "label": "UI设置"
+    },
+    {
+      "id": 2,
+      "name": "SIM_MEASURE",
+      "label": "模拟测量"
+    },
+    {
+      "id": 3,
+      "name": "QUERY",
+      "label": "状态查询"
+    },
+    {
+      "id": 4,
+      "name": "SYSTEM",
+      "label": "系统控制"
+    }
+  ],
+  "triggers": [
+    {
+      "id": 0,
+      "name": "SHORT",
+      "label": "短按"
+    },
+    {
+      "id": 1,
+      "name": "LONG",
+      "label": "长按"
+    },
+    {
+      "id": 2,
+      "name": "SUPER_LONG",
+      "label": "超长按"
+    },
+    {
+      "id": 3,
+      "name": "REPEAT",
+      "label": "重复"
+    },
+    {
+      "id": 4,
+      "name": "RELEASE",
+      "label": "释放"
+    }
+  ],
+  "actions": [
+    {
+      "id": 0,
+      "name": "NONE",
+      "label": "无动作",
+      "icon": "⚡"
+    },
+    {
+      "id": 1,
+      "name": "MEASURE",
+      "label": "测量",
+      "icon": "📏"
+    },
+    {
+      "id": 2,
+      "name": "MEASURE_CONT",
+      "label": "连续测量",
+      "icon": "🔁"
+    },
+    {
+      "id": 3,
+      "name": "MODE_NEXT",
+      "label": "下一模式",
+      "icon": "🔄"
+    },
+    {
+      "id": 4,
+      "name": "MODE_PREV",
+      "label": "上一模式",
+      "icon": "◀️"
+    },
+    {
+      "id": 5,
+      "name": "UNIT_SWITCH",
+      "label": "切换单位",
+      "icon": "📐"
+    },
+    {
+      "id": 6,
+      "name": "BASE_SWITCH",
+      "label": "切换基准",
+      "icon": "🎯"
+    },
+    {
+      "id": 7,
+      "name": "LASER_TOGGLE",
+      "label": "激光开关",
+      "icon": "🔦"
+    },
+    {
+      "id": 8,
+      "name": "LASER_ON",
+      "label": "开激光",
+      "icon": "💡"
+    },
+    {
+      "id": 9,
+      "name": "LASER_OFF",
+      "label": "关激光",
+      "icon": "🔴"
+    },
+    {
+      "id": 10,
+      "name": "POWER_ON",
+      "label": "开机",
+      "icon": "🔋"
+    },
+    {
+      "id": 11,
+      "name": "POWER_OFF",
+      "label": "关机",
+      "icon": "⏻"
+    },
+    {
+      "id": 12,
+      "name": "CALIBRATE",
+      "label": "校准",
+      "icon": "🔧"
+    },
+    {
+      "id": 13,
+      "name": "DEBUG",
+      "label": "调试",
+      "icon": "🐛"
+    },
+    {
+      "id": 14,
+      "name": "CLEAR",
+      "label": "清除",
+      "icon": "🗑️"
+    },
+    {
+      "id": 15,
+      "name": "SAVE",
+      "label": "保存",
+      "icon": "💾"
+    },
+    {
+      "id": 16,
+      "name": "RECALL",
+      "label": "调用",
+      "icon": "📂"
+    },
+    {
+      "id": 17,
+      "name": "UNDO",
+      "label": "撤销",
+      "icon": "↩️"
+    },
+    {
+      "id": 18,
+      "name": "CONFIRM",
+      "label": "确认",
+      "icon": "✅"
+    },
+    {
+      "id": 19,
+      "name": "CANCEL",
+      "label": "取消",
+      "icon": "❌"
+    },
+    {
+      "id": 20,
+      "name": "UP",
+      "label": "上",
+      "icon": "⬆️"
+    },
+    {
+      "id": 21,
+      "name": "DOWN",
+      "label": "下",
+      "icon": "⬇️"
+    },
+    {
+      "id": 22,
+      "name": "ADD",
+      "label": "累加",
+      "icon": "➕"
+    },
+    {
+      "id": 23,
+      "name": "SUB",
+      "label": "累减",
+      "icon": "➖"
+    },
+    {
+      "id": 24,
+      "name": "TIMING",
+      "label": "定时测量",
+      "icon": "⏱️"
+    },
+    {
+      "id": 25,
+      "name": "BEEP_TOGGLE",
+      "label": "蜂鸣器",
+      "icon": "🔔"
+    }
+  ]
+}

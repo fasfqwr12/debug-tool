@@ -1,0 +1,607 @@
+<!-- 专业主题选择器 v2 -->
+<style>
+.theme-selector {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.theme-selector h1 {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 24px;
+    color: var(--text-color);
+}
+.theme-selector .subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    font-size: 14px;
+}
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+@media (max-width: 1000px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .theme-grid { grid-template-columns: 1fr; } }
+
+.theme-card {
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid var(--border-color);
+    background: var(--card-bg);
+}
+.theme-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    border-color: var(--accent);
+}
+.theme-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+.theme-preview {
+    height: 100px;
+    position: relative;
+    overflow: hidden;
+}
+.theme-info {
+    padding: 12px;
+}
+.theme-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: var(--text-color);
+}
+.theme-info p {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+.theme-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.theme-tag {
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 9px;
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+/* 各主题预览样式 */
+/* 新增流行主题预览 */
+.preview-dracula { background: #282A36; }
+.preview-dracula::after { content: ''; position: absolute; inset: 8px; border: 1px solid #BD93F9; border-radius: 6px; box-shadow: 0 0 10px rgba(189, 147, 249, 0.3); }
+
+.preview-tokyo { background: linear-gradient(135deg, #1A1B26, #24283B); }
+.preview-tokyo::after { content: ''; position: absolute; inset: 8px; border: 1px solid #7AA2F7; border-radius: 6px; box-shadow: 0 0 12px rgba(122, 162, 247, 0.3); }
+
+.preview-nord { background: #2E3440; }
+.preview-nord::after { content: ''; position: absolute; inset: 8px; border: 1px solid #88C0D0; border-radius: 6px; }
+
+.preview-rose { background: #191724; }
+.preview-rose::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 30%, rgba(196, 167, 231, 0.2), transparent 60%); }
+.preview-rose::after { content: ''; position: absolute; inset: 8px; border: 1px solid #C4A7E7; border-radius: 8px; }
+
+.preview-synthwave { background: linear-gradient(135deg, #262335, #34294F); }
+.preview-synthwave::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255, 126, 219, 0.25), transparent 60%); }
+.preview-synthwave::after { content: ''; position: absolute; inset: 8px; border: 1px solid #FF7EDB; border-radius: 6px; box-shadow: 0 0 15px rgba(255, 126, 219, 0.4); }
+
+.preview-neon { background: linear-gradient(135deg, #0D0D12, #13131A); }
+.preview-neon::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 30%, rgba(139, 92, 246, 0.3), transparent 60%); }
+.preview-neon::after { content: ''; position: absolute; inset: 8px; border: 1px solid rgba(167, 139, 250, 0.4); border-radius: 6px; box-shadow: 0 0 15px rgba(167, 139, 250, 0.3); }
+
+.preview-industrial { background: #1A1D21; }
+.preview-industrial::after { content: ''; position: absolute; inset: 8px; border: 1px solid #3A3F45; border-radius: 2px; }
+
+.preview-arctic { background: linear-gradient(135deg, #F8FAFC, #E2E8F0); }
+.preview-arctic::after { content: ''; position: absolute; inset: 8px; border: 1px solid #CBD5E1; border-radius: 6px; }
+
+.preview-midnight { background: linear-gradient(135deg, #0F172A, #1E293B); }
+.preview-midnight::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 0% 0%, rgba(124, 58, 237, 0.25), transparent 50%); }
+
+.preview-matrix { background: #000; }
+.preview-matrix::after { content: ''; position: absolute; inset: 8px; border: 1px solid #00FF41; box-shadow: 0 0 8px rgba(0,255,65,0.3); }
+
+.preview-carbon { 
+    background: #111; 
+    background-image: linear-gradient(45deg, #151515 25%, transparent 25%), linear-gradient(-45deg, #151515 25%, transparent 25%); 
+    background-size: 4px 4px; 
+}
+
+.preview-arctic { background: #F8FAFC; }
+.preview-arctic::after { content: ''; position: absolute; inset: 8px; background: #FFF; border: 1px solid #E2E8F0; border-radius: 4px; }
+
+.preview-aurora { background: linear-gradient(135deg, rgba(120, 50, 200, 0.4), rgba(50, 100, 180, 0.3)); }
+.preview-aurora::before { content: ''; position: absolute; inset: 8px; border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 6px; }
+
+.preview-cyber { background: linear-gradient(180deg, #0f0f1a, #1a1a2e); border-bottom: 2px solid #ff0080; }
+
+.preview-ocean { background: linear-gradient(180deg, #001220, #003060); }
+.preview-ocean::after { content: ''; position: absolute; bottom: 12px; left: 20%; right: 20%; height: 2px; background: linear-gradient(90deg, transparent, #00ffff, transparent); box-shadow: 0 0 8px #00ffff; }
+
+/* 新主题预览样式 */
+.preview-mars { background: linear-gradient(135deg, #1a0a05, #401a10); }
+.preview-mars::after { content: ''; position: absolute; inset: 8px; border: 1px solid #ff6b35; border-radius: 6px; box-shadow: 0 0 12px rgba(255, 107, 53, 0.4); }
+
+.preview-gold { background: linear-gradient(135deg, #0a0805, #252015); }
+.preview-gold::after { content: ''; position: absolute; inset: 8px; border: 1px solid #ffd700; border-radius: 6px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+
+.preview-neon-purple { background: linear-gradient(135deg, #0a0510, #1a0f28); }
+.preview-neon-purple::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(191, 0, 255, 0.25), transparent 60%); }
+.preview-neon-purple::after { content: ''; position: absolute; inset: 8px; border: 1px solid #bf00ff; border-radius: 6px; box-shadow: 0 0 15px rgba(191, 0, 255, 0.5); }
+
+.preview-glacier { background: linear-gradient(180deg, #051015, #0f2535); }
+.preview-glacier::after { content: ''; position: absolute; inset: 8px; border: 1px solid #00d4ff; border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.3); }
+
+.preview-sunset { background: linear-gradient(180deg, #150808, #352018); }
+.preview-sunset::before { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: radial-gradient(ellipse at 50% 100%, rgba(255, 100, 50, 0.3), transparent 70%); }
+.preview-sunset::after { content: ''; position: absolute; inset: 8px; border: 1px solid #ff8c42; border-radius: 6px; }
+
+/* 企业级浅色主题预览 */
+.preview-enterprise-light { background: linear-gradient(135deg, #F8FAFC, #EEF2F7); }
+.preview-enterprise-light::after { content: ''; position: absolute; inset: 8px; background: rgba(255,255,255,0.95); border: 1px solid rgba(15,23,42,0.14); border-radius: 6px; box-shadow: 0 0 0 2px rgba(37,99,235,0.10) inset; }
+
+.preview-cloud-blue { background: linear-gradient(135deg, #F7FBFF, #E8F3FF); }
+.preview-cloud-blue::after { content: ''; position: absolute; inset: 8px; background: rgba(255,255,255,0.95); border: 1px solid rgba(2,132,199,0.18); border-radius: 6px; box-shadow: 0 0 0 2px rgba(14,165,233,0.10) inset; }
+
+.preview-ice-mint { background: linear-gradient(135deg, #F7FFFB, #EAFBF4); }
+.preview-ice-mint::after { content: ''; position: absolute; inset: 8px; background: rgba(255,255,255,0.95); border: 1px solid rgba(15,23,42,0.14); border-radius: 6px; box-shadow: 0 0 0 2px rgba(16,185,129,0.10) inset; }
+
+.preview-slate-light { background: linear-gradient(135deg, #FBFDFF, #F1F5F9); }
+.preview-slate-light::after { content: ''; position: absolute; inset: 8px; background: rgba(255,255,255,0.95); border: 1px solid rgba(15,23,42,0.14); border-radius: 6px; box-shadow: 0 0 0 2px rgba(71,85,105,0.10) inset; }
+
+/* Lite 简易主题预览 */
+.preview-lite { background: #0f172a; }
+.preview-lite::after { content: ''; position: absolute; inset: 8px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; }
+
+.preview-lite-dark { background: #0f172a; }
+.preview-lite-dark::after { content: ''; position: absolute; inset: 8px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 4px; }
+
+.preview-lite-light { background: #f1f5f9; }
+.preview-lite-light::after { content: ''; position: absolute; inset: 8px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px; }
+
+.current-theme {
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.current-theme strong {
+    color: var(--accent);
+}
+</style>
+
+<div class="theme-selector">
+    <h1>🎨 选择主题风格</h1>
+    <p class="subtitle">点击即可切换，根据使用场景选择最适合的界面主题</p>
+
+    <div class="fx-mode-bar">
+        <div class="fx-mode-title">特效强度</div>
+        <div class="fx-mode-toggle">
+            <button id="fx-mode-pro" class="fx-btn active" type="button">Pro（专业）</button>
+            <button id="fx-mode-show" class="fx-btn" type="button">Show（展示）</button>
+        </div>
+        <div class="fx-mode-desc">Pro 更稳更耐看；Show 开启扫描线/呼吸灯/强光晕等展示特效</div>
+    </div>
+    
+    <div class="theme-layout">
+        <!-- 左侧：主题网格 -->
+        <div class="theme-grid">
+        <!-- 精选主题 - 只保留好看的 -->
+        <div class="theme-card" data-theme="dracula" onclick="applyTheme('dracula')">
+            <div class="theme-preview preview-dracula"></div>
+            <div class="theme-info">
+                <h3>🧛 Dracula</h3>
+                <p>经典紫粉，全球最流行</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">⭐ 推荐</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="tokyo-night" onclick="applyTheme('tokyo-night')">
+            <div class="theme-preview preview-tokyo"></div>
+            <div class="theme-info">
+                <h3>🗼 Tokyo Night</h3>
+                <p>日系赛博朋克，蓝紫调</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">⭐ 推荐</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="synthwave" onclick="applyTheme('synthwave')">
+            <div class="theme-preview preview-synthwave"></div>
+            <div class="theme-info">
+                <h3>🎹 Synthwave</h3>
+                <p>复古霓虹，80年代风</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">炫酷</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="carbon-premium" onclick="applyTheme('carbon-premium')">
+            <div class="theme-preview preview-carbon"></div>
+            <div class="theme-info">
+                <h3>💎 Carbon Premium</h3>
+                <p>碳纤维质感，高端企业级</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">专业</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="cyber" onclick="applyTheme('cyber')">
+            <div class="theme-preview preview-cyber"></div>
+            <div class="theme-info">
+                <h3>🌃 赛博朋克</h3>
+                <p>霓虹粉红，赛博美学</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">经典</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="aurora" onclick="applyTheme('aurora')">
+            <div class="theme-preview preview-aurora"></div>
+            <div class="theme-info">
+                <h3>🌌 Aurora 极光</h3>
+                <p>科技绿，霓虹发光</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">默认</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="arctic-clean" onclick="applyTheme('arctic-clean')">
+            <div class="theme-preview preview-arctic"></div>
+            <div class="theme-info">
+                <h3>☀️ Arctic Clean</h3>
+                <p>浅色护眼，明亮办公</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">浅色</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="enterprise-light" onclick="applyTheme('enterprise-light')">
+            <div class="theme-preview preview-enterprise-light"></div>
+            <div class="theme-info">
+                <h3>🏢 Enterprise Light</h3>
+                <p>企业白灰，清晰分层，最稳的浅色</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">浅色</span>
+                    <span class="theme-tag">专业</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="cloud-blue" onclick="applyTheme('cloud-blue')">
+            <div class="theme-preview preview-cloud-blue"></div>
+            <div class="theme-info">
+                <h3>☁️ Cloud Blue</h3>
+                <p>云雾蓝，企业系统风，观感更清爽</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">浅色</span>
+                    <span class="theme-tag">专业</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="ice-mint" onclick="applyTheme('ice-mint')">
+            <div class="theme-preview preview-ice-mint"></div>
+            <div class="theme-info">
+                <h3>🩺 Ice Mint</h3>
+                <p>医疗青，干净克制，长时间不疲劳</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">浅色</span>
+                    <span class="theme-tag">专业</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="slate-light" onclick="applyTheme('slate-light')">
+            <div class="theme-preview preview-slate-light"></div>
+            <div class="theme-info">
+                <h3>🧱 Slate Light</h3>
+                <p>石墨浅灰，中性对比强，适合办公大屏</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">浅色</span>
+                    <span class="theme-tag">专业</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="mars" onclick="applyTheme('mars')">
+            <div class="theme-preview preview-mars"></div>
+            <div class="theme-info">
+                <h3>🔴 火星殖民</h3>
+                <p>暖红橙色调，科幻风</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">🔥 新</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="gold" onclick="applyTheme('gold')">
+            <div class="theme-preview preview-gold"></div>
+            <div class="theme-info">
+                <h3>💰 黄金奢华</h3>
+                <p>金色黑底，高端质感</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">🔥 新</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="neon" onclick="applyTheme('neon')">
+            <div class="theme-preview preview-neon-purple"></div>
+            <div class="theme-info">
+                <h3>💜 霓虹紫</h3>
+                <p>电子紫粉，炫彩夺目</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">🔥 新</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="matrix" onclick="applyTheme('matrix')">
+            <div class="theme-preview preview-matrix"></div>
+            <div class="theme-info">
+                <h3>💻 矩阵绿</h3>
+                <p>经典黑客风，代码雨</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">🔥 新</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="glacier" onclick="applyTheme('glacier')">
+            <div class="theme-preview preview-glacier"></div>
+            <div class="theme-info">
+                <h3>❄️ 冰川蓝</h3>
+                <p>冷色清爽，专注护眼</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">🔥 新</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="sunset" onclick="applyTheme('sunset')">
+            <div class="theme-preview preview-sunset"></div>
+            <div class="theme-info">
+                <h3>🌅 日落橙</h3>
+                <p>温暖渐变，舒适护眼</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">🔥 新</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="ocean" onclick="applyTheme('ocean')">
+            <div class="theme-preview preview-ocean"></div>
+            <div class="theme-info">
+                <h3>🌊 深海科技</h3>
+                <p>青蓝深邃，科技感</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">经典</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lite 简易主题 - 性能优化 -->
+        <div class="theme-card" data-theme="lite" onclick="applyTheme('lite')">
+            <div class="theme-preview preview-lite"></div>
+            <div class="theme-info">
+                <h3>🚀 Lite 简约</h3>
+                <p>无动画无模糊，极致性能</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">⚡ 性能</span>
+                    <span class="theme-tag">🔥 新</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="lite-dark" onclick="applyTheme('lite-dark')">
+            <div class="theme-preview preview-lite-dark"></div>
+            <div class="theme-info">
+                <h3>🚀 Lite 深色</h3>
+                <p>深色简约，性能优先</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">⚡ 性能</span>
+                    <span class="theme-tag">深色</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-card" data-theme="lite-light" onclick="applyTheme('lite-light')">
+            <div class="theme-preview preview-lite-light"></div>
+            <div class="theme-info">
+                <h3>🚀 Lite 浅色</h3>
+                <p>浅色简约，低配电脑首选</p>
+                <div class="theme-tags">
+                    <span class="theme-tag">⚡ 性能</span>
+                    <span class="theme-tag">浅色</span>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- 右侧：实时预览面板 -->
+        <div class="theme-preview-panel">
+            <div class="preview-header">
+                <span>📱 实时预览</span>
+            </div>
+            <div class="preview-content">
+                <!-- 按钮预览 -->
+                <div class="preview-section">
+                    <label>按钮</label>
+                    <div class="preview-row">
+                        <button class="btn primary">主要按钮</button>
+                        <button class="btn">次要按钮</button>
+                        <button class="btn danger">危险</button>
+                    </div>
+                </div>
+                
+                <!-- 输入框预览 -->
+                <div class="preview-section">
+                    <label>输入框</label>
+                    <input type="text" placeholder="输入文本..." style="width:100%;">
+                </div>
+                
+                <!-- 卡片预览 -->
+                <div class="preview-section">
+                    <label>卡片</label>
+                    <div class="card-base" style="padding:12px;">
+                        <div style="font-weight:600;">卡片标题</div>
+                        <div style="font-size:12px; color:var(--text-muted);">卡片描述内容</div>
+                    </div>
+                </div>
+                
+                <!-- 徽章预览 -->
+                <div class="preview-section">
+                    <label>徽章</label>
+                    <div class="preview-row">
+                        <span class="badge">默认</span>
+                        <span class="badge success">成功</span>
+                        <span class="badge warning">警告</span>
+                        <span class="badge danger">危险</span>
+                    </div>
+                </div>
+                
+                <!-- 状态点预览 -->
+                <div class="preview-section">
+                    <label>状态</label>
+                    <div class="preview-row" style="gap:16px;">
+                        <span class="status-preview"><span class="status-dot connected"></span> 在线</span>
+                        <span class="status-preview"><span class="status-dot"></span> 离线</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="current-theme">
+        当前主题: <strong id="current-theme-name">Aurora 极光</strong>
+    </div>
+</div>
+
+<style>
+/* 新增预览面板样式 */
+.theme-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+}
+@media (max-width: 900px) {
+    .theme-layout { grid-template-columns: 1fr; }
+    .theme-preview-panel { display: none; }
+}
+
+.theme-preview-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 8px);
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+}
+.preview-header {
+    padding: 12px 16px;
+    background: var(--input-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 13px;
+}
+.preview-content {
+    padding: 16px;
+}
+.preview-section {
+    margin-bottom: 16px;
+}
+.preview-section:last-child { margin-bottom: 0; }
+.preview-section > label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+.preview-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.status-preview {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+.status-preview .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #666;
+}
+.status-preview .status-dot.connected {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Pro/Show 强度切换 */
+.fx-mode-bar {
+    margin: 16px 0 18px;
+    padding: 12px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 8px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.fx-mode-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-color);
+    min-width: 70px;
+}
+.fx-mode-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--input-bg);
+}
+.fx-btn {
+    border: none;
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+.fx-btn.active {
+    background: linear-gradient(135deg, rgba(0,255,136,0.18), rgba(0,212,255,0.12));
+    color: var(--text-color);
+    box-shadow: inset 0 0 0 1px var(--border-highlight);
+}
+.fx-mode-desc {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-dim);
+    max-width: 520px;
+    text-align: right;
+}
+</style>

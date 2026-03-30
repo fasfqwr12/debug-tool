@@ -1,0 +1,300 @@
+<!-- LCD段码编辑器 - 像素级编辑 + 元素分类管理 + 固件同步 -->
+<style>
+.seg-editor-page { display:flex; height:100%; overflow:hidden; background:var(--panel-bg); }
+
+/* 左侧：元素树 */
+.seg-left-panel { width:280px; background:var(--card-bg); border-right:1px solid var(--border-color); display:flex; flex-direction:column; overflow:hidden; }
+.seg-panel-header { padding:12px 15px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; }
+.seg-panel-header h3 { font-size:14px; margin:0; color:var(--text-color); }
+.seg-panel-header .btn-small { padding:4px 10px; font-size:11px; background:var(--accent); color:var(--text-on-accent); border:none; border-radius:4px; cursor:pointer; }
+.seg-elements-tree { flex:1; overflow-y:auto; padding:8px; }
+
+/* 元素组 */
+.seg-element-group { margin-bottom:6px; border:1px solid var(--border-color); border-radius:6px; overflow:hidden; }
+.seg-element-header { background:var(--input-bg); padding:8px 12px; display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; transition:all 0.2s; }
+.seg-element-header:hover { background:rgba(33,150,243,0.15); }
+.seg-element-header .chevron { font-size:10px; color:var(--text-muted); transition:transform 0.2s; }
+.seg-element-group.expanded .chevron { transform:rotate(90deg); }
+.seg-element-header .name { font-weight:600; font-size:13px; color:var(--text-color); flex:1; }
+.seg-element-header .type-badge { font-size:10px; padding:2px 6px; border-radius:3px; background:rgba(33,150,243,0.2); color:var(--accent); }
+.seg-element-header .status { font-size:11px; color:var(--text-muted); }
+.seg-element-header .status.completed { color:#4caf50; }
+.seg-element-header .status.partial { color:#ff9800; }
+.seg-element-header .btn-split { padding:2px 6px; font-size:10px; background:transparent; border:none; cursor:pointer; opacity:0.5; }
+.seg-element-header .btn-split:hover { opacity:1; color:#2196f3; }
+.seg-element-header .btn-delete { padding:2px 6px; font-size:10px; background:transparent; border:none; cursor:pointer; opacity:0.5; }
+.seg-element-header .btn-delete:hover { opacity:1; }
+
+/* 拆分对话框 */
+.seg-dialog-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:10000; }
+.seg-dialog { background:#1e1e2e; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.5); border:1px solid #3a3a4a; }
+.seg-dialog-header { padding:12px 16px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; font-weight:600; }
+.seg-dialog-close { background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted); }
+.seg-dialog-close:hover { color:var(--text-primary); }
+.seg-dialog-body { padding:16px; }
+.seg-dialog-footer { padding:12px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:8px; }
+.seg-btn { padding:6px 12px; background:var(--bg-tertiary); border:1px solid var(--border-color); border-radius:4px; color:var(--text-primary); cursor:pointer; font-size:12px; }
+.seg-btn:hover { border-color:var(--accent-color); }
+.seg-btn.primary { background:var(--accent-color); border-color:var(--accent-color); color:#000; }
+.seg-input { background:var(--bg-tertiary); border:1px solid var(--border-color); border-radius:4px; color:var(--text-primary); }
+.seg-input:focus { outline:none; border-color:var(--accent-color); }
+
+/* 段列表 */
+.seg-segment-list { max-height:0; overflow:hidden; transition:max-height 0.3s ease; background:var(--card-bg); }
+.seg-element-group.expanded .seg-segment-list { max-height:500px; }
+.seg-segment-row { padding:6px 12px 6px 28px; border-top:1px solid var(--border-color); display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; transition:background 0.15s; }
+.seg-segment-row:hover { background:rgba(33,150,243,0.1); }
+.seg-segment-row.selected { background:rgba(255,235,59,0.3); border-left:3px solid #ffeb3b; box-shadow:inset 0 0 0 1px rgba(255,235,59,0.5); animation:seg-pulse 1.5s ease-in-out infinite; }
+@keyframes seg-pulse { 0%,100%{background:rgba(255,235,59,0.3)} 50%{background:rgba(255,235,59,0.5)} }
+.seg-segment-row .seg-name { font-weight:500; color:var(--text-color); min-width:40px; }
+.seg-segment-row.selected .seg-name { color:#ffeb3b; font-weight:700; }
+.seg-segment-row .seg-pin { font-family:monospace; font-size:11px; color:var(--text-muted); flex:1; }
+.seg-segment-row .seg-status { font-size:10px; }
+.seg-segment-row .seg-status.done { color:#4caf50; }
+.seg-segment-row .seg-status.ready { color:#ff9800; }
+
+/* 元素详情列表 */
+.seg-detail-list { display:flex; flex-direction:column; gap:4px; }
+.seg-detail-item { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--input-bg); border-radius:4px; cursor:pointer; font-size:12px; transition:all 0.15s; border:1px solid transparent; }
+.seg-detail-item:hover { background:rgba(33,150,243,0.15); border-color:var(--accent); }
+.seg-detail-item.selected { background:rgba(255,235,59,0.2); border-color:#ffeb3b; }
+.seg-detail-item .seg-detail-name { font-weight:600; color:var(--text-color); min-width:40px; }
+.seg-detail-item .seg-detail-pin { font-family:monospace; font-size:11px; color:var(--accent); flex:1; }
+.seg-detail-item .seg-detail-pixels { font-size:10px; color:var(--text-muted); }
+.seg-detail-item .seg-detail-pixels.done { color:#4caf50; }
+.seg-mini-btn { padding:2px 6px; font-size:10px; background:transparent; border:1px solid var(--border-color); color:var(--text-muted); border-radius:3px; cursor:pointer; transition:all 0.15s; }
+.seg-mini-btn:hover { background:var(--accent); color:var(--text-on-accent); border-color:var(--accent); }
+
+/* 中间：Canvas画布 */
+.seg-center-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.seg-canvas-toolbar { height:44px; background:var(--card-bg); border-bottom:1px solid var(--border-color); display:flex; align-items:center; padding:0 15px; gap:10px; font-size:12px; }
+.seg-tool-group { display:flex; align-items:center; gap:6px; padding:0 10px; border-right:1px solid var(--border-color); }
+.seg-tool-group:last-child { border-right:none; }
+.seg-tool-btn { padding:6px 10px; background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:4px; cursor:pointer; font-size:12px; transition:all 0.2s; }
+.seg-tool-btn:hover { background:rgba(33,150,243,0.2); border-color:var(--accent); }
+.seg-tool-btn.active { background:var(--accent); color:var(--text-on-accent); border-color:var(--accent); }
+.seg-canvas-wrap { flex:1; overflow:hidden; background:#1a1a2e; position:relative; }
+#seg-lcd-canvas { display:block; width:100%; height:100%; }
+
+/* 右侧：属性面板 */
+.seg-right-panel { width:300px; background:var(--card-bg); border-left:1px solid var(--border-color); display:flex; flex-direction:column; overflow:hidden; }
+.seg-info-section { padding:12px 15px; border-bottom:1px solid var(--border-color); }
+.seg-info-section h4 { font-size:12px; color:var(--text-muted); margin:0 0 10px; text-transform:uppercase; }
+.seg-info-row { display:flex; align-items:center; margin-bottom:8px; font-size:12px; }
+.seg-info-row label { width:70px; color:var(--text-muted); flex-shrink:0; }
+.seg-info-row span { color:var(--text-color); font-family:monospace; }
+.seg-info-row input, .seg-info-row select { flex:1; background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-color); padding:5px 8px; border-radius:4px; font-size:12px; }
+
+/* 批量圈选面板 */
+#seg-batch-panel { display:none; background:rgba(76,175,80,0.1); border:1px solid #4caf50; border-radius:6px; padding:12px; margin-bottom:10px; }
+#seg-batch-panel h4 { color:#4caf50; margin:0 0 8px; font-size:13px; }
+#seg-batch-panel .batch-info { font-size:12px; color:var(--text-color); margin-bottom:10px; }
+#seg-batch-panel .batch-btns { display:flex; gap:8px; }
+#seg-batch-panel .batch-btns button { flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; cursor:pointer; }
+
+/* 缓冲区预览 */
+.seg-buffer-preview { flex:1; overflow-y:auto; padding:12px 15px; }
+.seg-buffer-grid { display:grid; grid-template-columns:repeat(6, 1fr); gap:4px; font-family:monospace; font-size:10px; }
+.seg-buffer-cell { background:var(--input-bg); padding:4px; border-radius:3px; text-align:center; cursor:pointer; transition:all 0.15s; }
+.seg-buffer-cell:hover { background:rgba(33,150,243,0.2); }
+.seg-buffer-cell .idx { color:var(--text-muted); font-size:9px; display:block; }
+.seg-buffer-cell .val { color:var(--text-color); font-weight:600; }
+
+/* SEG×COM矩阵 */
+.seg-matrix-section { max-height:200px; overflow:auto; padding:12px 15px; border-top:1px solid var(--border-color); }
+.seg-matrix-table { border-collapse:collapse; font-size:10px; font-family:monospace; width:100%; }
+.seg-matrix-table th, .seg-matrix-table td { border:1px solid var(--border-color); padding:3px 5px; text-align:center; min-width:35px; }
+.seg-matrix-table th { background:var(--input-bg); color:var(--text-muted); font-weight:600; position:sticky; top:0; }
+.seg-matrix-table th.row-header { left:0; z-index:1; }
+.seg-matrix-table td { cursor:pointer; transition:all 0.15s; background:var(--card-bg); }
+.seg-matrix-table td:hover { background:rgba(33,150,243,0.2); }
+.seg-matrix-table td.on { background:#00e676; color:#000; font-weight:bold; }
+.seg-matrix-table td.assigned { background:rgba(76,175,80,0.3); color:#4caf50; }
+.seg-matrix-table td.lit { background:#ff9800 !important; color:#fff; animation:seg-lit-pulse 0.8s ease-in-out infinite; }
+@keyframes seg-lit-pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* 状态栏 */
+.seg-status-bar { height:28px; background:var(--card-bg); border-top:1px solid var(--border-color); display:flex; align-items:center; padding:0 15px; font-size:11px; color:var(--text-muted); gap:20px; }
+.seg-status-bar .status-item { display:flex; align-items:center; gap:4px; }
+.seg-status-bar .status-dot { width:6px; height:6px; border-radius:50%; background:#4caf50; }
+.seg-status-bar .status-dot.offline { background:#f44336; }
+
+/* 工具栏按钮 */
+.seg-toolbar-btn { padding:6px 12px; background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:4px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px; transition:all 0.2s; }
+.seg-toolbar-btn:hover { background:rgba(33,150,243,0.2); border-color:var(--accent); }
+.seg-toolbar-btn.primary { background:var(--accent); color:var(--text-on-accent); border-color:var(--accent); }
+</style>
+
+<div class="seg-editor-page">
+    <!-- 左侧：元素树 -->
+    <div class="seg-left-panel">
+        <div class="seg-panel-header" style="flex-direction:column;align-items:stretch;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <h3>📋 元素列表</h3>
+                <div style="display:flex;gap:4px;">
+                    <button class="btn-small" onclick="SegmentEditor.addElement()" title="新建空元素">➕</button>
+                    <button class="btn-small" onclick="SegmentEditor.startPickMode()" title="拾取组合 - 从LCD拾取段组成新元素" style="background:#9c27b0;">🎯</button>
+                </div>
+            </div>
+            <!-- 设备选择器 -->
+            <div style="display:flex;align-items:center;gap:6px;">
+                <div id="seg-device-selector" class="device-selector-container" style="flex:1;"></div>
+                <button class="btn-small" onclick="showConfigStatusPanel()" title="查看配置加载状态" style="padding:4px 8px;">📂</button>
+            </div>
+        </div>
+        <div class="seg-elements-tree" id="seg-elements-tree">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+    
+    <!-- 中间：Canvas画布 -->
+    <div class="seg-center-panel">
+        <div class="seg-canvas-toolbar">
+            <div class="seg-tool-group">
+                <label>图像:</label>
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.loadImage()">📷 加载图片</button>
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.fitToView()">适配</button>
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.resetView()">重置</button>
+            </div>
+            <div class="seg-tool-group">
+                <label>工具:</label>
+                <button id="seg-tool-pan" class="seg-tool-btn active" title="平移 (Shift+拖拽)">🤚</button>
+                <button id="seg-tool-find" class="seg-tool-btn" title="查找模式 - 点击像素查看所属元素">🔍</button>
+                <button id="seg-tool-brush" class="seg-tool-btn" title="画笔">🖌️</button>
+                <button id="seg-tool-eraser" class="seg-tool-btn" title="橡皮">🧹</button>
+                <button id="seg-tool-magic" class="seg-tool-btn" title="魔棒">✨</button>
+                <button id="seg-tool-rect" class="seg-tool-btn" title="矩形">▭</button>
+            </div>
+            <div class="seg-tool-group">
+                <label>画笔:</label>
+                <input type="range" id="seg-brush-size" min="1" max="20" value="3" style="width:60px">
+                <span id="seg-brush-size-value">3px</span>
+            </div>
+            <div class="seg-tool-group">
+                <label><input type="checkbox" id="seg-show-overlay" checked> 蒙版</label>
+                <label><input type="checkbox" id="seg-show-grid"> 网格</label>
+                <select id="seg-label-mode" style="padding:2px 4px;font-size:11px;background:var(--input-bg);border:1px solid var(--border-color);color:var(--text-color);border-radius:3px;" title="标签显示模式">
+                    <option value="none">标签:隐藏</option>
+                    <option value="selected">标签:仅选中</option>
+                    <option value="all" selected>标签:全部</option>
+                </select>
+                <input type="range" id="seg-overlay-opacity" min="0" max="100" value="40" style="width:60px">
+                <span id="seg-opacity-value">40%</span>
+            </div>
+            <div class="seg-tool-group" style="margin-left:auto;">
+                <button id="seg-btn-undo" class="seg-toolbar-btn" onclick="SegmentEditor.undo()" disabled>↩️ 撤销</button>
+            </div>
+        </div>
+        <div class="seg-canvas-wrap">
+            <canvas id="seg-lcd-canvas"></canvas>
+        </div>
+    </div>
+    
+    <!-- 右侧：属性面板 -->
+    <div class="seg-right-panel">
+        <div class="seg-info-section">
+            <h4>当前选中</h4>
+            <div class="seg-info-row"><label>元素:</label><span id="seg-info-element">-</span><button id="seg-rename-btn" class="seg-mini-btn" onclick="SegmentEditor.renameSelectedElement()" title="重命名元素" style="display:none;margin-left:6px;">✏️</button></div>
+            <div class="seg-info-row"><label>段:</label><span id="seg-info-segment">-</span></div>
+            <div class="seg-info-row"><label>引脚:</label><span id="seg-info-pin">-</span></div>
+            <div class="seg-info-row"><label>像素数:</label><span id="seg-info-pixels">0</span></div>
+            <div style="margin-top:10px;display:flex;gap:8px;">
+                <button class="seg-toolbar-btn" style="flex:1" onclick="SegmentEditor.clearSegmentPixels()">🗑️ 清除</button>
+                <button class="seg-toolbar-btn" style="flex:1" onclick="SegmentEditor.startBatchSelect()">✨ 批量</button>
+                <button class="seg-toolbar-btn" style="flex:1" onclick="SegmentEditor.checkAllOverlaps()">🔍 重叠</button>
+            </div>
+        </div>
+        
+        <!-- 元素详情面板 -->
+        <div class="seg-info-section" id="seg-element-detail-panel" style="display:none;max-height:180px;overflow-y:auto;">
+            <h4>📋 段列表 <span id="seg-detail-count" style="font-weight:normal;color:var(--text-muted);"></span></h4>
+            <div id="seg-element-segments-list" class="seg-detail-list"></div>
+        </div>
+        
+        <!-- 批量圈选面板 -->
+        <div id="seg-batch-panel">
+            <h4>✨ 批量圈选模式</h4>
+            <div class="batch-info">已圈选: <span id="seg-batch-count">0</span> / <span id="seg-batch-needed">0</span></div>
+            <div class="batch-btns">
+                <button style="background:#ff9800;color:#fff" onclick="SegmentEditor.undoLastBatchRegion()">↩️</button>
+                <button style="background:#4caf50;color:#fff" onclick="SegmentEditor.finishBatchSelect()">✅</button>
+                <button style="background:#f44336;color:#fff" onclick="SegmentEditor.cancelBatchSelect()">❌</button>
+            </div>
+        </div>
+        
+        <div class="seg-info-section">
+            <h4>引脚分配</h4>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <input type="number" id="seg-manual-seg" min="0" max="53" placeholder="SEG" style="width:60px;padding:4px;font-size:11px;">
+                <select id="seg-manual-com" style="flex:1;padding:4px;font-size:11px;">
+                    <option value="">COM</option>
+                    <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                    <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                </select>
+                <button class="seg-toolbar-btn primary" style="padding:4px 10px;" onclick="SegmentEditor.applyManualPin()">应用</button>
+            </div>
+        </div>
+        
+        <div class="seg-info-section">
+            <h4>文件操作</h4>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.saveProject()">💾 保存</button>
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.loadProject()">📂 加载</button>
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.importCSV()">📄 CSV</button>
+                <button class="seg-toolbar-btn primary" onclick="SegmentEditor.syncFromFirmware()">📡 同步</button>
+            </div>
+        </div>
+        
+        <div class="seg-info-section">
+            <h4>段码测试</h4>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;">
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.testSelectedSegment()">💡 点亮</button>
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.testFullDisplay()">🔆 全显</button>
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.testClearDisplay()">🔅 清屏</button>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+                <input type="number" id="seg-test-seg" value="0" min="0" max="53" style="width:40px;padding:3px;font-size:11px;background:var(--input-bg);border:1px solid var(--border-color);color:var(--text-color);border-radius:3px">
+                <input type="number" id="seg-test-com" value="0" min="0" max="7" style="width:35px;padding:3px;font-size:11px;background:var(--input-bg);border:1px solid var(--border-color);color:var(--text-color);border-radius:3px">
+                <button class="seg-toolbar-btn" onclick="SegmentEditor.testManualSegment()">💡</button>
+                <label style="font-size:10px;display:flex;align-items:center;gap:2px;cursor:pointer;">
+                    <input type="checkbox" id="seg-test-auto-inc" checked style="margin:0;">
+                    <span style="color:var(--text-muted)">+1</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="seg-matrix-section" style="flex:1;max-height:none;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                <span style="font-size:11px;color:var(--text-muted)">SEG:</span>
+                <input type="number" id="seg-start" value="0" min="0" max="53" style="width:40px;padding:2px;font-size:10px;background:var(--input-bg);border:1px solid var(--border-color);color:var(--text-color);border-radius:3px">
+                <span style="font-size:10px">~</span>
+                <input type="number" id="seg-end" value="27" min="0" max="53" style="width:40px;padding:2px;font-size:10px;background:var(--input-bg);border:1px solid var(--border-color);color:var(--text-color);border-radius:3px">
+            </div>
+            <div id="seg-matrix-container"></div>
+        </div>
+        
+        <!-- 操作日志 -->
+        <div class="seg-info-section" style="min-height:80px;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <h4 style="font-size:10px;color:var(--text-muted);margin:0;">日志</h4>
+                <button onclick="SegmentEditor.clearLog()" style="padding:1px 4px;font-size:9px;background:transparent;border:1px solid var(--border-color);color:var(--text-muted);border-radius:2px;cursor:pointer;">清空</button>
+            </div>
+            <div id="seg-log-area" style="flex:1;overflow-y:auto;background:var(--input-bg);border-radius:4px;padding:6px;font-family:monospace;font-size:10px;line-height:1.5;max-height:100px;">
+                <div style="color:var(--text-muted);">等待操作...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="seg-status-bar">
+    <span class="status-item"><span class="status-dot offline" id="seg-status-dot"></span><span id="seg-status-device">未连接</span></span>
+    <span id="seg-status-elements">元素:0</span>
+    <span id="seg-status-segments">段:0</span>
+    <span id="seg-status-completed">已完成:0</span>
+    <span style="margin-left:auto;color:var(--text-muted)">选中段后使用工具圈选像素 | 右键矩阵编辑映射 | H键切换标签 | Ctrl+Z撤销</span>
+</div>
+
+<!-- 隐藏的文件输入 -->
+<input type="file" id="seg-image-input" accept="image/*" style="display:none" onchange="SegmentEditor.onImageSelected(event)">
+<input type="file" id="seg-csv-input" accept=".csv" style="display:none" onchange="SegmentEditor.onCSVSelected(event)">
+<input type="file" id="seg-project-input" accept=".json" style="display:none" onchange="SegmentEditor.onProjectSelected(event)">

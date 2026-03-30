@@ -1,0 +1,914 @@
+<div class="page-container" style="display:flex; flex-direction:column; height:calc(100vh - var(--topbar-h, 32px) - 40px); overflow:hidden;">
+    <div class="page-header" style="flex-shrink:0;">
+        <h1>📝 测试脚本编辑器</h1>
+        <div class="header-actions" style="display:flex; gap:8px; align-items:center;">
+            <!-- 设备选择器 -->
+            <div id="tse-device-selector" class="device-selector-container" style="min-width: 180px;"></div>
+            
+            <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px;"></span>
+            
+            <!-- 视图切换 -->
+            <div class="view-toggle">
+                <button class="toggle-btn active" data-view="visual" onclick="TestScriptEditor.switchView('visual')">📊 可视化</button>
+                <button class="toggle-btn" data-view="code" onclick="TestScriptEditor.switchView('code')">📝 代码</button>
+            </div>
+            
+            <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px;"></span>
+            
+            <button class="btn" onclick="TestScriptEditor.newSuite()">📄 新建</button>
+            <button class="btn btn-primary" onclick="TestScriptEditor.saveSuite()">💾 保存</button>
+            <button class="btn" onclick="TestScriptEditor.exportScript()">📤 导出</button>
+            <button class="btn" onclick="TestScriptEditor.runSelected()">▶️ 运行</button>
+        </div>
+    </div>
+
+    <div class="editor-layout" style="flex:1; display:grid; grid-template-columns:240px 1fr 280px; gap:12px; min-height:0;">
+        <!-- 左侧：测试用例树 -->
+        <div class="panel tree-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <div class="panel-header">
+                <span>📁 测试用例</span>
+                <button class="mini-btn" onclick="TestScriptEditor.addCategory()" title="添加分类">➕</button>
+            </div>
+            <div id="test-tree" class="test-tree" style="flex:1; overflow-y:auto; padding:8px;"></div>
+        </div>
+
+        <!-- 中间：编辑区（可视化/代码切换） -->
+        <div class="panel editor-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <div class="panel-header">
+                <span id="editor-title">选择或创建测试用例</span>
+                <div style="display:flex; gap:4px;">
+                    <button class="mini-btn" onclick="TestScriptEditor.validateCase()" title="验证">✓</button>
+                </div>
+            </div>
+            
+            <!-- 可视化编辑视图 -->
+            <div id="visual-view" class="visual-view" style="flex:1; overflow-y:auto; padding:12px;">
+                <div class="empty-hint">选择左侧用例开始编辑</div>
+            </div>
+            
+            <!-- 代码编辑视图 - 带语法高亮 -->
+            <div id="code-view" class="code-view" style="flex:1; display:none; overflow:hidden; position:relative;">
+                <!-- 高亮层 -->
+                <pre id="code-highlight" class="code-highlight"></pre>
+                <!-- 编辑层 -->
+                <textarea id="code-textarea" class="code-textarea" spellcheck="false" 
+                    placeholder="// 选择左侧用例或新建..."></textarea>
+            </div>
+            
+            <!-- 补全提示框 -->
+            <div id="autocomplete-box" class="autocomplete-box" style="display:none;"></div>
+        </div>
+
+        <!-- 右侧：LCD预设管理 + 参考 -->
+        <div class="panel preview-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <!-- LCD预设管理器 -->
+            <div class="panel-header" style="background: linear-gradient(135deg, #1a3a5c 0%, #2a4a6c 100%);">
+                <span>🖥️ LCD预设</span>
+                <button class="mini-btn" onclick="TestScriptEditor.openLcdPicker()" title="打开大画布选择">🔍</button>
+                <button class="mini-btn" onclick="TestScriptEditor.saveCurrentAsPreset()" title="保存当前为预设">💾</button>
+            </div>
+            <div id="lcd-preset-manager" style="padding:8px; border-bottom:1px solid var(--border-color);">
+                <!-- LCD可视化画布 - 点击打开大画布 -->
+                <div class="lcd-preset-canvas-wrap" onclick="TestScriptEditor.openLcdPicker()" style="cursor:pointer;" title="点击放大选择">
+                    <canvas id="lcd-preset-canvas" width="260" height="180"></canvas>
+                    <div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:3px;font-size:10px;color:#888;">点击放大</div>
+                </div>
+                <!-- 预设列表 -->
+                <div class="lcd-preset-list" id="lcd-preset-list">
+                    <div style="color:var(--text-muted);font-size:11px;padding:8px;text-align:center;">
+                        点击画布选择元素<br>或从下方选择预设
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快速参考（折叠） -->
+            <div style="flex:1; overflow-y:auto; padding:10px; font-size:11px;">
+                <div class="ref-section">
+                    <div class="ref-title collapsed" onclick="this.classList.toggle('collapsed')">▶ 动作参考</div>
+                    <div class="ref-content" id="ref-actions"></div>
+                </div>
+                <div class="ref-section">
+                    <div class="ref-title collapsed" onclick="this.classList.toggle('collapsed')">▶ 期望参考</div>
+                    <div class="ref-content" id="ref-expects"></div>
+                </div>
+            </div>
+            
+            <!-- JSON预览 -->
+            <div class="panel-header" style="border-top:1px solid var(--border-color);">
+                <span>🔄 JSON</span>
+                <button class="mini-btn" onclick="TestScriptEditor.copyJson()" title="复制">📋</button>
+            </div>
+            <div id="script-preview" style="height:120px; overflow-y:auto; padding:8px; font-size:10px; font-family:monospace; background:rgba(0,0,0,0.2);"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 机芯选择下拉框 */
+.machine-select {
+    padding: 6px 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 160px;
+    cursor: pointer;
+}
+.machine-select:hover {
+    border-color: var(--primary-color);
+}
+.machine-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(34,197,94,0.2);
+}
+
+/* 视图切换按钮 */
+.view-toggle {
+    display: flex;
+    background: var(--input-bg);
+    border-radius: 6px;
+    padding: 2px;
+}
+.toggle-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+.toggle-btn:hover {
+    color: var(--text-color);
+}
+.toggle-btn.active {
+    background: var(--primary-color);
+    color: var(--text-on-accent);
+}
+
+/* 面板 */
+.editor-layout .panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--input-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 13px;
+}
+.mini-btn {
+    width: 24px; height: 24px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.mini-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* 测试树 */
+.test-tree .tree-item {
+    padding: 6px 8px;
+    padding-right: 60px; /* 为操作按钮预留空间 */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+}
+.test-tree .tree-item:hover {
+    background: var(--input-bg);
+}
+.test-tree .tree-item.active {
+    background: var(--primary-color);
+    color: var(--text-on-accent);
+}
+.test-tree .tree-item.category { font-weight: 600; }
+.test-tree .tree-item.case { padding-left: 16px; }
+.test-tree .tree-item.subcase { padding-left: 28px; font-size: 11px; }
+.tree-item .tree-actions {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    gap: 2px;
+}
+.tree-item:hover .tree-actions { display: flex; }
+.tree-actions button {
+    width: 18px; height: 18px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    opacity: 0.6;
+}
+.tree-actions button:hover { opacity: 1; }
+
+/* 可视化编辑器 */
+.visual-view .empty-hint {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px;
+}
+
+/* 初始状态区 */
+.initial-section {
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+.initial-section .section-title {
+    font-weight: 600;
+    font-size: 12px;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+.initial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.initial-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+.initial-item label {
+    color: var(--text-muted);
+    min-width: 50px;
+}
+.initial-item input, .initial-item select {
+    flex: 1;
+    padding: 4px 6px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 11px;
+}
+
+/* 步骤卡片 */
+.steps-section {
+    margin-top: 12px;
+}
+.steps-section .section-title {
+    font-weight: 600;
+    font-size: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.step-card {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+.step-card.dragging {
+    opacity: 0.5;
+}
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.15);
+    cursor: grab;
+}
+.step-num {
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.step-action-select {
+    flex: 1;
+    padding: 5px 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 12px;
+}
+.step-params {
+    display: flex;
+    gap: 4px;
+}
+.step-params input {
+    width: 60px;
+    padding: 4px 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 11px;
+}
+.step-actions {
+    display: flex;
+    gap: 4px;
+}
+.step-actions button {
+    width: 24px; height: 24px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+}
+.step-actions button:hover {
+    border-color: var(--primary-color);
+}
+.step-expects {
+    padding: 8px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+.step-expects .label {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.expect-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--card-bg);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--primary-color);
+}
+.expect-tag .remove {
+    cursor: pointer;
+    color: var(--text-muted);
+}
+.expect-tag .remove:hover {
+    color: var(--error-color);
+}
+.add-expect-btn {
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 10px;
+    cursor: pointer;
+}
+.add-expect-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* 代码编辑器 - 语法高亮 */
+.code-view {
+    position: relative;
+    background: #1a1d24;
+}
+.code-highlight, .code-textarea {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    margin: 0;
+    padding: 12px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    tab-size: 2;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-y: auto;
+}
+.code-highlight {
+    pointer-events: none;
+    color: transparent;
+    z-index: 1;
+}
+.code-textarea {
+    background: transparent;
+    color: rgba(255,255,255,0.05); /* 几乎透明，让高亮层显示 */
+    caret-color: #fff; /* 光标白色 */
+    border: none;
+    outline: none;
+    resize: none;
+    z-index: 2;
+}
+.code-textarea::selection {
+    background: rgba(34,197,94,0.3);
+}
+
+/* 语法高亮颜色 */
+.hl-keyword { color: #c678dd; font-weight: bold; } /* 初始: 紫色 */
+.hl-arrow { color: #e5c07b; font-weight: bold; } /* → 黄色 */
+.hl-action { color: #e06c75; } /* 动作 红/橙色 */
+.hl-param { color: #98c379; } /* 参数 绿色 */
+.hl-field { color: #61afef; } /* 字段 蓝色 */
+.hl-value { color: #98c379; } /* 值 绿色 */
+.hl-expect { color: #56b6c2; } /* 期望 青色 */
+.hl-comment { color: #5c6370; font-style: italic; } /* 注释 灰色 */
+.hl-colon { color: #abb2bf; } /* 冒号 */
+.hl-comma { color: #abb2bf; } /* 逗号 */
+.hl-number { color: #d19a66; } /* 数字 橙色 */
+
+/* 补全框 */
+.autocomplete-box {
+    position: fixed;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    min-width: 200px;
+}
+.autocomplete-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 11px;
+}
+.autocomplete-item:hover, .autocomplete-item.selected {
+    background: var(--input-bg);
+}
+.autocomplete-item.selected {
+    background: rgba(34,197,94,0.2);
+    border-left: 2px solid var(--primary-color);
+}
+.autocomplete-item .name {
+    color: var(--primary-color);
+}
+.autocomplete-item .desc {
+    color: var(--text-muted);
+    font-size: 10px;
+    margin-left: 8px;
+}
+
+/* 参考区 */
+.ref-section { margin-bottom: 8px; }
+.ref-title {
+    font-weight: 600;
+    padding: 4px 0;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 11px;
+}
+.ref-title.collapsed + .ref-content { display: none; }
+.ref-content {
+    padding-left: 8px;
+    border-left: 2px solid var(--border-color);
+    max-height: 150px;
+    overflow-y: auto;
+}
+.ref-item {
+    padding: 3px 0;
+    font-size: 10px;
+    cursor: pointer;
+}
+.ref-item:hover { color: var(--primary-color); }
+.ref-item code {
+    background: rgba(0,0,0,0.2);
+    padding: 1px 4px;
+    border-radius: 2px;
+}
+
+/* 添加步骤按钮 */
+.add-step-btn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    margin-top: 8px;
+}
+.add-step-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* LCD期望选择器样式 */
+.step-lcd-section {
+    padding: 8px 10px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0, 100, 200, 0.05);
+}
+.lcd-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.lcd-section-header .label {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.lcd-preset-select {
+    padding: 2px 6px;
+    font-size: 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    color: var(--text-color);
+}
+.lcd-expand-btn {
+    padding: 2px 8px;
+    font-size: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    color: var(--primary-color);
+    cursor: pointer;
+    margin-left: auto;
+}
+.lcd-expand-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(34, 197, 94, 0.1);
+}
+.lcd-mini-preview {
+    background: #1a1a2e;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+}
+.lcd-mini-preview canvas {
+    display: block;
+    width: 100%;
+    height: 80px;
+}
+.lcd-picker-panel {
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.lcd-elem-group {
+    margin-bottom: 8px;
+}
+.lcd-elem-group-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--border-color);
+}
+.lcd-elem-group-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.lcd-elem-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.lcd-elem-checkbox:hover {
+    border-color: var(--primary-color);
+}
+.lcd-elem-checkbox.checked {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+.lcd-elem-checkbox input {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    accent-color: var(--primary-color);
+}
+
+/* LCD预设管理器样式 */
+.lcd-preset-canvas-wrap {
+    background: #1a1a2e;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+.lcd-preset-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
+}
+.lcd-preset-list {
+    max-height: 120px;
+    overflow-y: auto;
+}
+.lcd-preset-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.15s;
+}
+.lcd-preset-item:hover {
+    border-color: var(--primary-color);
+    background: rgba(34, 197, 94, 0.1);
+}
+.lcd-preset-item.active {
+    border-color: var(--primary-color);
+    background: rgba(34, 197, 94, 0.2);
+}
+.lcd-preset-item .preset-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.lcd-preset-item .preset-count {
+    color: var(--text-muted);
+    font-size: 10px;
+}
+.lcd-preset-item .preset-actions {
+    display: none;
+    gap: 2px;
+}
+.lcd-preset-item:hover .preset-actions {
+    display: flex;
+}
+.lcd-preset-item .preset-actions button {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    opacity: 0.6;
+}
+.lcd-preset-item .preset-actions button:hover {
+    opacity: 1;
+}
+
+/* 步骤卡片中的LCD期望显示 */
+.step-lcd-expect {
+    padding: 6px 10px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0, 100, 200, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.step-lcd-expect .label {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.step-lcd-expect .lcd-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(0, 150, 255, 0.15);
+    border: 1px solid rgba(0, 150, 255, 0.3);
+    border-radius: 4px;
+    font-size: 10px;
+    color: #4da6ff;
+}
+.step-lcd-expect .lcd-tag .remove {
+    cursor: pointer;
+    opacity: 0.6;
+}
+.step-lcd-expect .lcd-tag .remove:hover {
+    opacity: 1;
+    color: var(--error-color);
+}
+.step-lcd-expect .edit-lcd-btn {
+    padding: 2px 8px;
+    background: transparent;
+    border: 1px dashed rgba(0, 150, 255, 0.5);
+    border-radius: 4px;
+    color: #4da6ff;
+    font-size: 10px;
+    cursor: pointer;
+}
+.step-lcd-expect .edit-lcd-btn:hover {
+    background: rgba(0, 150, 255, 0.1);
+    border-style: solid;
+}
+
+/* 正在编辑LCD的步骤卡片高亮 */
+.step-card.editing-lcd {
+    border-color: #4da6ff;
+    box-shadow: 0 0 0 2px rgba(0, 150, 255, 0.2);
+}
+.step-card.editing-lcd .step-lcd-expect {
+    background: rgba(0, 150, 255, 0.1);
+}
+
+/* LCD选择器弹窗样式 */
+.lcd-picker-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+.lcd-picker-modal.show {
+    display: flex;
+}
+.lcd-picker-content {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.lcd-picker-header {
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #1a3a5c 0%, #2a4a6c 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.lcd-picker-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+.lcd-picker-close {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 4px;
+    opacity: 0.7;
+}
+.lcd-picker-close:hover {
+    opacity: 1;
+}
+.lcd-picker-body {
+    padding: 16px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.lcd-picker-canvas-wrap {
+    background: #1a1a2e;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+.lcd-picker-canvas-wrap canvas {
+    display: block;
+    cursor: crosshair;
+}
+.lcd-picker-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    font-size: 12px;
+}
+.lcd-picker-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.lcd-picker-footer button {
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+}
+.lcd-picker-footer .btn-cancel {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+.lcd-picker-footer .btn-confirm {
+    background: var(--primary-color);
+    color: white;
+}
+.lcd-picker-footer .btn-clear {
+    background: transparent;
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+    margin-right: auto;
+}
+
+/* 快捷预设按钮 */
+.lcd-picker-presets {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+}
+.lcd-picker-presets button {
+    padding: 4px 10px;
+    font-size: 11px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.lcd-picker-presets button:hover {
+    border-color: var(--primary-color);
+    background: rgba(34, 197, 94, 0.1);
+}
+
+/* 小画布提示样式 */
+.lcd-preset-canvas-wrap {
+    position: relative;
+}
+</style>
+
+<!-- LCD选择器弹窗 -->
+<div id="lcd-picker-modal" class="lcd-picker-modal" onclick="if(event.target===this)TestScriptEditor.closeLcdPicker()">
+    <div class="lcd-picker-content">
+        <div class="lcd-picker-header">
+            <h3>🖥️ 选择LCD元素</h3>
+            <button class="lcd-picker-close" onclick="TestScriptEditor.closeLcdPicker()">×</button>
+        </div>
+        <div class="lcd-picker-body">
+            <div class="lcd-picker-info">
+                <span>点击元素切换选中，按 H 显示/隐藏标签</span>
+                <span id="lcd-picker-count">已选: 0 个</span>
+            </div>
+            <!-- 界面预设选择 -->
+            <div class="lcd-picker-presets" style="border-bottom:1px solid var(--border-color);padding-bottom:8px;margin-bottom:8px;">
+                <span style="font-size:11px;color:var(--text-muted);">界面预设:</span>
+                <select id="screen-preset-select" onchange="TestScriptEditor.applyScreenPreset(this.value)" style="padding:4px 8px;font-size:11px;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:4px;color:var(--text-primary);min-width:150px;">
+                    <option value="">-- 选择预设 --</option>
+                </select>
+                <button onclick="TestScriptEditor.refreshScreenPresets()" style="padding:4px 8px;font-size:11px;" title="刷新预设列表">🔄</button>
+            </div>
+            <!-- 快捷预设按钮 -->
+            <div class="lcd-picker-presets">
+                <span style="font-size:11px;color:var(--text-muted);">快捷选择:</span>
+                <button onclick="TestScriptEditor.selectPresetGroup('line4')">第4行</button>
+                <button onclick="TestScriptEditor.selectPresetGroup('line3')">第3行</button>
+                <button onclick="TestScriptEditor.selectPresetGroup('allDigits')">全部数字</button>
+                <button onclick="TestScriptEditor.selectPresetGroup('icons')">图标</button>
+                <button onclick="TestScriptEditor.selectPresetGroup('units')">单位</button>
+                <button onclick="TestScriptEditor.syncFromFirmware()" style="background:var(--accent-color);color:white;">📡 同步固件</button>
+            </div>
+            <div class="lcd-picker-canvas-wrap">
+                <canvas id="lcd-picker-canvas" width="600" height="500"></canvas>
+            </div>
+        </div>
+        <div class="lcd-picker-footer">
+            <button class="btn-clear" onclick="TestScriptEditor.clearPickerSelection()">清空选择</button>
+            <button class="btn-cancel" onclick="TestScriptEditor.closeLcdPicker()">取消</button>
+            <button class="btn-confirm" onclick="TestScriptEditor.confirmLcdPicker()">确定</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,100 @@
+{
+  "device": "default",
+  "name": "默认按键映射表",
+  "keys": [
+    {
+      "id": 0,
+      "name": "K1",
+      "label": "测量键"
+    },
+    {
+      "id": 1,
+      "name": "K2",
+      "label": "模式键"
+    },
+    {
+      "id": 2,
+      "name": "K3",
+      "label": "单位键"
+    }
+  ],
+  "mappings": [
+    {
+      "key": "K1",
+      "trigger": "SHORT",
+      "action": "MEASURE",
+      "label": "K1短按(测量)",
+      "icon": "📏"
+    },
+    {
+      "key": "K1",
+      "trigger": "LONG",
+      "action": "MEASURE_CONT",
+      "label": "K1长按(连续测量)",
+      "icon": "🔁"
+    },
+    {
+      "key": "K1",
+      "trigger": "RELEASE",
+      "action": "CONFIRM",
+      "label": "K1释放(确认)",
+      "icon": "✅"
+    },
+    {
+      "key": "K2",
+      "trigger": "SHORT",
+      "action": "MODE_NEXT",
+      "label": "K2短按(下一模式)",
+      "icon": "🔄"
+    },
+    {
+      "key": "K2",
+      "trigger": "LONG",
+      "action": "BASE_SWITCH",
+      "label": "K2长按(切换基准)",
+      "icon": "🎯"
+    },
+    {
+      "key": "K3",
+      "trigger": "SHORT",
+      "action": "UNDO",
+      "label": "K3短按(撤销)",
+      "icon": "↩️"
+    },
+    {
+      "key": "K3",
+      "trigger": "LONG",
+      "action": "UNIT_SWITCH",
+      "label": "K3长按(切换单位)",
+      "icon": "📐"
+    },
+    {
+      "key": "K3",
+      "trigger": "RELEASE",
+      "action": "CANCEL",
+      "label": "K3释放(取消)",
+      "icon": "❌"
+    },
+    {
+      "key": "K3",
+      "trigger": "SUPER_LONG",
+      "action": "POWER_OFF",
+      "label": "K3超长按(关机)",
+      "icon": "⏻"
+    },
+    {
+      "key": "K1+K2",
+      "trigger": "SUPER_LONG",
+      "action": "CALIBRATE",
+      "label": "K1+K2超长按(校准)",
+      "icon": "🔧"
+    },
+    {
+      "key": "K2+K3",
+      "trigger": "LONG",
+      "action": "DEBUG",
+      "label": "K2+K3长按(调试)",
+      "icon": "🐛"
+    }
+  ]
+}

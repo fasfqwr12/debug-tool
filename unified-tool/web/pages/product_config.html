@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品配置管理 - GreenLaser Tool</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin-left: 10px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn:hover { opacity: 0.9; }
+        
+        .main-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+        
+        /* 产品列表 */
+        .product-list { background: #f8f9fa; border-radius: 8px; padding: 15px; }
+        .product-list h3 { margin: 0 0 15px 0; color: #333; }
+        .product-item { padding: 12px; background: white; border-radius: 6px; margin-bottom: 10px;
+                        cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .product-item:hover { border-color: #007bff; }
+        .product-item.active { border-color: #007bff; background: #e7f1ff; }
+        .product-item .name { font-weight: bold; color: #333; }
+        .product-item .info { font-size: 12px; color: #666; margin-top: 5px; }
+        .product-item .tags { margin-top: 8px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 5px; }
+        .tag-seg { background: #d4edda; color: #155724; }
+        .tag-dot { background: #cce5ff; color: #004085; }
+        .tag-line { background: #fff3cd; color: #856404; }
+        
+        /* 配置面板 */
+        .config-panel { background: white; border-radius: 8px; padding: 20px; }
+        .config-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .config-section h3 { margin: 0 0 15px 0; color: #333; font-size: 16px; }
+        .form-grid { display: grid; grid-template-columns: 140px 1fr 140px 1fr; gap: 12px; align-items: center; }
+        .form-grid label { color: #666; font-size: 14px; }
+        .form-grid input, .form-grid select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-grid input[type="checkbox"] { width: 18px; height: 18px; }
+        
+        .feature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .feature-item { display: flex; align-items: center; gap: 8px; padding: 10px; 
+                        background: #f8f9fa; border-radius: 6px; cursor: pointer; }
+        .feature-item:hover { background: #e9ecef; }
+        .feature-item input { width: 16px; height: 16px; }
+        .feature-item span { font-size: 13px; color: #333; }
+        
+        .config-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 产品配置管理</h1>
+            <div>
+                <button class="btn btn-primary" onclick="createProduct()">+ 新建产品</button>
+                <button class="btn btn-success" onclick="generateCode()">生成代码</button>
+            </div>
+        </div>
+        <div class="main-layout">
+            <div class="product-list" id="productList"></div>
+            <div class="config-panel" id="configPanel"></div>
+        </div>
+    </div>
+    <script src="../js/product_config.js"></script>
+</body>
+</html>

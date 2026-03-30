@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>滑台测试页面布局方案</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a1628; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; }
+        h1 { color: #00ff88; margin-bottom: 20px; font-size: 18px; }
+        h2 { color: #00d4ff; margin: 30px 0 15px; font-size: 16px; border-bottom: 1px solid #1a3a5c; padding-bottom: 8px; }
+        
+        .layout-container { 
+            border: 2px solid #1a3a5c; 
+            border-radius: 8px; 
+            margin-bottom: 30px; 
+            overflow: hidden;
+            background: #0c1829;
+        }
+        .layout-title {
+            background: #1a3a5c;
+            padding: 10px 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .layout-desc { font-size: 12px; color: #888; }
+        .layout-preview {
+            height: 400px;
+            display: flex;
+            padding: 10px;
+            gap: 10px;
+        }
+        
+        /* 通用组件样式 */
+        .panel { background: #0f1f35; border: 1px solid #1a3a5c; border-radius: 6px; padding: 10px; }
+        .panel-title { font-size: 12px; color: #00ff88; margin-bottom: 8px; font-weight: 600; }
+        .row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+        .input { background: #1a2a40; border: 1px solid #2a4a6c; border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 12px; }
+        .input.sm { width: 60px; }
+        .btn { padding: 6px 12px; border-radius: 4px; border: 1px solid #2a4a6c; background: #1a2a40; color: #fff; font-size: 11px; cursor: pointer; }
+        .btn.primary { background: #00ff88; color: #000; border-color: #00ff88; }
+        .btn.danger { color: #ff6b6b; border-color: #ff6b6b; }
+        .label { font-size: 11px; color: #888; }
+        .value { font-size: 13px; color: #00ff88; font-family: monospace; }
+        
+        .ref-btn { flex: 1; padding: 4px; text-align: center; background: #1a2a40; border: 1px solid #2a4a6c; border-radius: 3px; font-size: 10px; color: #888; }
+        .ref-btn.active { background: #00ff88; color: #000; border-color: #00ff88; }
+        
+        .stats-bar { display: flex; gap: 8px; padding: 8px; background: #0f1f35; border-radius: 6px; }
+        .stat-item { flex: 1; text-align: center; }
+        .stat-num { font-size: 14px; color: #00ff88; font-family: monospace; }
+        .stat-label { font-size: 10px; color: #666; }
+        
+        .table-area { flex: 1; background: #0f1f35; border: 1px solid #1a3a5c; border-radius: 6px; overflow: hidden; }
+        .table-header { display: flex; background: #1a2a40; padding: 8px; font-size: 11px; color: #888; }
+        .table-header span { flex: 1; text-align: center; }
+        .table-body { height: 200px; overflow-y: auto; }
+        
+        .chart-area { height: 100px; background: #0f1f35; border: 1px solid #1a3a5c; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #444; }
+        
+        /* 布局特定样式 */
+        .sidebar { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .sidebar-narrow { width: 200px; }
+        .main-area { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .top-bar { display: flex; gap: 8px; }
+        .bottom-bar { display: flex; gap: 8px; }
+        
+        .action-btns { display: flex; gap: 6px; margin-top: auto; }
+        .action-btn { flex: 1; padding: 10px; font-size: 12px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; }
+        .action-btn.start { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #000; }
+        .action-btn.stop { background: rgba(255,107,107,0.2); color: #ff6b6b; border: 1px solid #ff6b6b; }
+        
+        .compact-ctrl { display: flex; gap: 4px; flex-wrap: wrap; }
+        .toolbar-style { background: #0f1f35; border: 1px solid #1a3a5c; border-radius: 6px; padding: 8px; }
+    </style>
+</head>
+<body>
+
+<h1>🛤️ 滑台测试页面 - 布局方案选择</h1>
+
+<!-- 方案A：紧凑左侧栏 -->
+<div class="layout-container">
+    <div class="layout-title">
+        <span>方案A：紧凑左侧栏（一屏显示）</span>
+        <span class="layout-desc">控制面板更紧凑，标签放弹窗</span>
+    </div>
+    <div class="layout-preview">
+        <div class="sidebar sidebar-narrow">
+            <div class="panel">
+                <div class="panel-title">🛤️ 滑台</div>
+                <div class="row">
+                    <input class="input" style="flex:1" value="5000">
+                    <button class="btn primary">GO</button>
+                    <button class="btn">🏠</button>
+                    <button class="btn danger">⏹</button>
+                </div>
+                <div class="row">
+                    <span class="label">步进</span>
+                    <input class="input sm" value="10">
+                    <button class="btn">◀</button>
+                    <button class="btn">▶</button>
+                    <span class="label">mm</span>
+                </div>
+                <div class="row">
+                    <span class="label">位置:</span>
+                    <span class="value">1234.567</span>
+                    <span class="label">mm</span>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">🎯 转靶 <span class="value" style="font-size:11px;">90%</span></div>
+                <div class="row">
+                    <button class="ref-btn">10</button>
+                    <button class="ref-btn">20</button>
+                    <button class="ref-btn">30</button>
+                    <button class="ref-btn">40</button>
+                </div>
+                <div class="row">
+                    <button class="ref-btn">60</button>
+                    <button class="ref-btn">70</button>
+                    <button class="ref-btn">80</button>
+                    <button class="ref-btn active">90</button>
+                    <button class="btn">🔄</button>
+                </div>
+            </div>
+            <div class="panel" style="flex:1;">
+                <div class="panel-title">📊 测试 <span style="float:right;"><button class="btn" style="padding:2px 6px;font-size:10px;">基础</button><button class="btn primary" style="padding:2px 6px;font-size:10px;">高级</button></span></div>
+                <div class="row">
+                    <span class="label">起始</span><input class="input sm" value="0">
+                    <span class="label">结束</span><input class="input sm" value="38000">
+                </div>
+                <div class="row">
+                    <span class="label">步进</span><input class="input sm" value="1000">
+                    <span class="label">采样</span><input class="input sm" value="5">
+                </div>
+                <div class="row" style="margin-top:6px;">
+                    <button class="btn" style="flex:1;">🏷️ 标签</button>
+                    <button class="btn" style="flex:1;">⚙️ 设置</button>
+                </div>
+            </div>
+            <div class="action-btns">
+                <button class="action-btn start">▶ 开始</button>
+                <button class="action-btn stop">⏹ 停止</button>
+            </div>
+        </div>
+        <div class="main-area">
+            <div class="stats-bar">
+                <div class="stat-item"><div class="stat-num">0.000</div><div class="stat-label">位置mm</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#00d4ff;">--</div><div class="stat-label">平均误差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#ff6b6b;">--</div><div class="stat-label">最大误差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#ffc107;">--</div><div class="stat-label">标准差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#00e676;">--</div><div class="stat-label">通过率</div></div>
+            </div>
+            <div class="table-area">
+                <div class="table-header"><span>ID</span><span>耗时</span><span>目标</span><span>实际</span><span>误差</span><span>反射率</span><span>状态</span></div>
+                <div class="table-body"></div>
+            </div>
+            <div class="chart-area">📈 误差曲线</div>
+        </div>
+    </div>
+</div>
+
+<!-- 方案B：顶部工具栏 -->
+<div class="layout-container">
+    <div class="layout-title">
+        <span>方案B：顶部工具栏</span>
+        <span class="layout-desc">运动控制放顶部，更多空间给数据</span>
+    </div>
+    <div class="layout-preview" style="flex-direction: column;">
+        <div class="toolbar-style">
+            <div class="row">
+                <div class="panel-title" style="margin:0;">🛤️ 滑台</div>
+                <input class="input sm" value="5000">
+                <button class="btn primary">GO</button>
+                <button class="btn">🏠</button>
+                <button class="btn danger">⏹</button>
+                <span class="label" style="margin-left:10px;">步进</span>
+                <input class="input" style="width:50px;" value="10">
+                <button class="btn">◀</button>
+                <button class="btn">▶</button>
+                <span class="value" style="margin-left:10px;">1234.567 mm</span>
+                
+                <span style="margin-left:20px;"></span>
+                <div class="panel-title" style="margin:0;">🎯 转靶</div>
+                <button class="ref-btn" style="width:30px;">10</button>
+                <button class="ref-btn" style="width:30px;">20</button>
+                <button class="ref-btn" style="width:30px;">30</button>
+                <button class="ref-btn" style="width:30px;">40</button>
+                <button class="ref-btn" style="width:30px;">60</button>
+                <button class="ref-btn" style="width:30px;">70</button>
+                <button class="ref-btn" style="width:30px;">80</button>
+                <button class="ref-btn active" style="width:30px;">90</button>
+                <button class="btn">🔄</button>
+                <span class="value" style="margin-left:6px;">90%</span>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; flex:1;">
+            <div class="sidebar sidebar-narrow" style="width:180px;">
+                <div class="panel" style="flex:1;">
+                    <div class="panel-title">📊 测试配置</div>
+                    <div class="row"><button class="btn" style="flex:1;">基础</button><button class="btn primary" style="flex:1;">高级</button></div>
+                    <div class="row"><span class="label">起始</span><input class="input" style="flex:1;" value="0"></div>
+                    <div class="row"><span class="label">结束</span><input class="input" style="flex:1;" value="38000"></div>
+                    <div class="row"><span class="label">步进</span><input class="input" style="flex:1;" value="1000"></div>
+                    <div class="row"><span class="label">采样</span><input class="input" style="flex:1;" value="5"></div>
+                    <div class="row" style="margin-top:8px;">
+                        <button class="btn" style="flex:1;">🏷️ 标签</button>
+                        <button class="btn" style="flex:1;">⚙️</button>
+                    </div>
+                </div>
+                <div class="action-btns">
+                    <button class="action-btn start">▶ 开始</button>
+                    <button class="action-btn stop">⏹</button>
+                </div>
+            </div>
+            <div class="main-area">
+                <div class="stats-bar">
+                    <div class="stat-item"><div class="stat-num" style="color:#00d4ff;">--</div><div class="stat-label">平均误差</div></div>
+                    <div class="stat-item"><div class="stat-num" style="color:#ff6b6b;">--</div><div class="stat-label">最大误差</div></div>
+                    <div class="stat-item"><div class="stat-num" style="color:#ffc107;">--</div><div class="stat-label">标准差</div></div>
+                    <div class="stat-item"><div class="stat-num" style="color:#00e676;">--</div><div class="stat-label">通过率</div></div>
+                </div>
+                <div class="table-area" style="flex:1;">
+                    <div class="table-header"><span>ID</span><span>耗时</span><span>目标</span><span>实际</span><span>误差</span><span>反射率</span><span>状态</span></div>
+                    <div class="table-body"></div>
+                </div>
+                <div class="chart-area">📈 误差曲线</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 方案C：极简左栏+弹窗 -->
+<div class="layout-container">
+    <div class="layout-title">
+        <span>方案C：极简左栏 + 弹窗配置</span>
+        <span class="layout-desc">左栏只放核心操作，配置全部弹窗</span>
+    </div>
+    <div class="layout-preview">
+        <div class="sidebar" style="width:160px;">
+            <div class="panel">
+                <div class="row">
+                    <input class="input" style="flex:1" value="5000" placeholder="目标mm">
+                    <button class="btn primary">GO</button>
+                </div>
+                <div class="row">
+                    <button class="btn" style="flex:1;">🏠</button>
+                    <button class="btn danger" style="flex:1;">⏹</button>
+                </div>
+                <div class="row">
+                    <input class="input sm" value="10">
+                    <button class="btn">◀</button>
+                    <button class="btn">▶</button>
+                </div>
+                <div class="row">
+                    <span class="value" style="flex:1; text-align:center;">1234.567 mm</span>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="row">
+                    <button class="ref-btn">10</button>
+                    <button class="ref-btn">20</button>
+                    <button class="ref-btn">30</button>
+                    <button class="ref-btn">40</button>
+                </div>
+                <div class="row">
+                    <button class="ref-btn">60</button>
+                    <button class="ref-btn">70</button>
+                    <button class="ref-btn">80</button>
+                    <button class="ref-btn active">90</button>
+                </div>
+                <div class="row">
+                    <span class="value" style="flex:1; text-align:center;">90%</span>
+                    <button class="btn">🔄</button>
+                </div>
+            </div>
+            <div class="panel" style="flex:1;">
+                <button class="btn" style="width:100%; margin-bottom:6px;">📊 测试配置</button>
+                <button class="btn" style="width:100%; margin-bottom:6px;">🏷️ 标签设置</button>
+                <button class="btn" style="width:100%;">⚙️ 系统设置</button>
+            </div>
+            <div class="action-btns">
+                <button class="action-btn start">▶ 开始</button>
+                <button class="action-btn stop">⏹</button>
+            </div>
+        </div>
+        <div class="main-area">
+            <div class="stats-bar">
+                <div class="stat-item"><div class="stat-num">0.000</div><div class="stat-label">位置mm</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#00d4ff;">--</div><div class="stat-label">平均误差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#ff6b6b;">--</div><div class="stat-label">最大误差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#ffc107;">--</div><div class="stat-label">标准差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#00e676;">--</div><div class="stat-label">通过率</div></div>
+            </div>
+            <div class="table-area" style="flex:1;">
+                <div class="table-header"><span>ID</span><span>耗时</span><span>目标</span><span>实际</span><span>误差</span><span>反射率</span><span>状态</span></div>
+                <div class="table-body"></div>
+            </div>
+            <div class="chart-area">📈 误差曲线</div>
+        </div>
+    </div>
+</div>
+
+<!-- 方案D：双栏布局 -->
+<div class="layout-container">
+    <div class="layout-title">
+        <span>方案D：运动控制独立浮窗</span>
+        <span class="layout-desc">运动控制用全局工具栏，页面只放测试相关</span>
+    </div>
+    <div class="layout-preview">
+        <div class="sidebar" style="width:200px;">
+            <div class="panel" style="flex:1;">
+                <div class="panel-title">📊 测试配置</div>
+                <div class="row"><button class="btn" style="flex:1;">基础</button><button class="btn primary" style="flex:1;">高级</button></div>
+                <div class="row"><span class="label">起始</span><input class="input" style="flex:1;" value="0"><span class="label">mm</span></div>
+                <div class="row"><span class="label">结束</span><input class="input" style="flex:1;" value="38000"><span class="label">mm</span></div>
+                <div class="row"><span class="label">步进</span><input class="input" style="flex:1;" value="1000"><span class="label">mm</span></div>
+                <div class="row"><span class="label">采样</span><input class="input" style="flex:1;" value="5"><span class="label">次</span></div>
+                <hr style="border-color:#1a3a5c; margin:10px 0;">
+                <div class="panel-title">🏷️ 标签</div>
+                <div class="row"><span class="label">别名</span><input class="input" style="flex:1;" placeholder="1#机"></div>
+                <div class="row"><span class="label">温度</span><input class="input sm" value="25"><span class="label">℃</span></div>
+                <div class="row"><textarea class="input" style="flex:1; height:40px; resize:none;" placeholder="备注..."></textarea></div>
+            </div>
+            <div class="action-btns">
+                <button class="action-btn start">▶ 开始测试</button>
+                <button class="action-btn stop">⏹ 停止</button>
+            </div>
+        </div>
+        <div class="main-area">
+            <div class="stats-bar">
+                <div class="stat-item"><div class="stat-num">0.000</div><div class="stat-label">位置mm</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#00d4ff;">--</div><div class="stat-label">平均误差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#ff6b6b;">--</div><div class="stat-label">最大误差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#ffc107;">--</div><div class="stat-label">标准差</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:#00e676;">--</div><div class="stat-label">通过率</div></div>
+                <div class="stat-item"><button class="btn">⚙️</button></div>
+            </div>
+            <div class="table-area" style="flex:1;">
+                <div class="table-header"><span>ID</span><span>耗时</span><span>目标</span><span>实际</span><span>误差</span><span>反射率</span><span>状态</span></div>
+                <div class="table-body"></div>
+            </div>
+            <div class="chart-area">📈 误差曲线</div>
+        </div>
+        <!-- 浮动工具栏示意 -->
+        <div style="position:absolute; right:30px; top:80px; width:180px;">
+            <div class="panel" style="background:#0a1628; border:2px solid #00ff88;">
+                <div class="panel-title">🎛️ 设备控制</div>
+                <div class="row"><span class="label">滑台</span><input class="input sm" value="5000"><button class="btn primary" style="padding:4px 8px;">GO</button></div>
+                <div class="row"><input class="input" style="width:40px;" value="10"><button class="btn" style="padding:4px;">◀</button><button class="btn" style="padding:4px;">▶</button><button class="btn" style="padding:4px;">🏠</button></div>
+                <div class="row"><span class="label">转靶</span><span class="value">90%</span><button class="btn" style="padding:4px;">🔄</button></div>
+                <div class="row">
+                    <button class="ref-btn" style="padding:2px;">10</button>
+                    <button class="ref-btn" style="padding:2px;">30</button>
+                    <button class="ref-btn" style="padding:2px;">60</button>
+                    <button class="ref-btn active" style="padding:2px;">90</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2>方案说明</h2>
+<ul style="line-height: 2; padding-left: 20px; color: #aaa;">
+    <li><b style="color:#00ff88;">方案A</b>：紧凑左侧栏，标签和设置用按钮打开弹窗，一屏显示所有内容</li>
+    <li><b style="color:#00ff88;">方案B</b>：运动控制放顶部工具栏，左侧只放测试配置，数据区更大</li>
+    <li><b style="color:#00ff88;">方案C</b>：极简左栏，只放核心操作按钮，所有配置都用弹窗</li>
+    <li><b style="color:#00ff88;">方案D</b>：运动控制用全局浮动工具栏（已有），页面只放测试相关内容</li>
+</ul>
+
+</body>
+</html>

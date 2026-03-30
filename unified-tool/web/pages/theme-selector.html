@@ -1,0 +1,364 @@
+<!-- 专业主题选择页面 -->
+<div class="theme-page">
+    <div class="theme-header">
+        <h2>🎨 选择主题风格</h2>
+        <p class="theme-subtitle">根据使用场景选择最适合的界面主题</p>
+    </div>
+
+    <div class="theme-grid">
+        <!-- Industrial Pro -->
+        <div class="theme-card" onclick="applyTheme('industrial-pro')">
+            <div class="theme-preview industrial-pro-preview">
+                <div class="preview-header"></div>
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                    <div class="preview-card"></div>
+                    <div class="preview-card"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3>🏭 Industrial Pro</h3>
+                <p>专业工业风格，高对比度，清晰可读</p>
+                <div class="theme-tags">
+                    <span class="tag">高可读性</span>
+                    <span class="tag">生产环境</span>
+                    <span class="tag">HMI标准</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Midnight Glass -->
+        <div class="theme-card" onclick="applyTheme('midnight-glass')">
+            <div class="theme-preview midnight-glass-preview">
+                <div class="preview-header"></div>
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                    <div class="preview-card"></div>
+                    <div class="preview-card"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3>🌙 Midnight Glass</h3>
+                <p>现代玻璃拟态，优雅渐变效果</p>
+                <div class="theme-tags">
+                    <span class="tag">玻璃拟态</span>
+                    <span class="tag">展示演示</span>
+                    <span class="tag">优雅设计</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matrix Terminal -->
+        <div class="theme-card" onclick="applyTheme('matrix-terminal')">
+            <div class="theme-preview matrix-terminal-preview">
+                <div class="preview-header"></div>
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                    <div class="preview-card"></div>
+                    <div class="preview-card"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3>💻 Matrix Terminal</h3>
+                <p>终端风格，等宽字体，高科技感</p>
+                <div class="theme-tags">
+                    <span class="tag">终端风格</span>
+                    <span class="tag">开发调试</span>
+                    <span class="tag">极客美学</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carbon Premium -->
+        <div class="theme-card" onclick="applyTheme('carbon-premium')">
+            <div class="theme-preview carbon-premium-preview">
+                <div class="preview-header"></div>
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                    <div class="preview-card"></div>
+                    <div class="preview-card"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3>💎 Carbon Premium</h3>
+                <p>碳纤维质感，精致细节，企业级</p>
+                <div class="theme-tags">
+                    <span class="tag">高端质感</span>
+                    <span class="tag">商务演示</span>
+                    <span class="tag">精致细节</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arctic Clean -->
+        <div class="theme-card" onclick="applyTheme('arctic-clean')">
+            <div class="theme-preview arctic-clean-preview">
+                <div class="preview-header"></div>
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                    <div class="preview-card"></div>
+                    <div class="preview-card"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3>❄️ Arctic Clean</h3>
+                <p>浅色护眼主题，适合明亮环境</p>
+                <div class="theme-tags">
+                    <span class="tag">浅色主题</span>
+                    <span class="tag">护眼设计</span>
+                    <span class="tag">办公环境</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aurora (原主题) -->
+        <div class="theme-card" onclick="applyTheme('aurora')">
+            <div class="theme-preview aurora-preview">
+                <div class="preview-header"></div>
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                    <div class="preview-card"></div>
+                    <div class="preview-card"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3>🌌 Aurora 极光</h3>
+                <p>原版科技绿主题，霓虹发光效果</p>
+                <div class="theme-tags">
+                    <span class="tag">科技感</span>
+                    <span class="tag">霓虹发光</span>
+                    <span class="tag">经典风格</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-footer">
+        <p>当前主题: <strong id="current-theme-name">Aurora 极光</strong></p>
+        <button class="btn-reset" onclick="applyTheme('aurora')">重置为默认</button>
+    </div>
+</div>
+
+<style>
+.theme-page {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.theme-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.theme-header h2 {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    color: var(--text-color);
+}
+
+.theme-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.theme-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.theme-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.theme-preview {
+    height: 140px;
+    position: relative;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    grid-template-rows: 20px 1fr;
+    gap: 6px;
+}
+
+.preview-header {
+    grid-column: 1 / -1;
+    border-radius: 4px;
+}
+
+.preview-sidebar {
+    border-radius: 4px;
+}
+
+.preview-content {
+    display: flex;
+    gap: 6px;
+}
+
+.preview-card {
+    flex: 1;
+    border-radius: 4px;
+}
+
+/* 各主题预览样式 */
+.industrial-pro-preview {
+    background: #1A1D21;
+}
+.industrial-pro-preview .preview-header { background: #22262B; }
+.industrial-pro-preview .preview-sidebar { background: #15181C; }
+.industrial-pro-preview .preview-card { background: #22262B; border: 1px solid #3A3F45; }
+
+.midnight-glass-preview {
+    background: linear-gradient(135deg, #0F172A, #1E293B);
+}
+.midnight-glass-preview .preview-header { background: rgba(30, 41, 59, 0.7); }
+.midnight-glass-preview .preview-sidebar { background: rgba(15, 23, 42, 0.95); }
+.midnight-glass-preview .preview-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(148, 163, 184, 0.2); }
+
+.matrix-terminal-preview {
+    background: #000;
+}
+.matrix-terminal-preview .preview-header { background: rgba(0, 20, 0, 0.9); border: 1px solid #003300; }
+.matrix-terminal-preview .preview-sidebar { background: #000; border: 1px solid #003300; }
+.matrix-terminal-preview .preview-card { background: rgba(0, 20, 0, 0.9); border: 1px solid #00FF41; }
+
+.carbon-premium-preview {
+    background: #111;
+    background-image: 
+        linear-gradient(45deg, #151515 25%, transparent 25%),
+        linear-gradient(-45deg, #151515 25%, transparent 25%);
+    background-size: 4px 4px;
+}
+.carbon-premium-preview .preview-header { background: linear-gradient(145deg, #1A1A1A, #141414); }
+.carbon-premium-preview .preview-sidebar { background: #0A0A0A; }
+.carbon-premium-preview .preview-card { background: linear-gradient(145deg, #1A1A1A, #141414); border: 1px solid #2A2A2A; }
+
+.arctic-clean-preview {
+    background: #F8FAFC;
+}
+.arctic-clean-preview .preview-header { background: #FFF; border: 1px solid #E2E8F0; }
+.arctic-clean-preview .preview-sidebar { background: #FFF; border: 1px solid #E2E8F0; }
+.arctic-clean-preview .preview-card { background: #FFF; border: 1px solid #E2E8F0; }
+
+.aurora-preview {
+    background: linear-gradient(135deg, rgba(120, 50, 200, 0.4), rgba(50, 100, 180, 0.3));
+}
+.aurora-preview .preview-header { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 255, 136, 0.3); }
+.aurora-preview .preview-sidebar { background: rgba(10, 15, 30, 0.95); }
+.aurora-preview .preview-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 255, 136, 0.3); }
+
+.theme-info {
+    padding: 16px;
+}
+
+.theme-info h3 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    color: var(--text-color);
+}
+
+.theme-info p {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.theme-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-radius: 10px;
+}
+
+.theme-footer {
+    margin-top: 32px;
+    text-align: center;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+}
+
+.theme-footer p {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.btn-reset {
+    padding: 8px 16px;
+    background: var(--card-bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-reset:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+</style>
+
+<script>
+const themeNames = {
+    'aurora': 'Aurora 极光',
+    'industrial-pro': 'Industrial Pro',
+    'midnight-glass': 'Midnight Glass',
+    'matrix-terminal': 'Matrix Terminal',
+    'carbon-premium': 'Carbon Premium',
+    'arctic-clean': 'Arctic Clean'
+};
+
+function applyTheme(themeName) {
+    document.documentElement.setAttribute('data-theme', themeName);
+    localStorage.setItem('preferred-theme', themeName);
+    
+    const nameEl = document.getElementById('current-theme-name');
+    if (nameEl) {
+        nameEl.textContent = themeNames[themeName] || themeName;
+    }
+    
+    // 高亮选中的卡片
+    document.querySelectorAll('.theme-card').forEach(card => {
+        card.style.borderColor = '';
+    });
+    event.currentTarget.style.borderColor = 'var(--accent)';
+    
+    if (window.Utils) {
+        Utils.toast(`已切换到 ${themeNames[themeName]} 主题`, 'success');
+    }
+}
+
+// 初始化 - 读取已保存的主题
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('preferred-theme');
+    if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+        const nameEl = document.getElementById('current-theme-name');
+        if (nameEl) nameEl.textContent = themeNames[saved] || saved;
+    }
+});
+</script>

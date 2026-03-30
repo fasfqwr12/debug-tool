@@ -1,0 +1,1162 @@
+<!-- UI测试集成页面 - 规范化测试流程 + 自动化执行 -->
+<div class="uit-integrated-page">
+<style>
+/* ===== UI测试集成页面样式 ===== */
+.uit-integrated-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px;
+    gap: 12px;
+}
+
+/* 顶部工具栏 */
+.uit-top-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.uit-top-bar .device-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.uit-top-bar .device-model {
+    font-weight: 600;
+    color: var(--accent);
+    padding: 4px 10px;
+    background: rgba(0,255,136,0.1);
+    border-radius: 4px;
+}
+.uit-top-bar .serial-status {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.uit-top-bar .serial-status.connected { color: var(--accent); }
+.uit-top-bar .actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
+
+/* 进度条 */
+.uit-progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.uit-progress-bar .progress-track {
+    flex: 1;
+    height: 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.uit-progress-bar .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+.uit-progress-bar .progress-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    min-width: 120px;
+    text-align: right;
+}
+.uit-progress-bar .stats {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+}
+.uit-progress-bar .stats .pass { color: var(--color-success, #00ff88); }
+.uit-progress-bar .stats .fail { color: var(--color-danger, #ff6b6b); }
+
+/* 主内容区 */
+.uit-main-content {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 测试组列表 */
+.uit-groups-panel {
+    width: 280px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.uit-groups-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.uit-groups-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+.uit-group-item {
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.uit-group-item:hover { background: var(--input-bg); }
+.uit-group-item.active { background: rgba(0,255,136,0.1); border: 1px solid var(--accent); }
+.uit-group-item .name { flex: 1; font-size: 13px; }
+.uit-group-item .progress {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: var(--input-bg);
+    border-radius: 10px;
+}
+.uit-group-item.all-pass .progress { background: rgba(0,255,136,0.2); color: var(--accent); }
+.uit-group-item.has-fail .progress { background: rgba(255,107,107,0.2); color: var(--color-danger); }
+
+/* 测试项列表 */
+.uit-items-panel {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.uit-items-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.uit-items-header .title {
+    font-weight: 600;
+    font-size: 14px;
+}
+.uit-items-header .group-actions {
+    display: flex;
+    gap: 6px;
+}
+.uit-items-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* 单个测试项 */
+.uit-test-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+.uit-test-item:hover { background: color-mix(in srgb, var(--input-bg) 80%, var(--accent) 20%); }
+.uit-test-item.passed { border-left-color: var(--color-success, #00ff88); }
+.uit-test-item.failed { border-left-color: var(--color-danger, #ff6b6b); }
+.uit-test-item.running { border-left-color: var(--color-warning, #ffa500); background: rgba(255,165,0,0.1); }
+
+.uit-test-item .item-content {
+    flex: 1;
+    min-width: 0;
+}
+.uit-test-item .item-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 2px;
+}
+.uit-test-item .item-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.uit-test-item .item-result {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.uit-test-item .item-result.error { color: var(--color-danger); }
+
+/* 结果按钮 */
+.uit-result-btns {
+    display: flex;
+    gap: 6px;
+}
+.uit-result-btn {
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+.uit-result-btn.pass { border-color: var(--color-success, #00ff88); color: var(--color-success, #00ff88); }
+.uit-result-btn.fail { border-color: var(--color-danger, #ff6b6b); color: var(--color-danger, #ff6b6b); }
+.uit-result-btn.pass.active { background: var(--color-success, #00ff88); color: #000; }
+.uit-result-btn.fail.active { background: var(--color-danger, #ff6b6b); color: #fff; }
+.uit-result-btn:hover { opacity: 0.8; }
+
+/* 右侧控制面板 */
+.uit-control-panel {
+    width: 280px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.uit-control-section {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+.uit-control-section:last-child { border-bottom: none; }
+.uit-control-section .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+/* 设备状态 */
+.uit-device-status {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.uit-status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    font-size: 11px;
+}
+.uit-status-item .label { color: var(--text-muted); }
+.uit-status-item .value { color: var(--text-color); font-family: var(--font-mono); }
+.uit-status-item.highlight .value { color: var(--accent); font-weight: 600; }
+
+/* 手动控制按钮 */
+.uit-manual-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.uit-manual-btn {
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    color: var(--text-color);
+    transition: all 0.2s;
+}
+.uit-manual-btn:hover { border-color: var(--accent); color: var(--accent); }
+.uit-manual-btn.danger { border-color: var(--color-danger); color: var(--color-danger); }
+
+/* 模拟输入 */
+.uit-sim-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+.uit-sim-row input {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 12px;
+}
+.uit-sim-row .unit {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* 执行日志 */
+.uit-log-panel {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.uit-log-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    line-height: 1.5;
+    background: var(--input-bg);
+    border-radius: 4px;
+    margin: 0 12px 12px;
+}
+.uit-log-item { margin-bottom: 2px; }
+.uit-log-item.tx { color: #00d4ff; }
+.uit-log-item.rx { color: #a78bfa; }
+.uit-log-item.pass { color: var(--color-success); }
+.uit-log-item.fail { color: var(--color-danger); }
+.uit-log-item.info { color: var(--text-muted); }
+.uit-log-time { color: var(--text-dim); margin-right: 6px; }
+
+/* 按钮样式 */
+.uit-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+.uit-btn:hover { border-color: var(--accent); color: var(--accent); }
+.uit-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
+.uit-btn.danger { border-color: var(--color-danger); color: var(--color-danger); }
+.uit-btn.sm { padding: 4px 10px; font-size: 11px; }
+.uit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+
+<!-- 顶部工具栏 -->
+<div class="uit-top-bar">
+    <div class="device-info">
+        <span>📱 设备:</span>
+        <span class="device-model" id="uit2-device-model">--</span>
+        <span class="serial-status" id="uit2-serial-status">⚪ 未连接</span>
+    </div>
+    <div class="actions">
+        <button class="uit-btn sm" onclick="UITestIntegrated.loadTestCases()">📥 加载用例</button>
+        <button class="uit-btn sm" onclick="UITestIntegrated.refreshStatus()">🔄 刷新状态</button>
+        <button class="uit-btn primary" onclick="UITestIntegrated.runAllAuto()" id="uit2-btn-run">▶ 自动执行全部</button>
+        <button class="uit-btn danger" onclick="UITestIntegrated.stopAuto()" id="uit2-btn-stop" style="display:none">⏹ 停止</button>
+        <button class="uit-btn sm" onclick="UITestIntegrated.exportReport()">📊 导出报告</button>
+    </div>
+</div>
+
+<!-- 进度条 -->
+<div class="uit-progress-bar">
+    <div class="progress-track">
+        <div class="progress-fill" id="uit2-progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="progress-text" id="uit2-progress-text">0 / 0</div>
+    <div class="stats">
+        <span class="pass">✅ <span id="uit2-pass-count">0</span></span>
+        <span class="fail">❌ <span id="uit2-fail-count">0</span></span>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="uit-main-content">
+    <!-- 左侧：测试组列表 -->
+    <div class="uit-groups-panel">
+        <div class="uit-groups-header">
+            <span>📋 测试分组</span>
+            <span id="uit2-group-count">0 组</span>
+        </div>
+        <div class="uit-groups-list" id="uit2-groups-list">
+            <div style="text-align:center; padding:20px; color:var(--text-muted)">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 中间：测试项列表 -->
+    <div class="uit-items-panel">
+        <div class="uit-items-header">
+            <span class="title" id="uit2-items-title">选择左侧分组</span>
+            <div class="group-actions">
+                <button class="uit-btn sm" onclick="UITestIntegrated.runGroupAuto()">▶ 执行本组</button>
+                <button class="uit-btn sm" onclick="UITestIntegrated.resetGroup()">🔄 重置</button>
+            </div>
+        </div>
+        <div class="uit-items-list" id="uit2-items-list">
+            <div style="text-align:center; padding:40px; color:var(--text-muted)">选择左侧分组查看测试项</div>
+        </div>
+    </div>
+
+    <!-- 右侧：控制面板 -->
+    <div class="uit-control-panel">
+        <!-- 设备状态 -->
+        <div class="uit-control-section">
+            <div class="section-title">📡 设备状态</div>
+            <div class="uit-device-status">
+                <div class="uit-status-item"><span class="label">state</span><span class="value" id="ds2-state">-</span></div>
+                <div class="uit-status-item"><span class="label">mode</span><span class="value" id="ds2-mode">-</span></div>
+                <div class="uit-status-item"><span class="label">base</span><span class="value" id="ds2-base">-</span></div>
+                <div class="uit-status-item"><span class="label">unit</span><span class="value" id="ds2-unit">-</span></div>
+                <div class="uit-status-item"><span class="label">laser</span><span class="value" id="ds2-laser">-</span></div>
+                <div class="uit-status-item"><span class="label">runstep</span><span class="value" id="ds2-runstep">-</span></div>
+                <div class="uit-status-item highlight" style="grid-column: span 2">
+                    <span class="label">line4</span><span class="value" id="ds2-line4">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手动控制 -->
+        <div class="uit-control-section">
+            <div class="section-title">🎮 手动控制</div>
+            <div class="uit-manual-btns">
+                <button class="uit-manual-btn" onclick="UITestIntegrated.sendCmd('key_measure')">📏 测量</button>
+                <button class="uit-manual-btn" onclick="UITestIntegrated.sendCmd('key_measure_long')">🔁 连续</button>
+                <button class="uit-manual-btn" onclick="UITestIntegrated.sendCmd('key_mode')">🔄 模式</button>
+                <button class="uit-manual-btn" onclick="UITestIntegrated.sendCmd('key_base')">📐 基准</button>
+                <button class="uit-manual-btn" onclick="UITestIntegrated.sendCmd('key_clear')">🗑️ 清除</button>
+                <button class="uit-manual-btn" onclick="UITestIntegrated.sendCmd('key_backlight')">💡 背光</button>
+                <button class="uit-manual-btn danger" onclick="UITestIntegrated.sendCmd('key_power_off')">⏻ 关机</button>
+            </div>
+            <div class="uit-sim-row">
+                <span style="font-size:11px; color:var(--text-muted)">模拟:</span>
+                <input type="number" id="uit2-sim-dist" value="5000" placeholder="距离">
+                <span class="unit">mm</span>
+                <button class="uit-manual-btn" onclick="UITestIntegrated.simOk()" style="color:var(--color-success)">✅</button>
+                <button class="uit-manual-btn" onclick="UITestIntegrated.simErr()" style="color:var(--color-danger)">❌</button>
+            </div>
+        </div>
+
+        <!-- 执行日志 -->
+        <div class="uit-control-section uit-log-panel">
+            <div class="section-title" style="display:flex; justify-content:space-between">
+                <span>📜 执行日志</span>
+                <button class="uit-btn sm" onclick="UITestIntegrated.clearLog()">清空</button>
+            </div>
+            <div class="uit-log-content" id="uit2-log"></div>
+        </div>
+    </div>
+</div>
+</div><!-- /uit-integrated-page -->
+
+<script>
+/**
+ * UI测试集成模块 - 规范化测试流程 + 自动化执行
+ */
+const UITestIntegrated = {
+    // 测试数据
+    testGroups: [],      // 测试分组
+    testItems: {},       // 测试项 {groupId: [items]}
+    testResults: {},     // 测试结果 {itemKey: 'pass'|'fail'|null}
+    
+    // 状态
+    currentGroupId: null,
+    running: false,
+    aborted: false,
+    
+    // 统计
+    stats: { total: 0, passed: 0, failed: 0 },
+    
+    async init() {
+        console.log('UITestIntegrated init');
+        this.updateSerialStatus();
+        this.updateDeviceModel();
+        
+        // 监听串口状态
+        if (window.DeviceHub) {
+            DeviceHub.onStatusChange(() => {
+                this.updateSerialStatus();
+                this.updateDeviceModel();
+            });
+        }
+        
+        // 加载测试用例
+        await this.loadTestCases();
+    },
+    
+    destroy() {
+        console.log('UITestIntegrated destroy');
+        this.aborted = true;
+    },
+    
+    // ==================== 数据加载 ====================
+    
+    async loadTestCases() {
+        this.log('info', '正在加载测试用例...');
+        
+        try {
+            const result = await API.call('ui_test_load_cases');
+            if (result && result.success && result.cases) {
+                this.parseTestCases(result.cases);
+                this.renderGroups();
+                this.updateStats();
+                this.log('info', `已加载 ${result.count} 个测试用例`);
+            } else {
+                this.log('fail', '加载测试用例失败');
+            }
+        } catch (e) {
+            console.error('加载测试用例失败:', e);
+            this.log('fail', '加载失败: ' + e.message);
+        }
+    },
+    
+    parseTestCases(cases) {
+        // 按标签分组
+        const groupMap = {};
+        
+        cases.forEach(tc => {
+            // 每个测试用例作为一个测试项
+            const tags = tc.tags || ['其他'];
+            const primaryTag = tags[0] || '其他';
+            
+            if (!groupMap[primaryTag]) {
+                groupMap[primaryTag] = {
+                    id: primaryTag,
+                    name: this.getGroupName(primaryTag),
+                    items: []
+                };
+            }
+            
+            groupMap[primaryTag].items.push({
+                key: tc.id,
+                name: tc.name,
+                desc: tc.description || '',
+                caseData: tc,  // 保存完整用例数据用于自动执行
+                autoSupport: tc.steps && tc.steps.length > 0  // 是否支持自动执行
+            });
+        });
+        
+        this.testGroups = Object.values(groupMap);
+        this.testItems = {};
+        this.testGroups.forEach(g => {
+            this.testItems[g.id] = g.items;
+        });
+        
+        // 初始化结果
+        this.testResults = {};
+        this.testGroups.forEach(g => {
+            g.items.forEach(item => {
+                this.testResults[item.key] = null;
+            });
+        });
+    },
+
+    getGroupName(tag) {
+        const names = {
+            'basic': '基础功能',
+            'single': '单次测量',
+            'history': '历史数据',
+            'scroll': '数据滚动',
+            'error': '错误处理',
+            'mode': '模式切换',
+            'clear': '清除功能',
+            'unit': '单位转换',
+            'meter': '米制单位',
+            'feet': '英尺单位',
+            'inch': '英寸单位',
+            'base': '基准偏移',
+            'front': '前基准',
+            'back': '后基准',
+            'area': '面积测量',
+            'volume': '体积测量',
+            'multi': '多步测量',
+            'continuous': '连续测量',
+            'max': '最大值',
+            'min': '最小值',
+        };
+        return names[tag] || tag;
+    },
+    
+    // ==================== 渲染 ====================
+    
+    renderGroups() {
+        const container = document.getElementById('uit2-groups-list');
+        const countEl = document.getElementById('uit2-group-count');
+        if (!container) return;
+        
+        if (countEl) countEl.textContent = `${this.testGroups.length} 组`;
+        
+        if (this.testGroups.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">暂无测试用例</div>';
+            return;
+        }
+        
+        container.innerHTML = this.testGroups.map(g => {
+            const items = this.testItems[g.id] || [];
+            const total = items.length;
+            const passed = items.filter(i => this.testResults[i.key] === 'pass').length;
+            const failed = items.filter(i => this.testResults[i.key] === 'fail').length;
+            
+            let statusClass = '';
+            if (passed === total && total > 0) statusClass = 'all-pass';
+            else if (failed > 0) statusClass = 'has-fail';
+            
+            return `
+                <div class="uit-group-item ${statusClass} ${this.currentGroupId === g.id ? 'active' : ''}"
+                     onclick="UITestIntegrated.selectGroup('${g.id}')">
+                    <span class="name">${g.name}</span>
+                    <span class="progress">${passed}/${total}</span>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    selectGroup(groupId) {
+        this.currentGroupId = groupId;
+        this.renderGroups();
+        this.renderItems();
+    },
+    
+    renderItems() {
+        const container = document.getElementById('uit2-items-list');
+        const titleEl = document.getElementById('uit2-items-title');
+        if (!container) return;
+        
+        const group = this.testGroups.find(g => g.id === this.currentGroupId);
+        if (!group) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted)">选择左侧分组查看测试项</div>';
+            return;
+        }
+        
+        if (titleEl) titleEl.textContent = group.name;
+        
+        const items = this.testItems[group.id] || [];
+        if (items.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted)">该分组暂无测试项</div>';
+            return;
+        }
+        
+        container.innerHTML = items.map(item => {
+            const result = this.testResults[item.key];
+            let statusClass = '';
+            if (result === 'pass') statusClass = 'passed';
+            else if (result === 'fail') statusClass = 'failed';
+            
+            return `
+                <div class="uit-test-item ${statusClass}" data-key="${item.key}">
+                    <div class="item-content">
+                        <div class="item-name">${item.key} - ${item.name}</div>
+                        <div class="item-desc">${item.desc}</div>
+                        ${item.autoSupport ? '<div class="item-result" style="color:var(--accent)">🤖 支持自动执行</div>' : ''}
+                    </div>
+                    <div class="uit-result-btns">
+                        <button class="uit-result-btn pass ${result === 'pass' ? 'active' : ''}"
+                                onclick="UITestIntegrated.setResult('${item.key}', 'pass')">通过</button>
+                        <button class="uit-result-btn fail ${result === 'fail' ? 'active' : ''}"
+                                onclick="UITestIntegrated.setResult('${item.key}', 'fail')">不通过</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    // ==================== 结果操作 ====================
+    
+    setResult(itemKey, result) {
+        const oldResult = this.testResults[itemKey];
+        this.testResults[itemKey] = result;
+        
+        // 更新统计
+        if (oldResult === 'pass') this.stats.passed--;
+        if (oldResult === 'fail') this.stats.failed--;
+        if (result === 'pass') this.stats.passed++;
+        if (result === 'fail') this.stats.failed++;
+        
+        this.updateStats();
+        this.renderGroups();
+        this.renderItems();
+        
+        this.log(result === 'pass' ? 'pass' : 'fail', `[${itemKey}] ${result === 'pass' ? '通过' : '不通过'}`);
+    },
+    
+    resetGroup() {
+        if (!this.currentGroupId) return;
+        
+        const items = this.testItems[this.currentGroupId] || [];
+        items.forEach(item => {
+            if (this.testResults[item.key] === 'pass') this.stats.passed--;
+            if (this.testResults[item.key] === 'fail') this.stats.failed--;
+            this.testResults[item.key] = null;
+        });
+        
+        this.updateStats();
+        this.renderGroups();
+        this.renderItems();
+        this.log('info', `已重置分组: ${this.currentGroupId}`);
+    },
+    
+    updateStats() {
+        // 计算总数
+        this.stats.total = Object.keys(this.testResults).length;
+        
+        // 更新进度条
+        const done = this.stats.passed + this.stats.failed;
+        const percent = this.stats.total > 0 ? (done / this.stats.total * 100) : 0;
+        
+        const fillEl = document.getElementById('uit2-progress-fill');
+        const textEl = document.getElementById('uit2-progress-text');
+        const passEl = document.getElementById('uit2-pass-count');
+        const failEl = document.getElementById('uit2-fail-count');
+        
+        if (fillEl) fillEl.style.width = `${percent}%`;
+        if (textEl) textEl.textContent = `${done} / ${this.stats.total}`;
+        if (passEl) passEl.textContent = this.stats.passed;
+        if (failEl) failEl.textContent = this.stats.failed;
+    },
+    
+    // ==================== 自动执行 ====================
+    
+    async runAllAuto() {
+        if (!this.checkSerial()) return;
+        
+        this.running = true;
+        this.aborted = false;
+        this.showRunningUI(true);
+        this.log('info', '开始自动执行全部测试...');
+        
+        try {
+            // 收集所有支持自动执行的用例
+            const autoItems = [];
+            this.testGroups.forEach(g => {
+                (this.testItems[g.id] || []).forEach(item => {
+                    if (item.autoSupport) {
+                        autoItems.push(item);
+                    }
+                });
+            });
+            
+            if (autoItems.length === 0) {
+                this.log('info', '没有支持自动执行的测试用例');
+                return;
+            }
+            
+            this.log('info', `共 ${autoItems.length} 个用例支持自动执行`);
+            
+            // 调用后端执行
+            const caseIds = autoItems.map(i => i.key);
+            const result = await API.call('ui_test_run', caseIds);
+            
+            if (result && result.success) {
+                // 轮询状态
+                await this.pollTestStatus();
+            } else {
+                this.log('fail', '启动测试失败: ' + (result?.error || ''));
+            }
+        } catch (e) {
+            this.log('fail', '执行失败: ' + e.message);
+        } finally {
+            this.running = false;
+            this.showRunningUI(false);
+        }
+    },
+    
+    async runGroupAuto() {
+        if (!this.currentGroupId) {
+            Utils.toast('请先选择一个分组', 'warning');
+            return;
+        }
+        if (!this.checkSerial()) return;
+        
+        this.running = true;
+        this.aborted = false;
+        this.showRunningUI(true);
+        
+        const items = this.testItems[this.currentGroupId] || [];
+        const autoItems = items.filter(i => i.autoSupport);
+        
+        if (autoItems.length === 0) {
+            this.log('info', '该分组没有支持自动执行的测试用例');
+            this.running = false;
+            this.showRunningUI(false);
+            return;
+        }
+        
+        this.log('info', `开始执行分组 [${this.currentGroupId}] 的 ${autoItems.length} 个用例...`);
+        
+        try {
+            const caseIds = autoItems.map(i => i.key);
+            const result = await API.call('ui_test_run', caseIds);
+            
+            if (result && result.success) {
+                await this.pollTestStatus();
+            } else {
+                this.log('fail', '启动测试失败: ' + (result?.error || ''));
+            }
+        } catch (e) {
+            this.log('fail', '执行失败: ' + e.message);
+        } finally {
+            this.running = false;
+            this.showRunningUI(false);
+        }
+    },
+
+    async pollTestStatus() {
+        while (this.running && !this.aborted) {
+            try {
+                const result = await API.call('ui_test_get_status');
+                if (result) {
+                    // 更新结果
+                    (result.cases || []).forEach(tc => {
+                        if (tc.status === 'passed') {
+                            this.setResultSilent(tc.id, 'pass');
+                        } else if (tc.status === 'failed') {
+                            this.setResultSilent(tc.id, 'fail');
+                        }
+                    });
+                    
+                    this.renderGroups();
+                    this.renderItems();
+                    this.updateStats();
+                    
+                    // 检查是否完成
+                    if (!result.running) {
+                        this.log('info', '测试执行完成');
+                        break;
+                    }
+                }
+            } catch (e) {
+                console.error('轮询状态失败:', e);
+            }
+            
+            await this.sleep(500);
+        }
+    },
+    
+    setResultSilent(itemKey, result) {
+        const oldResult = this.testResults[itemKey];
+        if (oldResult === result) return;
+        
+        this.testResults[itemKey] = result;
+        
+        if (oldResult === 'pass') this.stats.passed--;
+        if (oldResult === 'fail') this.stats.failed--;
+        if (result === 'pass') this.stats.passed++;
+        if (result === 'fail') this.stats.failed++;
+    },
+    
+    stopAuto() {
+        this.aborted = true;
+        API.call('ui_test_abort').catch(e => console.error(e));
+        this.log('info', '正在停止测试...');
+    },
+    
+    showRunningUI(running) {
+        const btnRun = document.getElementById('uit2-btn-run');
+        const btnStop = document.getElementById('uit2-btn-stop');
+        if (btnRun) btnRun.style.display = running ? 'none' : '';
+        if (btnStop) btnStop.style.display = running ? '' : 'none';
+    },
+    
+    // ==================== 手动控制 ====================
+    
+    async sendCmd(cmd) {
+        if (!this.checkSerial()) return;
+        
+        try {
+            const result = await API.call('ui_test_send_cmd', cmd);
+            if (result && result.success) {
+                this.log('tx', `[${cmd}] ${result.hex || ''}`);
+                setTimeout(() => this.refreshStatus(), 300);
+            } else {
+                this.log('fail', `发送失败: ${result?.error || ''}`);
+            }
+        } catch (e) {
+            this.log('fail', `发送失败: ${e.message}`);
+        }
+    },
+    
+    async simOk() {
+        if (!this.checkSerial()) return;
+        
+        const dist = parseInt(document.getElementById('uit2-sim-dist')?.value) || 5000;
+        try {
+            const result = await API.call('ui_test_send_cmd', 'sim_ok', {dist: dist, signal: 3});
+            if (result && result.success) {
+                this.log('tx', `[sim_ok] dist=${dist}mm`);
+                setTimeout(() => this.refreshStatus(), 300);
+            }
+        } catch (e) {
+            this.log('fail', `模拟失败: ${e.message}`);
+        }
+    },
+    
+    async simErr() {
+        if (!this.checkSerial()) return;
+        
+        try {
+            const result = await API.call('ui_test_send_cmd', 'sim_err', 1);
+            if (result && result.success) {
+                this.log('tx', '[sim_err] error=1');
+                setTimeout(() => this.refreshStatus(), 300);
+            }
+        } catch (e) {
+            this.log('fail', `模拟失败: ${e.message}`);
+        }
+    },
+    
+    async refreshStatus() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) return;
+        
+        try {
+            const result = await API.call('ui_test_get_device_status');
+            if (result && result.success && result.status) {
+                this.updateDeviceStatusDisplay(result.status);
+            }
+        } catch (e) {
+            console.error('获取状态失败:', e);
+        }
+    },
+    
+    updateDeviceStatusDisplay(status) {
+        const stateNames = ['IDLE', 'LASER_ON', 'RESULT', 'ERROR', 'MENU'];
+        const modeNames = ['单次', '面积', '体积', '勾股1', '勾股2', '勾股3', '连续'];
+        const baseNames = ['前基准', '后基准'];
+        const unitNames = ['m', 'ft', 'in'];
+        
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val ?? '-';
+        };
+        
+        set('ds2-state', stateNames[status.state] || status.state);
+        set('ds2-mode', modeNames[status.mode] || status.mode);
+        set('ds2-base', baseNames[status.base] || status.base);
+        set('ds2-unit', unitNames[status.unit] || status.unit);
+        set('ds2-laser', status.laser ? 'ON' : 'OFF');
+        set('ds2-runstep', status.runstep);
+        set('ds2-line4', status.line4?.toFixed(3));
+    },
+
+    // ==================== 工具方法 ====================
+    
+    checkSerial() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) {
+            Utils.toast('请先连接串口', 'warning');
+            return false;
+        }
+        return true;
+    },
+    
+    updateSerialStatus() {
+        const el = document.getElementById('uit2-serial-status');
+        if (!el) return;
+        const connected = window.DeviceHub && DeviceHub.isSerialConnected();
+        el.textContent = connected ? '🟢 已连接' : '⚪ 未连接';
+        el.className = 'serial-status' + (connected ? ' connected' : '');
+    },
+    
+    updateDeviceModel() {
+        const el = document.getElementById('uit2-device-model');
+        if (!el) return;
+        
+        if (window.DeviceHub && DeviceHub.status?.serial?.info?.model_name) {
+            el.textContent = DeviceHub.status.serial.info.model_name;
+        } else if (window.DeviceHub && DeviceHub.status?.serial?.info?.model) {
+            el.textContent = DeviceHub.status.serial.info.model;
+        } else {
+            el.textContent = '--';
+        }
+    },
+    
+    log(type, msg) {
+        const container = document.getElementById('uit2-log');
+        if (!container) return;
+        
+        const time = new Date().toLocaleTimeString();
+        const div = document.createElement('div');
+        div.className = `uit-log-item ${type}`;
+        div.innerHTML = `<span class="uit-log-time">${time}</span>${msg}`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    },
+    
+    clearLog() {
+        const container = document.getElementById('uit2-log');
+        if (container) container.innerHTML = '';
+    },
+    
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
+    
+    // ==================== 报告导出 ====================
+    
+    async exportReport() {
+        const report = {
+            time: new Date().toISOString(),
+            device: document.getElementById('uit2-device-model')?.textContent || '--',
+            stats: this.stats,
+            results: {},
+            screenshots: {}  // 截图数据
+        };
+        
+        // 按分组整理结果
+        this.testGroups.forEach(g => {
+            report.results[g.name] = {};
+            (this.testItems[g.id] || []).forEach(item => {
+                report.results[g.name][item.key] = {
+                    name: item.name,
+                    result: this.testResults[item.key] || 'pending'
+                };
+            });
+        });
+        
+        // 尝试获取LCD模拟器截图
+        try {
+            if (window.LcdSimulator && typeof LcdSimulator.captureScreenshot === 'function') {
+                const screenshot = await LcdSimulator.captureScreenshot();
+                if (screenshot) {
+                    report.screenshots['lcd_current'] = screenshot;
+                }
+            }
+        } catch (e) {
+            console.warn('获取LCD截图失败:', e);
+        }
+        
+        // 询问导出格式
+        const format = await this.showFormatDialog();
+        
+        if (format === 'json') {
+            // 下载JSON
+            const blob = new Blob([JSON.stringify(report, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ui_test_report_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            Utils.toast('JSON报告已导出', 'success');
+        } else if (format === 'doc') {
+            // 调用后端生成DOC报告 - 使用HTTP API
+            Utils.toast('正在生成DOC报告...', 'info');
+            try {
+                const deviceId = DeviceConfigManager?.getCurrentDevice?.() || 'gd303_mini';
+                
+                // 使用 HTTP API 调用
+                const response = await fetch('http://localhost:8766/api/call', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'ui_test_export_doc_report',
+                        params: [report, deviceId]
+                    })
+                });
+                const result = await response.json();
+                
+                if (result && result.success) {
+                    // 下载生成的DOC文件
+                    const downloadResponse = await fetch('http://localhost:8766/api/call', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            method: 'ui_test_download_report',
+                            params: [result.filename]
+                        })
+                    });
+                    const downloadResult = await downloadResponse.json();
+                    
+                    if (downloadResult && downloadResult.success) {
+                        // 将base64转为blob并下载
+                        const byteCharacters = atob(downloadResult.data);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+                        
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = result.filename;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        
+                        Utils.toast('DOC报告已导出: ' + result.filename, 'success');
+                    } else {
+                        Utils.toast('下载报告失败: ' + (downloadResult?.error || ''), 'error');
+                    }
+                } else {
+                    Utils.toast('生成报告失败: ' + (result?.error || ''), 'error');
+                }
+            } catch (e) {
+                console.error('导出DOC报告失败:', e);
+                Utils.toast('导出失败: ' + e.message, 'error');
+            }
+        }
+    },
+    
+    // 显示格式选择对话框
+    showFormatDialog() {
+        return new Promise((resolve) => {
+            // 创建简单的选择对话框
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5); display: flex;
+                align-items: center; justify-content: center; z-index: 10000;
+            `;
+            dialog.innerHTML = `
+                <div style="background: var(--card-bg, #1e1e1e); padding: 24px; border-radius: 12px; min-width: 300px;">
+                    <h3 style="margin: 0 0 16px; color: var(--text-color, #fff);">选择导出格式</h3>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button id="export-json-btn" style="padding: 12px 24px; border-radius: 6px; border: 1px solid var(--border-color, #333); background: var(--input-bg, #2d2d2d); color: var(--text-color, #fff); cursor: pointer;">
+                            📄 JSON
+                        </button>
+                        <button id="export-doc-btn" style="padding: 12px 24px; border-radius: 6px; border: 1px solid var(--accent, #00ff88); background: var(--accent, #00ff88); color: #000; cursor: pointer; font-weight: 600;">
+                            📝 DOC (推荐)
+                        </button>
+                    </div>
+                    <button id="export-cancel-btn" style="margin-top: 16px; width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color, #333); background: transparent; color: var(--text-muted, #888); cursor: pointer;">
+                        取消
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+            
+            dialog.querySelector('#export-json-btn').onclick = () => {
+                document.body.removeChild(dialog);
+                resolve('json');
+            };
+            dialog.querySelector('#export-doc-btn').onclick = () => {
+                document.body.removeChild(dialog);
+                resolve('doc');
+            };
+            dialog.querySelector('#export-cancel-btn').onclick = () => {
+                document.body.removeChild(dialog);
+                resolve(null);
+            };
+            dialog.onclick = (e) => {
+                if (e.target === dialog) {
+                    document.body.removeChild(dialog);
+                    resolve(null);
+                }
+            };
+        });
+    }
+};
+
+window.UITestIntegrated = UITestIntegrated;
+</script>

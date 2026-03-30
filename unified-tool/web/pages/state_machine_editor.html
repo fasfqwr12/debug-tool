@@ -1,0 +1,1297 @@
+<!-- 层级状态机编辑器 - 优化版 -->
+<style>
+    .hsm-container {
+        display: grid;
+        grid-template-columns: 220px 1fr 380px;
+        grid-template-rows: 36px 1fr;
+        height: 100%;
+        background: var(--bg-primary);
+    }
+    
+    /* 顶部工具栏 */
+    .hsm-toolbar {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        padding: 4px 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        gap: 8px;
+    }
+    .hsm-toolbar h1 { font-size: 14px; margin: 0; white-space: nowrap; }
+    .hsm-toolbar-sep { width: 1px; height: 20px; background: var(--border-color); }
+    .hsm-btn {
+        padding: 4px 10px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 11px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .hsm-btn:hover { border-color: var(--accent-color); }
+    .hsm-btn.primary { background: var(--accent-color); border-color: var(--accent-color); color: white; }
+    .hsm-btn.success { background: #22c55e; border-color: #22c55e; color: white; }
+    
+    /* 面包屑 */
+    .hsm-breadcrumb { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+    .hsm-breadcrumb-item { padding: 2px 6px; background: var(--bg-tertiary); border-radius: 3px; cursor: pointer; }
+    .hsm-breadcrumb-item:hover, .hsm-breadcrumb-item.current { background: var(--accent-color); color: white; }
+    .hsm-breadcrumb-sep { color: var(--text-muted); font-size: 10px; }
+    
+    /* 左侧面板 */
+    .hsm-left {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        overflow: hidden;
+        min-width: 0;
+    }
+    .hsm-panel { display: flex; flex-direction: column; border-bottom: 1px solid var(--border-color); }
+    .hsm-panel.flex { flex: 1; min-height: 0; overflow: hidden; }
+    .hsm-panel-header {
+        padding: 6px 8px;
+        background: var(--bg-tertiary);
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .hsm-panel-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 6px; min-height: 0; }
+    
+    /* 层级指示器 */
+    .hsm-level-indicator { display: flex; gap: 3px; margin-bottom: 6px; }
+    .hsm-level-dot {
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px; font-weight: 600;
+        cursor: pointer;
+    }
+    .hsm-level-dot.l0 { background: #ef444430; color: #ef4444; }
+    .hsm-level-dot.l1 { background: #f59e0b30; color: #f59e0b; }
+    .hsm-level-dot.l2 { background: #3b82f630; color: #3b82f6; }
+    .hsm-level-dot.l3 { background: #22c55e30; color: #22c55e; }
+    .hsm-level-dot.active { transform: scale(1.15); box-shadow: 0 0 6px currentColor; }
+    
+    /* 状态树 - 紧凑版 */
+    .hsm-tree-node { margin-bottom: 1px; }
+    .hsm-tree-header {
+        display: grid;
+        grid-template-columns: var(--indent, 0px) 14px 14px 1fr;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 4px 4px 2px;
+        background: var(--bg-primary);
+        border-radius: 3px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        font-size: 11px;
+        min-height: 24px;
+    }
+    .hsm-tree-header:hover { border-color: var(--accent-color); background: var(--bg-tertiary); }
+    .hsm-tree-header.selected { border-color: var(--accent-color); background: rgba(34,197,94,0.15); }
+    .hsm-tree-spacer { /* 动态缩进占位 */ }
+    .hsm-tree-expand { 
+        width: 14px; height: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 8px; color: var(--text-muted); 
+        transition: transform 0.15s;
+        border-radius: 2px;
+    }
+    .hsm-tree-expand:hover { background: var(--bg-tertiary); }
+    .hsm-tree-expand.expanded { transform: rotate(90deg); }
+    .hsm-tree-expand.empty { visibility: hidden; }
+    .hsm-tree-icon { font-size: 11px; text-align: center; }
+    .hsm-tree-name { 
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        padding-right: 4px;
+    }
+    .hsm-tree-badge { font-size: 8px; padding: 0 3px; border-radius: 4px; margin-left: 2px; }
+    .hsm-tree-badge.initial { background: #22c55e30; color: #22c55e; }
+    /* 子节点容器 - 无额外缩进，缩进由grid控制 */
+    .hsm-tree-children { display: none; }
+    .hsm-tree-children.expanded { display: block; }
+    
+    /* 中间画布 */
+    .hsm-canvas-area {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+    #hsm-canvas { position: absolute; top: 0; left: 0; }
+    
+    .hsm-canvas-toolbar {
+        position: absolute; top: 8px; left: 8px;
+        display: flex; gap: 2px;
+        background: var(--bg-secondary);
+        padding: 3px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        z-index: 10;
+    }
+    .hsm-canvas-btn {
+        width: 26px; height: 26px;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent;
+        border: none; border-radius: 3px;
+        color: var(--text-secondary);
+        cursor: pointer; font-size: 12px;
+    }
+    .hsm-canvas-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .hsm-canvas-btn.active { background: var(--accent-color); color: white; }
+    
+    .hsm-zoom-indicator {
+        position: absolute; bottom: 8px; left: 8px;
+        padding: 3px 8px;
+        background: var(--bg-secondary);
+        border-radius: 3px;
+        font-size: 10px;
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+    }
+    .hsm-level-hint {
+        position: absolute; bottom: 8px; right: 8px;
+        padding: 4px 10px;
+        background: var(--bg-secondary);
+        border-radius: 4px;
+        font-size: 11px;
+        border: 1px solid var(--border-color);
+        display: flex; align-items: center; gap: 6px;
+    }
+    .hsm-level-hint-icon {
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px;
+    }
+    .hsm-empty-hint {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center; color: var(--text-muted);
+    }
+    .hsm-empty-hint h2 { font-size: 18px; margin-bottom: 6px; }
+    .hsm-empty-hint p { font-size: 12px; margin-bottom: 12px; }
+    .hsm-shortcuts {
+        position: absolute; bottom: 32px; left: 8px;
+        font-size: 9px; color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 4px 8px;
+        border-radius: 3px;
+        border: 1px solid var(--border-color);
+    }
+    .hsm-shortcuts kbd { background: var(--bg-tertiary); padding: 1px 4px; border-radius: 2px; }
+    
+    /* 右侧面板 - LCD固定顶部，下方Tab切换 */
+    .hsm-right {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    /* LCD预览 - 固定顶部 */
+    .hsm-lcd-panel {
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+    
+    /* Tab容器 */
+    .hsm-tab-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+    .hsm-tab-header {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+        flex-shrink: 0;
+    }
+    .hsm-tab-btn {
+        flex: 1;
+        padding: 8px 12px;
+        font-size: 11px;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+    .hsm-tab-btn:hover {
+        color: var(--text-primary);
+        background: var(--bg-secondary);
+    }
+    .hsm-tab-btn.active {
+        color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
+        background: var(--bg-secondary);
+    }
+    .hsm-tab-content {
+        flex: 1;
+        overflow-y: auto;
+        display: none;
+    }
+    .hsm-tab-content.active {
+        display: block;
+    }
+    .hsm-lcd-preview {
+        background: #0a1a0a;
+        border-radius: 4px;
+        position: relative;
+        cursor: crosshair;
+        max-height: 200px;
+        overflow: hidden;
+    }
+    .hsm-lcd-preview canvas {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain;
+        max-height: 200px;
+    }
+    .hsm-lcd-labels {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        max-width: 120px;
+        justify-content: flex-end;
+    }
+    .hsm-lcd-label {
+        font-size: 8px;
+        padding: 1px 4px;
+        background: rgba(0,255,136,0.8);
+        color: #000;
+        border-radius: 2px;
+        cursor: pointer;
+    }
+    .hsm-lcd-label:hover { background: #fff; }
+    
+    /* 模拟控制面板 */
+    .hsm-sim-panel {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .hsm-sim-content {
+        padding: 8px !important;
+        overflow-y: auto;
+        flex: 1;
+    }
+    .hsm-sim-btn {
+        padding: 2px 6px !important;
+        font-size: 12px !important;
+    }
+    .hsm-sim-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .hsm-sim-section {
+        margin-bottom: 8px;
+    }
+    .hsm-sim-label {
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+    .hsm-sim-state {
+        font-size: 14px;
+        font-weight: 600;
+        color: #22c55e;
+        padding: 4px 8px;
+        background: rgba(34, 197, 94, 0.15);
+        border-radius: 4px;
+        text-align: center;
+    }
+    .hsm-sim-vars {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        max-height: 60px;
+        overflow-y: auto;
+    }
+    .hsm-sim-var {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        padding: 2px 4px;
+        background: var(--bg-tertiary);
+        border-radius: 2px;
+    }
+    .hsm-sim-var span:first-child { color: var(--text-muted); }
+    .hsm-sim-var span:last-child { color: #3b82f6; font-family: monospace; }
+    .hsm-sim-events {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .hsm-sim-event-btn {
+        padding: 3px 6px;
+        font-size: 10px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    .hsm-sim-event-btn:hover {
+        border-color: var(--accent-color);
+        background: var(--accent-color);
+        color: white;
+    }
+    .hsm-sim-event-measure {
+        background: rgba(34, 197, 94, 0.2);
+        border-color: #22c55e;
+    }
+    .hsm-sim-event-timer {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b;
+    }
+    .hsm-sim-history-section {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .hsm-sim-history {
+        flex: 1;
+        max-height: 80px;
+        overflow-y: auto;
+        font-size: 10px;
+        background: var(--bg-primary);
+        border-radius: 3px;
+        padding: 4px;
+    }
+    .hsm-sim-history-item {
+        padding: 2px 0;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        gap: 4px;
+    }
+    .hsm-sim-history-item:last-child { border-bottom: none; }
+    .hsm-sim-history-event { color: #3b82f6; }
+    .hsm-sim-history-arrow { color: var(--text-muted); }
+    .hsm-sim-history-state { color: #22c55e; }
+    .hsm-sim-history-empty {
+        color: var(--text-muted);
+        text-align: center;
+        padding: 8px;
+    }
+    
+    /* 属性面板 */
+    .hsm-props-panel { 
+        height: 100%;
+        display: flex; 
+        flex-direction: column; 
+    }
+    .hsm-props-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+    }
+    .hsm-props-empty {
+        flex: 1;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        color: var(--text-muted);
+        padding: 16px;
+        text-align: center;
+    }
+    .hsm-props-empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+    
+    /* 属性表单 */
+    .hsm-form-group { margin-bottom: 8px; }
+    .hsm-form-group label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 2px; }
+    .hsm-form-group input, .hsm-form-group select, .hsm-form-group textarea {
+        width: 100%;
+        padding: 5px 8px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    .hsm-form-group input:focus, .hsm-form-group select:focus { outline: none; border-color: var(--accent-color); }
+    
+    /* 可搜索下拉 */
+    .hsm-searchable-select {
+        position: relative;
+    }
+    .hsm-searchable-input {
+        width: 100%;
+        padding: 5px 8px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        font-size: 11px;
+    }
+    .hsm-searchable-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 150px;
+        overflow-y: auto;
+        background: var(--bg-primary);
+        border: 1px solid var(--accent-color);
+        border-radius: 3px;
+        z-index: 100;
+        display: none;
+    }
+    .hsm-searchable-dropdown.show { display: block; }
+    .hsm-searchable-option {
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+    }
+    .hsm-searchable-option:hover { background: var(--accent-color); color: white; }
+    .hsm-searchable-option.selected { background: var(--accent-color); color: white; }
+    
+    /* 动作标签 */
+    .hsm-action-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .hsm-action-tag {
+        padding: 2px 8px;
+        background: var(--bg-tertiary);
+        border-radius: 10px;
+        font-size: 10px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .hsm-action-tag:hover { border-color: var(--accent-color); }
+    .hsm-action-tag .remove { color: #ef4444; font-weight: bold; }
+    
+    /* 子状态/转移列表 */
+    .hsm-children-list { display: flex; flex-direction: column; gap: 2px; }
+    .hsm-child-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 5px 8px;
+        background: var(--bg-primary);
+        border-radius: 3px;
+        font-size: 11px;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+    .hsm-child-item:hover { border-color: var(--accent-color); }
+    .hsm-child-item.initial { border-left: 2px solid #22c55e; }
+    
+    .hsm-transition-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 4px 8px;
+        background: var(--bg-primary);
+        border-radius: 3px;
+        font-size: 10px;
+        margin-bottom: 2px;
+        border-left: 2px solid var(--accent-color);
+    }
+    .hsm-transition-event { padding: 1px 5px; background: var(--bg-tertiary); border-radius: 3px; font-weight: 500; }
+    
+    /* 属性面板内部样式 */
+    .hsm-prop-section { margin-bottom: 10px; }
+    .hsm-prop-section label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px; }
+    .hsm-input, .hsm-select, .hsm-textarea {
+        width: 100%; padding: 5px 8px;
+        background: var(--bg-primary); border: 1px solid var(--border-color);
+        border-radius: 3px; color: var(--text-primary); font-size: 11px;
+    }
+    .hsm-input:focus, .hsm-select:focus { outline: none; border-color: var(--accent-color); }
+    .hsm-textarea { min-height: 40px; resize: vertical; }
+    .hsm-btn-mini { padding: 1px 6px; font-size: 10px; background: var(--accent-color); color: white; border: none; border-radius: 3px; cursor: pointer; }
+    .hsm-tag-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .hsm-tag { padding: 2px 6px; border-radius: 10px; font-size: 10px; display: flex; align-items: center; gap: 4px; }
+    .hsm-tag-action { background: #f59e0b30; color: #f59e0b; }
+    .hsm-tag-comp { background: #8b5cf630; color: #8b5cf6; }
+    .hsm-tag-preset { background: #06b6d430; color: #06b6d4; }
+    .hsm-tag-anim { background: #ec489930; color: #ec4899; }
+    .hsm-tag-expect { background: #22c55e30; color: #22c55e; }
+    .hsm-tag-lcd { background: #3b82f630; color: #3b82f6; }
+    .hsm-tag-timeout { background: #64748b30; color: #64748b; }
+    .hsm-tag-exit { background: #ef444430; color: #ef4444; }
+    .hsm-tag-hw { background: #ef444430; color: #ef4444; }
+    .hsm-tag-flow { background: #f9731630; color: #f97316; }
+    .hsm-tag-macro { background: #8b5cf630; color: #8b5cf6; }
+    .hsm-tag-var { background: #10b98130; color: #10b981; }
+    .hsm-tag-calc { background: #6366f130; color: #6366f1; }
+    .hsm-tag-cond { background: #f9731630; color: #f97316; }
+    .hsm-tag-remove { cursor: pointer; font-weight: bold; opacity: 0.7; }
+    .hsm-tag-remove:hover { opacity: 1; }
+    .hsm-hint { font-size: 9px; color: var(--text-muted); margin-top: 4px; }
+    .hsm-empty { color: var(--text-muted); font-size: 11px; text-align: center; padding: 12px; }
+    
+    /* 流程属性区域样式 */
+    .hsm-flow-section {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-radius: 6px;
+        padding: 8px;
+        margin: 8px 0;
+    }
+    .hsm-flow-section label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #4ade80;
+    }
+    .hsm-flow-section input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+        accent-color: #22c55e;
+    }
+    .hsm-flow-section .hsm-hint {
+        color: #86efac;
+    }
+    
+    /* 搜索对话框 */
+    .hsm-dialog-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5); z-index: 10000;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .hsm-dialog {
+        background: var(--bg-secondary); border-radius: 8px;
+        width: 320px; max-height: 400px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .hsm-dialog-header {
+        padding: 10px 12px; border-bottom: 1px solid var(--border-color);
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 13px; font-weight: 600;
+    }
+    .hsm-dialog-close { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+    .hsm-dialog-close:hover { color: var(--text-primary); }
+    .hsm-dialog-body { padding: 10px; }
+    .hsm-search-input {
+        width: 100%; padding: 8px 10px;
+        background: var(--bg-primary); border: 1px solid var(--border-color);
+        border-radius: 4px; color: var(--text-primary); font-size: 12px;
+        margin-bottom: 8px;
+    }
+    .hsm-search-input:focus { outline: none; border-color: var(--accent-color); }
+    .hsm-search-list { max-height: 250px; overflow-y: auto; }
+    .hsm-search-category {
+        font-size: 10px; color: var(--text-muted); padding: 6px 10px 3px;
+        font-weight: 600; border-bottom: 1px solid var(--border-color);
+        margin-top: 4px; background: var(--bg-tertiary);
+    }
+    .hsm-search-category:first-child { margin-top: 0; }
+    .hsm-search-item {
+        padding: 8px 10px; cursor: pointer; border-radius: 4px;
+        border: 1px solid transparent; margin-bottom: 2px;
+    }
+    .hsm-search-item:hover { background: var(--bg-tertiary); border-color: var(--accent-color); }
+    .hsm-search-item-name { font-size: 12px; font-weight: 500; }
+    .hsm-search-item-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    
+    /* 事件项 */
+    .hsm-event-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 4px 6px; background: var(--bg-primary);
+        border-radius: 3px; margin-bottom: 2px;
+        font-size: 10px; cursor: grab;
+    }
+    .hsm-event-item:hover { background: var(--bg-tertiary); }
+    .hsm-event-icon { font-size: 10px; }
+    .hsm-event-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hsm-event-more { font-size: 9px; color: var(--text-muted); text-align: center; padding: 4px; }
+    
+    /* Toast */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translate(-50%, 20px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    
+    /* 右键菜单 */
+    .hsm-context-menu {
+        position: fixed;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        min-width: 180px;
+        z-index: 10001;
+        padding: 4px 0;
+        animation: contextFadeIn 0.15s ease;
+    }
+    @keyframes contextFadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .hsm-context-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        color: var(--text-primary);
+    }
+    .hsm-context-item:hover {
+        background: var(--accent-color);
+        color: white;
+    }
+    .hsm-context-item.danger:hover {
+        background: #ef4444;
+    }
+    .hsm-context-item.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+    .hsm-context-item .icon {
+        width: 16px;
+        text-align: center;
+        font-size: 12px;
+    }
+    .hsm-context-item .label {
+        flex: 1;
+    }
+    .hsm-context-item .shortcut {
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-left: 12px;
+    }
+    .hsm-context-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 4px 8px;
+    }
+    
+    /* 转移标签样式 */
+    .hsm-tag-timeout { background: #ec489930; color: #ec4899; }
+    
+    /* 快捷键提示优化 */
+    .hsm-shortcuts {
+        position: absolute; bottom: 8px; left: 8px;
+        font-size: 9px; color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        display: flex; gap: 12px;
+    }
+    .hsm-shortcuts kbd { 
+        background: var(--bg-tertiary); 
+        padding: 2px 5px; 
+        border-radius: 3px;
+        font-family: inherit;
+        border: 1px solid var(--border-color);
+    }
+    
+    /* 命令面板样式 */
+    .hsm-command-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--bg-primary);
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+        font-size: 14px;
+        outline: none;
+    }
+    .hsm-command-input::placeholder {
+        color: var(--text-muted);
+    }
+    .hsm-command-list {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .hsm-command-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        cursor: pointer;
+        border-left: 2px solid transparent;
+    }
+    .hsm-command-item:hover,
+    .hsm-command-item.selected {
+        background: var(--bg-tertiary);
+        border-left-color: var(--accent-color);
+    }
+    .hsm-command-icon {
+        font-size: 14px;
+        width: 20px;
+        text-align: center;
+    }
+    .hsm-command-name {
+        flex: 1;
+        font-size: 13px;
+    }
+    .hsm-command-shortcut {
+        font-size: 11px;
+        color: var(--text-muted);
+        padding: 2px 6px;
+        background: var(--bg-primary);
+        border-radius: 3px;
+        font-family: monospace;
+    }
+    
+    /* 快捷键帮助面板 */
+    .hsm-help-panel {
+        position: fixed;
+        bottom: 60px;
+        right: 20px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 11px;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        max-width: 280px;
+    }
+    .hsm-help-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--accent-color);
+    }
+    .hsm-help-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 0;
+    }
+    .hsm-help-key {
+        color: var(--text-muted);
+    }
+    .hsm-help-key kbd {
+        background: var(--bg-tertiary);
+        padding: 1px 5px;
+        border-radius: 3px;
+        margin-right: 4px;
+    }
+    
+    /* 右键菜单 */
+    .hsm-context-menu {
+        position: fixed;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 4px 0;
+        min-width: 160px;
+        z-index: 10000;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .hsm-context-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .hsm-context-item:hover {
+        background: var(--accent-color);
+        color: white;
+    }
+    .hsm-context-item.danger:hover {
+        background: #ef4444;
+    }
+    .hsm-context-item .icon {
+        width: 16px;
+        text-align: center;
+    }
+    .hsm-context-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 4px 8px;
+    }
+    
+    /* 组件设置对话框 */
+    .hsm-comp-group {
+        margin-bottom: 12px;
+        padding: 10px;
+        background: var(--bg-tertiary);
+        border-radius: 6px;
+    }
+    .hsm-comp-group-title {
+        font-weight: 600;
+        font-size: 12px;
+        margin-bottom: 10px;
+        color: var(--accent-color);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .hsm-comp-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        margin-bottom: 8px;
+        transition: border-color 0.2s;
+    }
+    .hsm-comp-card:hover {
+        border-color: var(--accent-color);
+    }
+    .hsm-comp-card.active {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 1px var(--accent-color);
+    }
+    .hsm-comp-card-header {
+        padding: 8px 12px;
+        font-weight: 600;
+        font-size: 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 6px 6px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .hsm-comp-card-header .hsm-comp-desc {
+        font-weight: normal;
+        color: var(--text-muted);
+        font-size: 10px;
+        flex: 1;
+    }
+    .hsm-comp-card-header .hsm-comp-onset {
+        font-size: 10px;
+        padding: 2px 6px;
+        background: #f59e0b30;
+        color: #f59e0b;
+        border-radius: 3px;
+    }
+    .hsm-comp-card-body {
+        padding: 10px 12px;
+    }
+    .hsm-comp-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 5px 0;
+    }
+    .hsm-comp-row label {
+        width: 80px;
+        font-size: 11px;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+    }
+    .hsm-comp-row select, .hsm-comp-row input {
+        flex: 1;
+        padding: 5px 10px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 11px;
+    }
+    .hsm-comp-row select:focus, .hsm-comp-row input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    .hsm-icon-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .hsm-icon-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        transition: border-color 0.2s;
+    }
+    .hsm-icon-item:hover {
+        border-color: var(--accent-color);
+    }
+    .hsm-icon-item.active {
+        border-color: var(--accent-color);
+        background: rgba(34, 197, 94, 0.1);
+    }
+    .hsm-icon-item label {
+        flex: 1;
+        font-size: 11px;
+    }
+    .hsm-icon-item select {
+        width: 80px;
+        padding: 3px 6px;
+        font-size: 10px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+    }
+    .hsm-dialog-footer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+    }
+    .hsm-comp-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+        color: var(--accent-color);
+    }
+    .hsm-comp-quick-btns {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+    .hsm-comp-quick-btn {
+        padding: 4px 10px;
+        font-size: 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    .hsm-comp-quick-btn:hover {
+        border-color: var(--accent-color);
+        background: var(--accent-color);
+        color: white;
+    }
+    
+    /* 底部工具栏式组件设置面板 */
+    .hsm-comp-toolbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        border-top: 2px solid var(--accent-color);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        z-index: 9999;
+        transform: translateY(100%);
+        transition: transform 0.2s ease;
+        max-height: 50vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .hsm-comp-toolbar.visible {
+        transform: translateY(0);
+    }
+    .hsm-comp-toolbar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+    .hsm-comp-toolbar-header > span {
+        font-weight: 600;
+        color: var(--accent-color);
+        font-size: 14px;
+    }
+    .hsm-comp-toolbar-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    .hsm-comp-toolbar-body {
+        padding: 12px 20px;
+        overflow-y: auto;
+        flex: 1;
+    }
+    .hsm-comp-toolbar-grid {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+    .hsm-comp-toolbar-section {
+        flex: 1;
+        min-width: 200px;
+    }
+    .hsm-comp-toolbar-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .hsm-comp-toolbar-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .hsm-comp-toolbar-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 12px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        min-width: 100px;
+    }
+    .hsm-comp-toolbar-item.active {
+        border-color: var(--accent-color);
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .hsm-comp-toolbar-item label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+    .hsm-comp-toolbar-item select {
+        padding: 4px 8px;
+        font-size: 12px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+    }
+    .hsm-comp-toolbar-icons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .hsm-comp-toolbar-icon {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        min-width: 80px;
+    }
+    .hsm-comp-toolbar-icon.active {
+        border-color: var(--accent-color);
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .hsm-comp-toolbar-icon label {
+        font-size: 10px;
+        color: var(--text-secondary);
+    }
+    .hsm-comp-toolbar-icon select {
+        padding: 2px 4px;
+        font-size: 11px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+    }
+</style>
+
+<div class="hsm-container">
+    <!-- 工具栏 -->
+    <div class="hsm-toolbar">
+        <h1>🔄 状态机</h1>
+        <div class="hsm-toolbar-sep"></div>
+        <div id="hsm-device-selector"></div>
+        <div class="hsm-breadcrumb" id="hsm-breadcrumb">
+            <span class="hsm-breadcrumb-item current">ROOT</span>
+        </div>
+        <div style="flex:1;"></div>
+        <button class="hsm-btn" onclick="HSM.showCommandPalette()" title="命令面板 (Ctrl+K)">⌘ 命令</button>
+        <button class="hsm-btn" onclick="HSM.showVariablesPanel()">📊 变量</button>
+        <button class="hsm-btn" onclick="HSM.generateTestCases()" title="从状态机生成测试用例">🧪 测试</button>
+        <button class="hsm-btn" onclick="HSM.showCodeGenDialog()" title="生成C代码并下载" style="background:#f59e0b;border-color:#f59e0b;color:white;">🔧 生成代码</button>
+        <button class="hsm-btn success" onclick="HSM.exportCode()">📤 导出</button>
+        <button class="hsm-btn primary" onclick="HSM.save()">💾 保存</button>
+    </div>
+    
+    <!-- 左侧 -->
+    <div class="hsm-left">
+        <div class="hsm-panel">
+            <div class="hsm-panel-header">📊 层级</div>
+            <div class="hsm-panel-content" style="padding: 4px 6px;">
+                <div class="hsm-level-indicator">
+                    <div class="hsm-level-dot l0 active" data-level="0">0</div>
+                    <div class="hsm-level-dot l1" data-level="1">1</div>
+                    <div class="hsm-level-dot l2" data-level="2">2</div>
+                    <div class="hsm-level-dot l3" data-level="3">3</div>
+                </div>
+            </div>
+        </div>
+        <div class="hsm-panel flex">
+            <div class="hsm-panel-header">🌳 状态树</div>
+            <div class="hsm-panel-content" id="hsm-tree"></div>
+        </div>
+        <div class="hsm-panel" style="max-height: 120px;">
+            <div class="hsm-panel-header">⚡ 事件</div>
+            <div class="hsm-panel-content" id="hsm-events"></div>
+        </div>
+    </div>
+    
+    <!-- 画布 -->
+    <div class="hsm-canvas-area" id="hsm-canvas-area">
+        <canvas id="hsm-canvas"></canvas>
+        <div class="hsm-canvas-toolbar">
+            <button class="hsm-canvas-btn active" data-tool="select" title="选择">↖</button>
+            <button class="hsm-canvas-btn" data-tool="pan" title="平移">✋</button>
+            <button class="hsm-canvas-btn" data-tool="connect" title="连线">↗</button>
+            <div style="width:1px;background:var(--border-color);margin:2px 0;"></div>
+            <button class="hsm-canvas-btn" onclick="HSM.zoomIn()" title="放大">+</button>
+            <button class="hsm-canvas-btn" onclick="HSM.zoomOut()" title="缩小">-</button>
+            <button class="hsm-canvas-btn" onclick="HSM.fitView()" title="适应视图 (F)">⊡</button>
+            <button class="hsm-canvas-btn" onclick="HSM.autoLayout()" title="自动布局 (L)">📐</button>
+        </div>
+        <div class="hsm-zoom-indicator" id="hsm-zoom">100%</div>
+        <div class="hsm-level-hint" id="hsm-level-hint">
+            <div class="hsm-level-hint-icon" style="background:#ef444430;color:#ef4444;">L0</div>
+            <span>系统层</span>
+        </div>
+        <div class="hsm-empty-hint" id="hsm-empty-hint" style="display:none;">
+            <h2>🎨 开始设计</h2>
+            <p>双击画布创建状态</p>
+            <button class="hsm-btn primary" onclick="HSM.loadExample()">📥 加载示例</button>
+        </div>
+        <div class="hsm-shortcuts">
+            <span><kbd>Ctrl+K</kbd> 命令</span>
+            <span><kbd>Tab</kbd> 快速创建</span>
+            <span><kbd>N</kbd> 新建</span>
+            <span><kbd>T</kbd> 连线</span>
+            <span><kbd>L</kbd> 布局</span>
+            <span><kbd>F</kbd> 适应</span>
+            <span><kbd>F5</kbd> 模拟</span>
+        </div>
+    </div>
+    
+    <!-- 右侧 - LCD固定顶部，下方Tab切换 -->
+    <div class="hsm-right">
+        <!-- LCD预览 - 固定顶部 -->
+        <div class="hsm-lcd-panel">
+            <div class="hsm-panel-header">
+                <span>📺 LCD预览</span>
+                <button class="hsm-btn" style="padding:2px 6px;font-size:10px;" onclick="HSM.refreshPreview()">刷新</button>
+            </div>
+            <div style="padding: 6px;">
+                <div class="hsm-lcd-preview" onclick="HSM.onLcdClick(event)">
+                    <canvas id="hsm-lcd-canvas" width="300" height="200"></canvas>
+                    <div class="hsm-lcd-labels" id="hsm-lcd-labels"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab容器 - 属性/模拟切换 -->
+        <div class="hsm-tab-container">
+            <div class="hsm-tab-header">
+                <button class="hsm-tab-btn active" onclick="HSM.switchTab('props')" data-tab="props">⚙️ 属性</button>
+                <button class="hsm-tab-btn" onclick="HSM.switchTab('sim')" data-tab="sim">🎮 模拟</button>
+            </div>
+            
+            <!-- 属性面板 -->
+            <div class="hsm-tab-content active" id="hsm-tab-props">
+                <div class="hsm-props-panel">
+                    <div class="hsm-props-content" id="hsm-props-content">
+                        <div class="hsm-props-empty">
+                            <div class="hsm-props-empty-icon">🔄</div>
+                            <div>选择状态查看属性</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模拟控制面板 -->
+            <div class="hsm-tab-content" id="hsm-tab-sim">
+                <div class="hsm-sim-panel">
+                    <div class="hsm-sim-content">
+                        <!-- 当前状态 -->
+                        <div class="hsm-sim-section">
+                            <div class="hsm-sim-label">当前状态</div>
+                            <div class="hsm-sim-state" id="hsm-sim-current-state">OFF</div>
+                        </div>
+                        
+                        <!-- 变量监视 -->
+                        <div class="hsm-sim-section">
+                            <div class="hsm-sim-label">变量</div>
+                            <div class="hsm-sim-vars" id="hsm-sim-vars">
+                                <div class="hsm-sim-var"><span>laser_on</span><span>false</span></div>
+                                <div class="hsm-sim-var"><span>backlight_on</span><span>false</span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 流程控制器状态 -->
+                        <div class="hsm-sim-section">
+                            <div class="hsm-sim-label">🔀 流程控制器</div>
+                            <div class="hsm-sim-vars" id="hsm-flow-status">
+                                <div class="hsm-sim-var"><span>类型</span><span id="hsm-flow-type">single</span></div>
+                                <div class="hsm-sim-var"><span>步骤</span><span id="hsm-flow-step">0</span></div>
+                                <div class="hsm-sim-var"><span>状态</span><span id="hsm-flow-state">-</span></div>
+                                <div class="hsm-sim-var"><span>快照</span><span id="hsm-flow-history">0</span></div>
+                                <div class="hsm-sim-var"><span>Line1</span><span id="hsm-flow-line1">-----</span></div>
+                                <div class="hsm-sim-var"><span>Line2</span><span id="hsm-flow-line2">-----</span></div>
+                                <div class="hsm-sim-var"><span>Line3</span><span id="hsm-flow-line3">-----</span></div>
+                                <div class="hsm-sim-var"><span>Line4</span><span id="hsm-flow-line4">-----</span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 快捷流程 -->
+                        <div class="hsm-sim-section">
+                            <div class="hsm-sim-label">快捷流程</div>
+                            <div class="hsm-sim-events">
+                                <button class="hsm-sim-event-btn" style="background:#22c55e;color:white;" onclick="HSM.simBootSequence()">🚀 开机</button>
+                                <button class="hsm-sim-event-btn" style="background:#3b82f6;color:white;" onclick="HSM.simBootWithUnitSelect()">🔄 选单位</button>
+                                <button class="hsm-sim-event-btn" style="background:#ef4444;color:white;" onclick="HSM.simShutdown()">⏻ 关机</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 事件按钮 -->
+                        <div class="hsm-sim-section">
+                            <div class="hsm-sim-label">发送事件</div>
+                            <div class="hsm-sim-events" id="hsm-sim-events">
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K1_SHORT')">K1短按</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K1_LONG')">K1长按</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K1_XLONG')">K1超长</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K1_RELEASE')">K1松开</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K2_SHORT')">K2短按</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K2_LONG')">K2长按</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K3_SHORT')">K3短按</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K3_LONG')">K3长按</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K3_XLONG')">K3超长</button>
+                                <button class="hsm-sim-event-btn" onclick="HSM.simSendEvent('K1K2_COMBO')">K1+K2</button>
+                                <button class="hsm-sim-event-btn hsm-sim-event-measure" onclick="HSM.simSendEvent('MEASURE_OK')">测距OK</button>
+                                <button class="hsm-sim-event-btn hsm-sim-event-measure" onclick="HSM.simSendEvent('MEASURE_FAIL')">测距ERR</button>
+                                <button class="hsm-sim-event-btn hsm-sim-event-timer" onclick="HSM.simSendEvent('TIMEOUT_1S')">1秒超时</button>
+                                <button class="hsm-sim-event-btn hsm-sim-event-timer" onclick="HSM.simSendEvent('TIMEOUT_LASER')">激光超时</button>
+                                <button class="hsm-sim-event-btn hsm-sim-event-timer" onclick="HSM.simSendEvent('TIMEOUT_POWER')">关机超时</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 事件历史 -->
+                        <div class="hsm-sim-section">
+                            <div class="hsm-sim-label">事件历史</div>
+                            <div class="hsm-sim-history" id="hsm-sim-history">
+                                <div class="hsm-sim-history-empty">点击事件按钮开始模拟</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 模拟控制按钮 -->
+                        <div class="hsm-sim-section" style="display:flex;gap:6px;justify-content:center;padding-top:8px;border-top:1px solid var(--border-color);">
+                            <button class="hsm-btn" id="hsm-sim-start" onclick="HSM.simStart()">▶️ 开始</button>
+                            <button class="hsm-btn" id="hsm-sim-stop" onclick="HSM.simStop()" disabled>⏹️ 停止</button>
+                            <button class="hsm-btn" id="hsm-sim-reset" onclick="HSM.simReset()">🔄 重置</button>
+                        </div>
+                        
+                        <div style="padding:8px;font-size:9px;color:var(--text-muted);text-align:center;">
+                            💡 F12 查看详细日志
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

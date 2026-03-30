@@ -1,0 +1,462 @@
+/* ========== 主题系统 ========== */
+/* 注意：主题变量只在选择特定主题时覆盖 */
+
+/* 主题1: 极光幻境 (Aurora) - 使用style.css默认值 */
+
+/* 主题2: 赛博朋克 (Cyber) */
+[data-theme="cyber"] {
+    --bg-primary: #0a0a14;
+    --bg-secondary: #12121f;
+    --bg-grad-1: radial-gradient(ellipse at 20% 80%, rgba(255, 0, 128, 0.25), transparent 50%);
+    --bg-grad-2: radial-gradient(ellipse at 80% 20%, rgba(0, 255, 255, 0.2), transparent 50%);
+    --bg-grad-3: none;
+    
+    --text-accent: #ff0080;
+    --text-color: #ffffff;
+    --text-muted: #00ffff;
+    --text-dim: #666688;
+    
+    --card-bg: rgba(20, 20, 35, 0.9);
+    --card-bg-hover: rgba(30, 30, 50, 0.95);
+    --sidebar-bg: rgba(10, 10, 20, 0.98);
+    --border-color: rgba(255, 0, 128, 0.2);
+    --border-highlight: rgba(0, 255, 255, 0.6);
+    --glow-color: #00ffff;
+    
+    --btn-grad-primary: linear-gradient(135deg, #ff0080 0%, #7928ca 100%);
+    --btn-grad-start: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
+    --btn-grad-stop: linear-gradient(135deg, #ff0080 0%, #ff4444 100%);
+}
+
+[data-theme="cyber"] body {
+    background: 
+        linear-gradient(90deg, transparent 49.5%, rgba(255,0,128,0.03) 50%, transparent 50.5%),
+        linear-gradient(0deg, transparent 49.5%, rgba(0,255,255,0.02) 50%, transparent 50.5%),
+        linear-gradient(180deg, #0a0a14 0%, #12121f 100%);
+    background-size: 30px 30px, 30px 30px, 100% 100%;
+}
+
+[data-theme="cyber"] .card,
+[data-theme="cyber"] .panel {
+    border-left: 2px solid var(--text-accent);
+}
+
+[data-theme="cyber"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(255, 0, 128, 0.3), transparent);
+    border-left: 3px solid #ff0080;
+}
+
+/* 主题3: 玻璃拟态 (Glass) */
+[data-theme="glass"] {
+    --bg-primary: #4a00e0;
+    --bg-secondary: #8e2de2;
+    --bg-grad-1: radial-gradient(ellipse at 30% 30%, rgba(255, 255, 255, 0.15), transparent 60%);
+    --bg-grad-2: radial-gradient(ellipse at 70% 70%, rgba(255, 255, 255, 0.1), transparent 60%);
+    --bg-grad-3: none;
+    
+    --text-accent: #ffffff;
+    --text-color: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.8);
+    --text-dim: rgba(255, 255, 255, 0.5);
+    
+    --card-bg: rgba(255, 255, 255, 0.1);
+    --card-bg-hover: rgba(255, 255, 255, 0.18);
+    --sidebar-bg: rgba(255, 255, 255, 0.08);
+    --border-color: rgba(255, 255, 255, 0.2);
+    --border-highlight: rgba(255, 255, 255, 0.5);
+    --glow-color: #ffffff;
+    
+    --btn-grad-primary: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+    --btn-grad-start: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+    --btn-grad-stop: linear-gradient(135deg, #ff6b6b 0%, #ffc864 100%);
+}
+
+[data-theme="glass"] body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+[data-theme="glass"] .card,
+[data-theme="glass"] .panel,
+[data-theme="glass"] .sidebar {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+[data-theme="glass"] .nav-item.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-left: 3px solid #fff;
+}
+
+/* 主题4: 深海科技 (Ocean) */
+[data-theme="ocean"] {
+    --bg-primary: #001220;
+    --bg-secondary: #002040;
+    --bg-grad-1: radial-gradient(ellipse at 20% 80%, rgba(0, 200, 255, 0.2), transparent 50%);
+    --bg-grad-2: radial-gradient(ellipse at 80% 30%, rgba(0, 255, 200, 0.15), transparent 50%);
+    --bg-grad-3: none;
+    
+    --text-accent: #00ffff;
+    --text-color: #e0f0ff;
+    --text-muted: #80b0d0;
+    --text-dim: #406080;
+    
+    --card-bg: rgba(0, 40, 80, 0.7);
+    --card-bg-hover: rgba(0, 60, 100, 0.8);
+    --sidebar-bg: rgba(0, 20, 40, 0.95);
+    --border-color: rgba(0, 200, 255, 0.15);
+    --border-highlight: rgba(0, 255, 255, 0.5);
+    --glow-color: #00ffff;
+    
+    --btn-grad-primary: linear-gradient(135deg, #0080ff 0%, #00d4aa 100%);
+    --btn-grad-start: linear-gradient(135deg, #00ffff 0%, #00ff88 100%);
+    --btn-grad-stop: linear-gradient(135deg, #ff6b6b 0%, #ffc864 100%);
+}
+
+[data-theme="ocean"] body {
+    background: linear-gradient(180deg, #001220 0%, #002040 50%, #003060 100%);
+}
+
+[data-theme="ocean"] .card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00ffff, transparent);
+    opacity: 0.5;
+}
+
+[data-theme="ocean"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.2), transparent);
+    border-left: 3px solid #00ffff;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+/* ========== 主题特效增强 ========== */
+
+/* 赛博朋克扫描线 */
+[data-fx="show"][data-theme="cyber"] .main-content::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff0080, #00ffff, transparent);
+    animation: scanline 4s linear infinite;
+    z-index: 1000;
+    pointer-events: none;
+}
+@keyframes scanline {
+    0% { transform: translateY(0); opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { transform: translateY(100vh); opacity: 1; }
+}
+
+/* 深海科技呼吸灯效果 */
+[data-fx="show"][data-theme="ocean"] .sidebar {
+    animation: breathe 4s ease-in-out infinite;
+}
+@keyframes breathe {
+    0%, 100% { box-shadow: inset -2px 0 20px rgba(0, 255, 255, 0.1); }
+    50% { box-shadow: inset -2px 0 30px rgba(0, 255, 255, 0.2); }
+}
+
+/* 玻璃主题悬浮效果增强 */
+[data-fx="show"][data-theme="glass"] .home-card:hover,
+[data-fx="show"][data-theme="glass"] .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+[data-fx="pro"][data-theme="glass"] .home-card:hover,
+[data-fx="pro"][data-theme="glass"] .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+/* ================================================================
+   🎨 新增现代化主题 - 2024
+   ================================================================ */
+
+/* 主题5: 火星殖民 (Mars) - 暖红橙色调 */
+[data-theme="mars"] {
+    --accent: #ff6b35;
+    --accent-glow: rgba(255, 107, 53, 0.5);
+    --accent-dim: rgba(255, 107, 53, 0.3);
+    --text-accent: #ff6b35;
+    --text-color: #fff0e6;
+    --text-muted: #cc9980;
+    --text-dim: #806050;
+    --card-bg: rgba(60, 30, 20, 0.8);
+    --card-bg-hover: rgba(80, 40, 25, 0.9);
+    --sidebar-bg: rgba(30, 15, 10, 0.98);
+    --border-color: rgba(255, 107, 53, 0.25);
+    --border-highlight: rgba(255, 150, 100, 0.6);
+    --glow-color: #ff6b35;
+    --input-bg: rgba(40, 20, 15, 0.6);
+}
+[data-theme="mars"] body {
+    background: linear-gradient(135deg, #1a0a05 0%, #2d1810 50%, #401a10 100%);
+}
+[data-theme="mars"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(255, 107, 53, 0.25), transparent);
+    border-left: 3px solid #ff6b35;
+}
+[data-theme="mars"] .sidebar {
+    border-right: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+/* 主题6: 黄金奢华 (Gold) - 金色黑色高端 */
+[data-theme="gold"] {
+    --accent: #ffd700;
+    --accent-glow: rgba(255, 215, 0, 0.4);
+    --accent-dim: rgba(255, 215, 0, 0.2);
+    --text-accent: #ffd700;
+    --text-color: #fff8e0;
+    --text-muted: #c0a060;
+    --text-dim: #806830;
+    --card-bg: rgba(30, 25, 15, 0.9);
+    --card-bg-hover: rgba(45, 38, 20, 0.95);
+    --sidebar-bg: rgba(15, 12, 8, 0.98);
+    --border-color: rgba(255, 215, 0, 0.2);
+    --border-highlight: rgba(255, 215, 0, 0.6);
+    --glow-color: #ffd700;
+    --input-bg: rgba(25, 20, 10, 0.7);
+}
+[data-theme="gold"] body {
+    background: linear-gradient(135deg, #0a0805 0%, #1a1510 50%, #252015 100%);
+}
+[data-theme="gold"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent);
+    border-left: 3px solid #ffd700;
+}
+[data-theme="gold"] .card, [data-theme="gold"] .panel {
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 215, 0, 0.1);
+}
+
+/* 主题7: 霓虹紫 (Neon) - 电子紫粉 */
+[data-theme="neon"] {
+    --accent: #bf00ff;
+    --accent-glow: rgba(191, 0, 255, 0.5);
+    --accent-dim: rgba(191, 0, 255, 0.3);
+    --text-accent: #bf00ff;
+    --text-color: #f0e0ff;
+    --text-muted: #c080e0;
+    --text-dim: #8050a0;
+    --card-bg: rgba(30, 15, 40, 0.85);
+    --card-bg-hover: rgba(45, 25, 60, 0.9);
+    --sidebar-bg: rgba(15, 8, 25, 0.98);
+    --border-color: rgba(191, 0, 255, 0.25);
+    --border-highlight: rgba(255, 100, 255, 0.6);
+    --glow-color: #bf00ff;
+    --input-bg: rgba(25, 12, 35, 0.6);
+}
+[data-theme="neon"] body {
+    background: 
+        radial-gradient(ellipse at 20% 80%, rgba(191, 0, 255, 0.15), transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 0, 128, 0.1), transparent 50%),
+        linear-gradient(135deg, #0a0510 0%, #150a20 50%, #1a0f28 100%);
+}
+[data-theme="neon"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(191, 0, 255, 0.25), transparent);
+    border-left: 3px solid #bf00ff;
+    box-shadow: 0 0 15px rgba(191, 0, 255, 0.3);
+}
+
+/* 主题8: 矩阵绿 (Matrix) - 经典黑客风 */
+[data-theme="matrix"] {
+    --accent: #00ff41;
+    --accent-glow: rgba(0, 255, 65, 0.5);
+    --accent-dim: rgba(0, 255, 65, 0.25);
+    --text-accent: #00ff41;
+    --text-color: #00ff41;
+    --text-muted: #00cc33;
+    --text-dim: #008822;
+    --card-bg: rgba(0, 15, 5, 0.9);
+    --card-bg-hover: rgba(0, 25, 10, 0.95);
+    --sidebar-bg: rgba(0, 8, 3, 0.98);
+    --border-color: rgba(0, 255, 65, 0.2);
+    --border-highlight: rgba(0, 255, 65, 0.6);
+    --glow-color: #00ff41;
+    --input-bg: rgba(0, 10, 5, 0.8);
+}
+[data-theme="matrix"] body {
+    background: #000500;
+}
+[data-theme="matrix"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(0, 255, 65, 0.2), transparent);
+    border-left: 3px solid #00ff41;
+    text-shadow: 0 0 10px #00ff41;
+}
+[data-theme="matrix"] * {
+    font-family: "Consolas", "Monaco", monospace !important;
+}
+
+/* 主题9: 冰川蓝 (Glacier) - 冷色清爽 */
+[data-theme="glacier"] {
+    --accent: #00d4ff;
+    --accent-glow: rgba(0, 212, 255, 0.4);
+    --accent-dim: rgba(0, 212, 255, 0.2);
+    --text-accent: #00d4ff;
+    --text-color: #e8f4ff;
+    --text-muted: #90c0e0;
+    --text-dim: #5090b0;
+    --card-bg: rgba(15, 30, 45, 0.85);
+    --card-bg-hover: rgba(20, 40, 60, 0.9);
+    --sidebar-bg: rgba(8, 18, 28, 0.98);
+    --border-color: rgba(0, 212, 255, 0.2);
+    --border-highlight: rgba(0, 212, 255, 0.5);
+    --glow-color: #00d4ff;
+    --input-bg: rgba(10, 25, 40, 0.6);
+}
+[data-theme="glacier"] body {
+    background: linear-gradient(180deg, #051015 0%, #0a1a25 50%, #0f2535 100%);
+}
+[data-theme="glacier"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.2), transparent);
+    border-left: 3px solid #00d4ff;
+}
+
+/* 主题10: 日落橙 (Sunset) - 温暖渐变 */
+[data-theme="sunset"] {
+    --accent: #ff8c42;
+    --accent-glow: rgba(255, 140, 66, 0.4);
+    --accent-dim: rgba(255, 140, 66, 0.2);
+    --text-accent: #ff8c42;
+    --text-color: #fff5ee;
+    --text-muted: #e0a080;
+    --text-dim: #a07050;
+    --card-bg: rgba(45, 25, 20, 0.85);
+    --card-bg-hover: rgba(60, 35, 28, 0.9);
+    --sidebar-bg: rgba(25, 12, 10, 0.98);
+    --border-color: rgba(255, 140, 66, 0.2);
+    --border-highlight: rgba(255, 180, 100, 0.5);
+    --glow-color: #ff8c42;
+    --input-bg: rgba(35, 18, 15, 0.6);
+}
+[data-theme="sunset"] body {
+    background: 
+        radial-gradient(ellipse at 50% 100%, rgba(255, 100, 50, 0.15), transparent 60%),
+        linear-gradient(180deg, #150808 0%, #251510 50%, #352018 100%);
+}
+[data-theme="sunset"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(255, 140, 66, 0.25), transparent);
+    border-left: 3px solid #ff8c42;
+}
+
+/* ================================================================
+   🧾 专业企业级浅色主题 - 2024
+   说明：低饱和、清晰分层、长时间使用更耐看
+   ================================================================ */
+
+/* 主题11: Enterprise Light - 企业白灰（默认推荐浅色） */
+[data-theme="enterprise-light"] {
+    --accent: #2563eb;
+    --accent-glow: rgba(37, 99, 235, 0.22);
+    --accent-dim: rgba(37, 99, 235, 0.14);
+    --text-accent: #2563eb;
+    --text-color: #0f172a;
+    --text-muted: #334155;
+    --text-dim: #64748b;
+    --text-on-accent: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.88);
+    --card-bg-hover: rgba(255, 255, 255, 0.96);
+    --sidebar-bg: rgba(248, 250, 252, 0.98);
+    --border-color: rgba(15, 23, 42, 0.12);
+    --border-highlight: rgba(37, 99, 235, 0.35);
+    --glow-color: #2563eb;
+    --input-bg: rgba(241, 245, 249, 0.9);
+}
+[data-theme="enterprise-light"] body {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 45%, #e9eef5 100%);
+}
+[data-theme="enterprise-light"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.14), transparent);
+    border-left: 3px solid #2563eb;
+}
+
+/* 主题12: Cloud Blue - 云雾蓝（偏浅蓝的企业系统） */
+[data-theme="cloud-blue"] {
+    --accent: #0ea5e9;
+    --accent-glow: rgba(14, 165, 233, 0.22);
+    --accent-dim: rgba(14, 165, 233, 0.12);
+    --text-accent: #0284c7;
+    --text-color: #0b1220;
+    --text-muted: #334155;
+    --text-dim: #64748b;
+    --text-on-accent: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --card-bg-hover: rgba(255, 255, 255, 0.97);
+    --sidebar-bg: rgba(240, 249, 255, 0.98);
+    --border-color: rgba(2, 132, 199, 0.16);
+    --border-highlight: rgba(14, 165, 233, 0.35);
+    --glow-color: #0ea5e9;
+    --input-bg: rgba(226, 232, 240, 0.85);
+}
+[data-theme="cloud-blue"] body {
+    background:
+        radial-gradient(ellipse at 15% 10%, rgba(14, 165, 233, 0.10), transparent 55%),
+        linear-gradient(180deg, #f7fbff 0%, #e8f3ff 50%, #e9eef5 100%);
+}
+[data-theme="cloud-blue"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.14), transparent);
+    border-left: 3px solid #0ea5e9;
+}
+
+/* 主题13: Ice Mint - 医疗青（干净、克制的薄荷青） */
+[data-theme="ice-mint"] {
+    --accent: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.20);
+    --accent-dim: rgba(16, 185, 129, 0.12);
+    --text-accent: #10b981;
+    --text-color: #0f172a;
+    --text-muted: #334155;
+    --text-dim: #64748b;
+    --text-on-accent: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --card-bg-hover: rgba(255, 255, 255, 0.97);
+    --sidebar-bg: rgba(236, 253, 245, 0.98);
+    --border-color: rgba(15, 23, 42, 0.12);
+    --border-highlight: rgba(16, 185, 129, 0.32);
+    --glow-color: #10b981;
+    --input-bg: rgba(226, 232, 240, 0.85);
+}
+[data-theme="ice-mint"] body {
+    background:
+        radial-gradient(ellipse at 10% 20%, rgba(16, 185, 129, 0.10), transparent 55%),
+        linear-gradient(180deg, #f7fffb 0%, #eafbf4 50%, #e9eef5 100%);
+}
+[data-theme="ice-mint"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.14), transparent);
+    border-left: 3px solid #10b981;
+}
+
+/* 主题14: Slate Light - 石墨浅灰（偏中性、对比强） */
+[data-theme="slate-light"] {
+    --accent: #475569;
+    --accent-glow: rgba(71, 85, 105, 0.18);
+    --accent-dim: rgba(71, 85, 105, 0.10);
+    --text-accent: #0f172a;
+    --text-color: #0f172a;
+    --text-muted: #334155;
+    --text-dim: #64748b;
+    --text-on-accent: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.88);
+    --card-bg-hover: rgba(255, 255, 255, 0.96);
+    --sidebar-bg: rgba(248, 250, 252, 0.98);
+    --border-color: rgba(15, 23, 42, 0.12);
+    --border-highlight: rgba(71, 85, 105, 0.35);
+    --glow-color: #475569;
+    --input-bg: rgba(241, 245, 249, 0.92);
+}
+[data-theme="slate-light"] body {
+    background: linear-gradient(180deg, #fbfdff 0%, #f1f5f9 60%, #e9eef5 100%);
+}
+[data-theme="slate-light"] .nav-item.active {
+    background: linear-gradient(90deg, rgba(71, 85, 105, 0.12), transparent);
+    border-left: 3px solid #475569;
+}

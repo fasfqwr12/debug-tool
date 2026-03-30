@@ -1,0 +1,708 @@
+{
+  "version": "1.0",
+  "frame_format": {
+    "header": "AA",
+    "direction": {
+      "send": "EE",
+      "recv": "FE"
+    },
+    "footer": "BB FF",
+    "checksum": "XOR"
+  },
+  "commands": {
+    "laser_on": {
+      "code": "F0",
+      "name": "开启激光",
+      "icon": "🟢",
+      "category": "control",
+      "timeout": 500,
+      "retry": 3,
+      "send_params": [
+        {
+          "name": "model",
+          "type": "uint8",
+          "label": "型号",
+          "default": 0
+        },
+        {
+          "name": "direction",
+          "type": "uint8",
+          "label": "方向",
+          "default": 0
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "model",
+          "type": "uint8"
+        },
+        {
+          "name": "direction",
+          "type": "uint8"
+        }
+      ]
+    },
+    "laser_off": {
+      "code": "F6",
+      "name": "关闭激光",
+      "icon": "🔴",
+      "category": "control",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "calibrate_p1": {
+      "code": "F1",
+      "name": "标定位置1",
+      "icon": "🎯",
+      "category": "calibration",
+      "timeout": 50000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "distance",
+          "type": "uint32",
+          "label": "距离(mm)",
+          "default": 5000
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "calibrate_p2": {
+      "code": "F2",
+      "name": "标定位置2",
+      "icon": "🎯",
+      "category": "calibration",
+      "timeout": 3000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "distance",
+          "type": "uint32",
+          "label": "距离(mm)",
+          "default": 20000
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "calibrate_p3": {
+      "code": "F3",
+      "name": "标定位置3",
+      "icon": "🎯",
+      "category": "calibration",
+      "timeout": 3000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "distance",
+          "type": "uint32",
+          "label": "距离(mm)",
+          "default": 25000
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "measure": {
+      "code": "FB",
+      "name": "测量距离",
+      "icon": "📏",
+      "category": "measure",
+      "timeout": 2000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "detail_level",
+          "type": "uint8",
+          "label": "详情级别",
+          "default": 1
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "distance",
+          "type": "uint32_be",
+          "unit": "mm"
+        },
+        {
+          "name": "amplitude",
+          "type": "uint32_be",
+          "label": "幅值"
+        },
+        {
+          "name": "range_mm",
+          "type": "uint16_be",
+          "label": "极差",
+          "unit": "mm"
+        },
+        {
+          "name": "quality_x1000",
+          "type": "uint16_be",
+          "label": "质量"
+        },
+        {
+          "name": "measure_time_ms",
+          "type": "uint16_be",
+          "label": "固件耗时",
+          "unit": "ms"
+        },
+        {
+          "name": "apd_voltage",
+          "type": "uint16_be",
+          "label": "APD"
+        },
+        {
+          "name": "good_shots",
+          "type": "uint8",
+          "label": "有效shots"
+        },
+        {
+          "name": "total_shots",
+          "type": "uint8",
+          "label": "总shots"
+        },
+        {
+          "name": "retry_count",
+          "type": "uint8",
+          "label": "重试次数"
+        },
+        {
+          "name": "power_mode",
+          "type": "uint8",
+          "label": "功率模式"
+        }
+      ]
+    },
+    "laser_blink": {
+      "code": "FA",
+      "name": "激光闪烁",
+      "icon": "💡",
+      "category": "control",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "get_info": {
+      "code": "F7",
+      "name": "获取设备信息",
+      "icon": "ℹ️",
+      "category": "info",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "device_id",
+          "type": "uint32"
+        },
+        {
+          "name": "hw_version",
+          "type": "uint16"
+        },
+        {
+          "name": "sw_version",
+          "type": "uint16"
+        },
+        {
+          "name": "bl_version",
+          "type": "uint16"
+        },
+        {
+          "name": "reserved",
+          "type": "uint16"
+        },
+        {
+          "name": "model",
+          "type": "string16"
+        },
+        {
+          "name": "flash_size",
+          "type": "uint32"
+        },
+        {
+          "name": "app_start",
+          "type": "uint32"
+        },
+        {
+          "name": "app_max_size",
+          "type": "uint32"
+        },
+        {
+          "name": "app_actual_size",
+          "type": "uint32"
+        },
+        {
+          "name": "app_crc",
+          "type": "uint32"
+        }
+      ]
+    },
+    "heartbeat": {
+      "code": "F8",
+      "name": "心跳查询",
+      "icon": "💓",
+      "category": "info",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        }
+      ]
+    },
+    "auto_shutdown": {
+      "code": "F9",
+      "name": "自动关机",
+      "icon": "⏻",
+      "category": "control",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "delay",
+          "type": "uint16_be",
+          "default": 10,
+          "unit": "秒"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "delay_set",
+          "type": "uint16_be"
+        }
+      ]
+    },
+    "diag_status": {
+      "code": "E0",
+      "name": "诊断状态",
+      "icon": "🔍",
+      "category": "diagnostic",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "sys_err",
+          "type": "uint16_be",
+          "label": "系统错误码"
+        },
+        {
+          "name": "phase_cal",
+          "type": "uint8",
+          "label": "相位校准状态"
+        },
+        {
+          "name": "speed_cal",
+          "type": "uint8",
+          "label": "光速校准"
+        },
+        {
+          "name": "hw_status",
+          "type": "uint8",
+          "label": "硬件状态"
+        },
+        {
+          "name": "apdwork_x100",
+          "type": "uint16_be",
+          "label": "apdwork*100"
+        },
+        {
+          "name": "speed_num",
+          "type": "int8",
+          "label": "校准次数"
+        }
+      ]
+    },
+    "diag_adc": {
+      "code": "E1",
+      "name": "ADC诊断",
+      "icon": "📊",
+      "category": "diagnostic",
+      "timeout": 1000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "channel",
+          "type": "uint8",
+          "default": 0,
+          "label": "通道(0-3)"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "adc_min",
+          "type": "uint16_be"
+        },
+        {
+          "name": "adc_max",
+          "type": "uint16_be"
+        }
+      ]
+    },
+    "diag_apd": {
+      "code": "E2",
+      "name": "APD诊断",
+      "icon": "⚡",
+      "category": "diagnostic",
+      "timeout": 2000,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "apd_vol",
+          "type": "uint16_be",
+          "label": "APD电压"
+        },
+        {
+          "name": "best_apd",
+          "type": "uint16_be",
+          "label": "最佳APD"
+        }
+      ]
+    },
+    "diag_phase": {
+      "code": "E3",
+      "name": "相位稳定性",
+      "icon": "📶",
+      "category": "diagnostic",
+      "timeout": 7000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "channel",
+          "type": "uint8",
+          "default": 0,
+          "label": "通道(0-3)"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "phase_x10",
+          "type": "int16_be",
+          "label": "相位*10"
+        },
+        {
+          "name": "amplitude",
+          "type": "uint16_be",
+          "label": "幅值"
+        },
+        {
+          "name": "shake_x10",
+          "type": "uint16_be",
+          "label": "shake*10"
+        }
+      ]
+    },
+    "diag_phase_cal": {
+      "code": "E4",
+      "name": "相位校准数据",
+      "icon": "📋",
+      "category": "diagnostic",
+      "timeout": 2000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "index",
+          "type": "uint8",
+          "default": 0,
+          "label": "索引(0-4)"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "phase_160M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "phase_134M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "phase_159M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "phase_129M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "apdvol",
+          "type": "uint16_be"
+        },
+        {
+          "name": "mode_flag",
+          "type": "uint8"
+        }
+      ]
+    },
+    "diag_coeff_speed": {
+      "code": "E5",
+      "name": "系数+光速",
+      "icon": "⚡",
+      "category": "diagnostic",
+      "timeout": 6000,
+      "retry": 3,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "apdwork_x1000",
+          "type": "uint16_be",
+          "label": "apdwork*1000"
+        },
+        {
+          "name": "apd2work_x1000",
+          "type": "uint16_be",
+          "label": "apd2work*1000"
+        },
+        {
+          "name": "apdcoeff_x1000",
+          "type": "int16_be",
+          "label": "apdcoeff*1000"
+        },
+        {
+          "name": "speed_num",
+          "type": "int8",
+          "label": "校准次数(2=全)"
+        },
+        {
+          "name": "actual_dis1",
+          "type": "int32_be",
+          "label": "校准位置1(mm)"
+        },
+        {
+          "name": "actual_dis2",
+          "type": "int32_be",
+          "label": "校准位置2(mm)"
+        }
+      ]
+    }
+  },
+  "workflows": [
+    {
+      "id": "slipway_calibration",
+      "name": "滑台三点标定",
+      "icon": "🎯",
+      "description": "5m/20m/25m三点标定",
+      "steps": [
+        {
+          "action": "command",
+          "cmd": "laser_on",
+          "params": {
+            "model": 0,
+            "direction": 0
+          }
+        },
+        {
+          "action": "delay",
+          "ms": 800
+        },
+        {
+          "action": "move_slipway",
+          "position": 5000,
+          "timeout": 60000
+        },
+        {
+          "action": "command",
+          "cmd": "calibrate_p1",
+          "params": {
+            "distance": 5000
+          }
+        },
+        {
+          "action": "move_slipway",
+          "position": 20000,
+          "timeout": 90000
+        },
+        {
+          "action": "command",
+          "cmd": "calibrate_p2",
+          "params": {
+            "distance": 20000
+          }
+        },
+        {
+          "action": "move_slipway",
+          "position": 25000,
+          "timeout": 90000
+        },
+        {
+          "action": "command",
+          "cmd": "calibrate_p3",
+          "params": {
+            "distance": 25000
+          }
+        },
+        {
+          "action": "command",
+          "cmd": "laser_off",
+          "params": {}
+        },
+        {
+          "action": "notify",
+          "message": "三点标定完成"
+        }
+      ]
+    },
+    {
+      "id": "slipway_multi_calibration",
+      "name": "滑台联动标定",
+      "icon": "🔄",
+      "description": "滑台+转靶联动",
+      "steps": [
+        {
+          "action": "move_rotary",
+          "position": "10%",
+          "timeout": 30000
+        },
+        {
+          "action": "command",
+          "cmd": "laser_on",
+          "params": {
+            "model": 0,
+            "direction": 0
+          }
+        },
+        {
+          "action": "delay",
+          "ms": 800
+        },
+        {
+          "action": "move_slipway",
+          "position": 5000,
+          "timeout": 60000
+        },
+        {
+          "action": "command",
+          "cmd": "calibrate_p1",
+          "params": {
+            "distance": 5000
+          }
+        },
+        {
+          "action": "move_rotary",
+          "position": "90%",
+          "timeout": 30000
+        },
+        {
+          "action": "move_slipway",
+          "position": 20000,
+          "timeout": 90000
+        },
+        {
+          "action": "command",
+          "cmd": "calibrate_p2",
+          "params": {
+            "distance": 20000
+          }
+        },
+        {
+          "action": "move_slipway",
+          "position": 25000,
+          "timeout": 90000
+        },
+        {
+          "action": "command",
+          "cmd": "calibrate_p3",
+          "params": {
+            "distance": 25000
+          }
+        },
+        {
+          "action": "command",
+          "cmd": "laser_off",
+          "params": {}
+        },
+        {
+          "action": "notify",
+          "message": "联动标定完成"
+        }
+      ]
+    }
+  ],
+  "params": {
+    "laser_on": {
+      "model": 0,
+      "direction": 0
+    },
+    "calibrate_p1": {
+      "distance": 5000
+    },
+    "calibrate_p2": {
+      "distance": 20000
+    },
+    "calibrate_p3": {
+      "distance": 25000
+    }
+  },
+  "id": "lg_150",
+  "name": "LG-150",
+  "model_pattern": "^(LG-150|lg-150)$"
+}

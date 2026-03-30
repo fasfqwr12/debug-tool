@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>变量绑定演示 - 开机单位选择</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+        }
+        h1 { text-align: center; margin-bottom: 20px; color: #4ade80; }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+        }
+        .panel h2 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        /* LCD预览 */
+        #lcd-container {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        #lcd-canvas {
+            border: 2px solid #334155;
+            border-radius: 4px;
+            max-width: 100%;
+        }
+        
+        /* 变量控制 */
+        .var-control {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .var-control label {
+            display: block;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .var-control .var-name {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+        .unit-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .unit-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #334155;
+            background: #0f172a;
+            color: #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .unit-btn:hover {
+            border-color: #60a5fa;
+        }
+        .unit-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .unit-btn .value {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+        .unit-btn .desc {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .unit-btn.active .desc {
+            color: #dbeafe;
+        }
+        
+        /* 预设选择 */
+        .preset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .preset-item {
+            padding: 12px 15px;
+            background: #1e293b;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .preset-item:hover {
+            background: #334155;
+        }
+        .preset-item.active {
+            border-color: #4ade80;
+            background: #166534;
+        }
+        .preset-item .name {
+            font-weight: bold;
+        }
+        .preset-item .desc {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        /* 日志 */
+        #log {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .log-entry .time {
+            color: #64748b;
+        }
+        .log-entry .action {
+            color: #4ade80;
+        }
+        .log-entry .detail {
+            color: #f59e0b;
+        }
+        
+        /* 代码展示 */
+        .code-block {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .code-block .comment { color: #6b7280; }
+        .code-block .keyword { color: #c084fc; }
+        .code-block .string { color: #4ade80; }
+        .code-block .number { color: #f59e0b; }
+        .code-block .func { color: #60a5fa; }
+        
+        /* 流程图 */
+        .flow-diagram {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .flow-step {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #1e293b;
+            border-radius: 8px;
+            margin: 5px;
+        }
+        .flow-arrow {
+            color: #4ade80;
+            font-size: 20px;
+            margin: 0 10px;
+        }
+        .flow-step.highlight {
+            background: #3b82f6;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 变量绑定演示 - 开机单位选择</h1>
+    
+    <div class="container">
+        <!-- 左侧：控制面板 -->
+        <div class="panel" style="flex: 0.8;">
+            <h2>📊 变量控制</h2>
+            
+            <div class="var-control">
+                <label>状态机变量: <span class="var-name">unit</span></label>
+                <div class="unit-buttons">
+                    <button class="unit-btn" data-value="0" onclick="setUnit(0)">
+                        <span class="value">m</span>
+                        <span class="desc">unit = 0</span>
+                    </button>
+                    <button class="unit-btn active" data-value="1" onclick="setUnit(1)">
+                        <span class="value">ft</span>
+                        <span class="desc">unit = 1</span>
+                    </button>
+                    <button class="unit-btn" data-value="2" onclick="setUnit(2)">
+                        <span class="value">in</span>
+                        <span class="desc">unit = 2</span>
+                    </button>
+                </div>
+            </div>
+            
+            <h2 style="margin-top:20px;">📋 应用预设</h2>
+            <div class="preset-list">
+                <div class="preset-item active" onclick="applyPreset('boot_init')">
+                    <div class="name">boot_init</div>
+                    <div class="desc">开机初始化 - 单位绑定到 unit 变量</div>
+                </div>
+                <div class="preset-item" onclick="applyPreset('single_idle')">
+                    <div class="name">single_idle</div>
+                    <div class="desc">单次待机 - 无变量绑定</div>
+                </div>
+                <div class="preset-item" onclick="applyPreset('full_display')">
+                    <div class="name">full_display</div>
+                    <div class="desc">全显测试</div>
+                </div>
+            </div>
+            
+            <h2 style="margin-top:20px;">📝 执行日志</h2>
+            <div id="log"></div>
+        </div>
+        
+        <!-- 中间：LCD预览 -->
+        <div class="panel" style="flex: 1;">
+            <h2>🖥️ LCD预览</h2>
+            <div id="lcd-container">
+                <canvas id="lcd-canvas" width="400" height="200"></canvas>
+                <div style="margin-top:10px;color:#94a3b8;font-size:12px;">
+                    当前单位: <span id="current-unit" style="color:#4ade80;font-weight:bold;">ft</span>
+                </div>
+            </div>
+            
+            <h2 style="margin-top:20px;">🔄 执行流程</h2>
+            <div class="flow-diagram">
+                <div class="flow-step" id="step1">1. 应用预设</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step" id="step2">2. 检测绑定</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step" id="step3">3. 读取变量</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step" id="step4">4. 映射模式</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step" id="step5">5. 渲染LCD</div>
+            </div>
+        </div>
+        
+        <!-- 右侧：代码说明 -->
+        <div class="panel" style="flex: 1.2;">
+            <h2>💻 实现原理</h2>
+            
+            <h3 style="color:#94a3b8;margin:15px 0 10px;font-size:14px;">1. 预设配置 (presets.json)</h3>
+            <div class="code-block"><span class="string">"boot_init"</span>: {
+  <span class="string">"components"</span>: {
+    <span class="string">"Line4_Unit"</span>: { <span class="string">"bind"</span>: <span class="string">"unit"</span> },
+    <span class="string">"Line3_Unit"</span>: { <span class="string">"bind"</span>: <span class="string">"unit"</span> },
+    <span class="comment">// 绑定到 unit 变量，而不是固定值</span>
+  }
+}</div>
+            
+            <h3 style="color:#94a3b8;margin:15px 0 10px;font-size:14px;">2. 组件定义 (components.json)</h3>
+            <div class="code-block"><span class="string">"Line4_Unit"</span>: {
+  <span class="string">"type"</span>: <span class="string">"ModeSelector"</span>,
+  <span class="string">"modes"</span>: {
+    <span class="string">"m"</span>:  [<span class="string">"Line4_Unit_U2"</span>],
+    <span class="string">"ft"</span>: [<span class="string">"Line4_Unit_U0"</span>],
+    <span class="string">"in"</span>: [<span class="string">"Line4_Unit_U1"</span>]
+  }
+}</div>
+            
+            <h3 style="color:#94a3b8;margin:15px 0 10px;font-size:14px;">3. 运行时映射 (lcd_runtime.js)</h3>
+            <div class="code-block"><span class="func">mapValueToMode</span>(comp, varName, value) {
+  <span class="keyword">if</span> (varName === <span class="string">'unit'</span>) {
+    <span class="comment">// 特殊映射: 整数 → 模式名</span>
+    <span class="keyword">const</span> unitMap = { 
+      <span class="number">0</span>: <span class="string">'m'</span>, 
+      <span class="number">1</span>: <span class="string">'ft'</span>, 
+      <span class="number">2</span>: <span class="string">'in'</span> 
+    };
+    <span class="keyword">return</span> unitMap[value];
+  }
+}</div>
+            
+            <h3 style="color:#94a3b8;margin:15px 0 10px;font-size:14px;">4. 调用方式</h3>
+            <div class="code-block"><span class="comment">// 状态机执行入口动作时</span>
+<span class="keyword">const</span> variables = { unit: <span class="number">1</span>, ... };
+LcdRuntime.<span class="func">applyPreset</span>(<span class="string">'boot_init'</span>, variables);
+
+<span class="comment">// 内部处理:</span>
+<span class="comment">// 1. 发现 Line4_Unit 有 bind: "unit"</span>
+<span class="comment">// 2. 从 variables 读取 unit = 1</span>
+<span class="comment">// 3. 映射 1 → "ft"</span>
+<span class="comment">// 4. 调用 setMode("Line4_Unit", "ft")</span></div>
+        </div>
+    </div>
+    
+    <script src="../js/device_config_manager.js"></script>
+    <script src="../js/lcd_runtime.js"></script>
+    <script>
+        // 模拟变量
+        let variables = {
+            unit: 1,  // 默认英尺
+            distance: 12.345,
+            battery_level: 3
+        };
+        
+        let currentPreset = 'boot_init';
+        const canvas = document.getElementById('lcd-canvas');
+        const ctx = canvas.getContext('2d');
+        let lcdImage = null;
+        
+        // 日志
+        function log(action, detail) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `<div class="log-entry"><span class="time">[${time}]</span> <span class="action">${action}</span> <span class="detail">${detail}</span></div>` + logDiv.innerHTML;
+        }
+        
+        // 高亮流程步骤
+        function highlightStep(stepNum) {
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById('step' + i).classList.remove('highlight');
+            }
+            if (stepNum) {
+                document.getElementById('step' + stepNum).classList.add('highlight');
+            }
+        }
+        
+        // 设置单位
+        function setUnit(value) {
+            variables.unit = value;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.value) === value);
+            });
+            
+            // 更新显示
+            const unitNames = ['m', 'ft', 'in'];
+            document.getElementById('current-unit').textContent = unitNames[value];
+            
+            log('设置变量', `unit = ${value} (${unitNames[value]})`);
+            
+            // 重新应用当前预设
+            if (currentPreset) {
+                applyPreset(currentPreset);
+            }
+        }
+        
+        // 应用预设
+        async function applyPreset(presetId) {
+            currentPreset = presetId;
+            
+            // 更新预设列表UI
+            document.querySelectorAll('.preset-item').forEach(item => {
+                item.classList.toggle('active', item.querySelector('.name').textContent === presetId);
+            });
+            
+            // 动画演示流程
+            highlightStep(1);
+            log('应用预设', presetId);
+            
+            await sleep(300);
+            highlightStep(2);
+            log('检测绑定', `检查组件是否有 bind 属性`);
+            
+            await sleep(300);
+            highlightStep(3);
+            log('读取变量', `variables = ${JSON.stringify(variables)}`);
+            
+            await sleep(300);
+            highlightStep(4);
+            const unitNames = ['m', 'ft', 'in'];
+            log('映射模式', `unit=${variables.unit} → "${unitNames[variables.unit]}"`);
+            
+            await sleep(300);
+            highlightStep(5);
+            
+            // 实际应用预设
+            if (typeof LcdRuntime !== 'undefined' && LcdRuntime.state.initialized) {
+                LcdRuntime.applyPreset(presetId, variables);
+                log('渲染完成', `LCD缓冲区已更新`);
+                renderLcd();
+            }
+            
+            await sleep(500);
+            highlightStep(0);
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // 渲染LCD
+        function renderLcd() {
+            if (!LcdRuntime.state.initialized) return;
+            
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景图
+            if (lcdImage) {
+                ctx.drawImage(lcdImage, 0, 0, canvas.width, canvas.height);
+            }
+            
+            // 绘制点亮的段
+            const buffer = LcdRuntime.getBuffer();
+            const elements = LcdRuntime.state.lcdProject?.elements || [];
+            
+            ctx.fillStyle = 'rgba(0, 255, 100, 0.8)';
+            
+            for (const elem of elements) {
+                for (const seg of elem.segments || []) {
+                    if (seg.seg === '' || seg.com === '') continue;
+                    
+                    const segIdx = parseInt(seg.seg);
+                    const comIdx = parseInt(seg.com);
+                    const bit = LcdRuntime.COM_BIT_MAP[comIdx];
+                    const isLit = (buffer[segIdx] & (1 << bit)) !== 0;
+                    
+                    if (isLit && seg.pixels) {
+                        const scale = canvas.width / (LcdRuntime.state.lcdProject?.imageWidth || 400);
+                        for (const pixel of seg.pixels) {
+                            const [x, y] = pixel.split(',').map(Number);
+                            ctx.fillRect(x * scale, y * scale, scale, scale);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 初始化
+        async function init() {
+            log('初始化', '开始加载配置...');
+            
+            // 初始化设备管理器
+            if (typeof DeviceConfigManager !== 'undefined') {
+                await DeviceConfigManager.init();
+            }
+            
+            // 初始化LCD运行时
+            await LcdRuntime.init('gd303_mini');
+            
+            // 加载背景图
+            if (LcdRuntime.state.lcdProject?.image) {
+                lcdImage = new Image();
+                lcdImage.onload = () => {
+                    log('初始化', 'LCD背景图加载完成');
+                    applyPreset('boot_init');
+                };
+                lcdImage.src = LcdRuntime.state.lcdProject.image;
+            } else {
+                applyPreset('boot_init');
+            }
+            
+            // 监听缓冲区更新
+            LcdRuntime.on('onBufferUpdate', () => {
+                renderLcd();
+            });
+            
+            log('初始化', '完成！');
+        }
+        
+        init();
+    </script>
+</body>
+</html>

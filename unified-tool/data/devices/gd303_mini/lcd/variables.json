@@ -1,0 +1,115 @@
+{
+  "version": "2.0",
+  "description": "UIStore 变量定义 - 内置变量，无需用户定义",
+  "globals": {
+    "unit": {
+      "type": "int",
+      "default": 0,
+      "description": "单位: 0=m, 1=ft, 2=in, 3=ft+in",
+      "options": [
+        { "value": 0, "label": "米 (m)" },
+        { "value": 1, "label": "英尺 (ft)" },
+        { "value": 2, "label": "英寸 (in)" },
+        { "value": 3, "label": "英尺+英寸 (ft+in)" }
+      ]
+    },
+    "laser_on": {
+      "type": "bool",
+      "default": false,
+      "description": "激光状态",
+      "hardware": "laser"
+    },
+    "backlight_on": {
+      "type": "bool",
+      "default": true,
+      "description": "背光状态",
+      "hardware": "backlight"
+    },
+    "base_back": {
+      "type": "bool",
+      "default": true,
+      "description": "基准模式: true=后基准, false=前基准"
+    },
+    "beep_enable": {
+      "type": "bool",
+      "default": true,
+      "description": "蜂鸣器开关"
+    },
+    "battery": {
+      "type": "int",
+      "default": 3,
+      "min": 0,
+      "max": 3,
+      "description": "电量等级 0-3"
+    }
+  },
+  "data": {
+    "distance": {
+      "type": "float",
+      "default": 0,
+      "unit": "m",
+      "description": "当前测量距离(米)"
+    },
+    "length": {
+      "type": "float",
+      "default": 0,
+      "unit": "m",
+      "description": "长度(米) - 面积/体积测量用"
+    },
+    "width": {
+      "type": "float",
+      "default": 0,
+      "unit": "m",
+      "description": "宽度(米) - 面积/体积测量用"
+    },
+    "height": {
+      "type": "float",
+      "default": 0,
+      "unit": "m",
+      "description": "高度(米) - 体积测量用"
+    },
+    "area_result": {
+      "type": "float",
+      "default": 0,
+      "unit": "m²",
+      "description": "面积计算结果(平方米)"
+    },
+    "volume_result": {
+      "type": "float",
+      "default": 0,
+      "unit": "m³",
+      "description": "体积计算结果(立方米)"
+    },
+    "pythagorean_result": {
+      "type": "float",
+      "default": 0,
+      "unit": "m",
+      "description": "勾股定理计算结果(米)"
+    },
+    "max_data": {
+      "type": "float",
+      "default": -1,
+      "unit": "m",
+      "description": "连续测量最大值"
+    },
+    "min_data": {
+      "type": "float",
+      "default": -1,
+      "unit": "m",
+      "description": "连续测量最小值"
+    },
+    "signal": {
+      "type": "int",
+      "default": 0,
+      "min": 0,
+      "max": 5,
+      "description": "信号强度 0-5"
+    },
+    "angle": {
+      "type": "float",
+      "default": 0,
+      "unit": "°",
+      "description": "角度"
+    }
+  }
+}

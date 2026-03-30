@@ -1,0 +1,277 @@
+<!-- 滑台精度测试系统 - 风格3科技感 + 左Tab右数据布局 -->
+
+<!-- 顶部状态栏 -->
+<div class="glass-header">
+    <div class="header-title">
+        <span class="title-glow">SLIPWAY PRECISION TEST</span>
+        <span class="title-ver">v2.0</span>
+    </div>
+    <div class="header-status">
+        <div class="status-block">
+            <span class="status-label">位置</span>
+            <span class="status-value" id="header-pos">0.000 mm</span>
+        </div>
+        <div class="status-block">
+            <span class="status-label">反射率</span>
+            <span class="status-value" id="header-ref">90%</span>
+        </div>
+        <div class="status-block">
+            <span class="status-label">状态</span>
+            <span class="status-value online" id="header-state">就绪</span>
+        </div>
+        <div class="status-block">
+            <span class="status-label">进度</span>
+            <span class="status-value" id="header-progress">0/0</span>
+        </div>
+    </div>
+</div>
+
+<!-- 主界面 -->
+<div class="glass-main">
+    <!-- 左侧控制面板 -->
+    <div class="glass-left">
+        <!-- 连接状态 -->
+        <div class="glass-card connect-card">
+            <div class="connect-row">
+                <input type="text" id="slipway-ip" data-remember="ip" value="192.168.2.46" placeholder="IP">
+                <span class="separator">:</span>
+                <input type="number" id="slipway-port" data-remember="port" value="6000" placeholder="端口">
+                <button id="btn-connect" class="glow-btn primary" onclick="SlipwayPage.toggleSlipway()">连接</button>
+            </div>
+            <div class="connect-status">
+                <span class="dot online"></span>
+                <span id="connect-text">未连接</span>
+            </div>
+        </div>
+
+        <!-- Tab切换 -->
+        <div class="glass-card">
+            <div class="tab-header">
+                <button class="tab-btn active" data-tab="slipway">滑台</button>
+                <button class="tab-btn" data-tab="rotary">转靶</button>
+                <button class="tab-btn" data-tab="test">测试参数</button>
+            </div>
+
+            <!-- 滑台控制 -->
+            <div class="tab-content active" id="tab-slipway">
+                <div class="control-section">
+                    <div class="section-label">手动控制</div>
+                    <div class="input-row">
+                        <label>目标位置</label>
+                        <div class="input-group">
+                            <input type="number" id="slipway-target" data-remember="target" value="1000" step="100">
+                            <span class="unit">mm</span>
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="ctrl-btn" onclick="SlipwayPage.jogNeg()">后退</button>
+                        <button class="ctrl-btn" onclick="SlipwayPage.jogPos()">前进</button>
+                        <button class="ctrl-btn highlight" onclick="SlipwayPage.homeSlipway()">复位</button>
+                        <button class="ctrl-btn danger" onclick="SlipwayPage.stopSlipway()">停止</button>
+                    </div>
+                    <div class="btn-row">
+                        <button class="ctrl-btn primary full" onclick="SlipwayPage.moveSlipway()">移动到目标位置</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 转靶控制 -->
+            <div class="tab-content" id="tab-rotary">
+                <div class="control-section">
+                    <div class="section-label">反射率选择</div>
+                    <div class="ref-grid">
+                        <button class="ref-btn" onclick="SlipwayPage.setReflectance(10)">10%</button>
+                        <button class="ref-btn" onclick="SlipwayPage.setReflectance(20)">20%</button>
+                        <button class="ref-btn" onclick="SlipwayPage.setReflectance(30)">30%</button>
+                        <button class="ref-btn" onclick="SlipwayPage.setReflectance(40)">40%</button>
+                        <button class="ref-btn" onclick="SlipwayPage.setReflectance(60)">60%</button>
+                        <button class="ref-btn" onclick="SlipwayPage.setReflectance(70)">70%</button>
+                        <button class="ref-btn" onclick="SlipwayPage.setReflectance(80)">80%</button>
+                        <button class="ref-btn active" onclick="SlipwayPage.setReflectance(90)">90%</button>
+                    </div>
+                    <div class="btn-row" style="margin-top:16px;">
+                        <button class="ctrl-btn highlight" onclick="SlipwayPage.homeRotary()">转靶复位</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试参数 -->
+            <div class="tab-content" id="tab-test">
+                <div class="control-section">
+                    <div class="section-label">测试参数</div>
+                    <div class="input-row">
+                        <label>开始位置(mm)</label>
+                        <input type="number" id="test-start" data-remember="testStart" value="1000" step="100">
+                    </div>
+                    <div class="input-row">
+                        <label>结束位置(mm)</label>
+                        <input type="number" id="test-end" data-remember="testEnd" value="5000" step="100">
+                    </div>
+                    <div class="input-row">
+                        <label>步进距离(mm)</label>
+                        <input type="number" id="test-step" data-remember="testStep" value="1000" step="100">
+                    </div>
+                    <div class="input-row">
+                        <label>测试次数</label>
+                        <input type="number" id="test-repeats" data-remember="testRepeats" value="2" min="1">
+                    </div>
+                    <div class="input-row">
+                        <label>补偿位置(mm)</label>
+                        <input type="number" id="test-compensate" data-remember="testCompensate" value="0" step="1">
+                    </div>
+                    <div class="mode-switch">
+                        <label class="radio-item">
+                            <input type="radio" name="test-mode" data-remember="testMode" value="basic" checked>
+                            <span>基础模式</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="test-mode" data-remember="testMode" value="advanced">
+                            <span>高级模式</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试控制按钮 -->
+        <div class="glass-card">
+            <div class="test-actions">
+                <button class="action-btn start" onclick="SlipwayPage.startTest()">
+                    <span class="icon">▶</span> 开始精度测试
+                </button>
+                <button class="action-btn stop" onclick="SlipwayPage.stopTest()">
+                    <span class="icon">⏹</span> 停止测试
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧数据面板 -->
+    <div class="glass-right">
+        <div class="glass-card full-height">
+            <!-- 数据Tab -->
+            <div class="data-tab-header">
+                <button class="data-tab-btn active" data-dtab="table">滑台数据表</button>
+                <button class="data-tab-btn" data-dtab="log">测试日志</button>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-val" id="stat-count">0</span>
+                    <span class="stat-name">记录数</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val" id="stat-avg">--</span>
+                    <span class="stat-name">平均误差</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val error" id="stat-max">--</span>
+                    <span class="stat-name">最大误差</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val success" id="stat-min">--</span>
+                    <span class="stat-name">最小误差</span>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="data-tab-content active" id="dtab-table">
+                <div class="table-header-row">
+                    <span class="col-time">耗时(ms)</span>
+                    <span class="col-pos">滑台位置</span>
+                    <span class="col-ref">当前反射率</span>
+                    <span class="col-dist">测量距离</span>
+                    <span class="col-err">误差</span>
+                </div>
+                <div class="table-body" id="results-tbody">
+                    <!-- 数据行会动态添加 -->
+                </div>
+            </div>
+
+            <!-- 测试日志 -->
+            <div class="data-tab-content" id="dtab-log">
+                <div class="log-container" id="test-log">
+                    <div class="log-line">[系统] 等待开始测试...</div>
+                </div>
+            </div>
+
+            <!-- 底部操作 -->
+            <div class="data-footer">
+                <span class="data-info">实时数据: 总记录数:<b id="total-records">0</b>, 字段数:<b>5</b></span>
+                <button class="export-btn" onclick="SlipwayPage.exportResults()">📊 导出精度测试数据</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 底部状态栏 -->
+<div class="glass-footer">
+    <span id="footer-conn">未连接</span>
+    <span>位置: <b id="footer-pos">0.000mm</b></span>
+    <span id="footer-state">就绪</span>
+</div>
+
+<script>
+// 初始化状态管理器
+if (window.StateManager) {
+    StateManager.init('slipway');
+}
+
+// Tab切换
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+        // 记忆当前Tab
+        if (window.StateManager) {
+            StateManager.save('slipway', 'activeTab', this.dataset.tab);
+        }
+    });
+});
+
+// 恢复上次的Tab
+if (window.StateManager) {
+    const savedTab = StateManager.load('slipway', 'activeTab');
+    if (savedTab) {
+        const tabBtn = document.querySelector(`.tab-btn[data-tab="${savedTab}"]`);
+        if (tabBtn) tabBtn.click();
+    }
+}
+
+// 数据Tab切换
+document.querySelectorAll('.data-tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.data-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.data-tab-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('dtab-' + this.dataset.dtab).classList.add('active');
+    });
+});
+
+// 反射率按钮
+document.querySelectorAll('.ref-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ref-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        // 记忆选中的反射率
+        if (window.StateManager) {
+            StateManager.save('slipway', 'reflectance', this.textContent.replace('%', ''));
+        }
+    });
+});
+
+// 恢复上次选中的反射率
+if (window.StateManager) {
+    const savedRef = StateManager.load('slipway', 'reflectance');
+    if (savedRef) {
+        const refBtn = Array.from(document.querySelectorAll('.ref-btn')).find(b => b.textContent.includes(savedRef));
+        if (refBtn) {
+            document.querySelectorAll('.ref-btn').forEach(b => b.classList.remove('active'));
+            refBtn.classList.add('active');
+        }
+    }
+}
+</script>

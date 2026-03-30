@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "deviceId": "segment_lcd_template",
+  "name": "段码LCD设备模板",
+  "description": "用于创建段码LCD设备的模板",
+  "createdAt": "2025-12-26T00:00:00.000Z",
+  "updatedAt": "2025-12-26T00:00:00.000Z",
+  "lcdType": "segment",
+  "bufferSize": 54,
+  "comCount": 8,
+  "frameFormat": {
+    "header": "AA",
+    "direction": {
+      "send": "EE",
+      "recv": "FE"
+    },
+    "footer": "BB FF",
+    "checksum": "XOR"
+  }
+}

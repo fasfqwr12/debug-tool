@@ -1,0 +1,129 @@
+{
+  "version": "2.0",
+  "description": "宏动作库 - 组件名=变量名",
+  "macros": {
+    "scrollUp": {
+      "name": "数据上移",
+      "description": "历史数据滚动: line1←line2←line3←line4",
+      "category": "数据操作",
+      "icon": "⬆️",
+      "steps": [
+        "line1 = line2",
+        "line2 = line3",
+        "line3 = line4"
+      ]
+    },
+    "scrollDown": {
+      "name": "撤回/下移",
+      "description": "撤回操作: line4←line3←line2←line1",
+      "category": "数据操作",
+      "icon": "⬇️",
+      "steps": [
+        "line4 = line3",
+        "line3 = line2",
+        "line2 = line1"
+      ]
+    },
+    "calcArea": {
+      "name": "计算面积",
+      "description": "面积 = line2 × line3",
+      "category": "计算",
+      "icon": "📐",
+      "steps": [
+        "line4 = line2 * line3"
+      ]
+    },
+    "calcVolume": {
+      "name": "计算体积",
+      "description": "体积 = line1 × line2 × line3",
+      "category": "计算",
+      "icon": "📦",
+      "steps": [
+        "line4 = line1 * line2 * line3"
+      ]
+    },
+    "calcPythagoras": {
+      "name": "勾股定理",
+      "description": "√(line1² - line2²)",
+      "category": "计算",
+      "icon": "📐",
+      "steps": [
+        "line4 = sqrt(line1^2 - line2^2)"
+      ]
+    },
+    "clearAll": {
+      "name": "清空所有行",
+      "description": "所有行显示横线",
+      "category": "显示",
+      "icon": "🗑️",
+      "steps": [
+        "line1 = '-----'",
+        "line2 = '-----'",
+        "line3 = '-----'",
+        "line4 = '-----'"
+      ]
+    },
+    "showReady": {
+      "name": "待机显示",
+      "description": "line4显示横线，其他清空",
+      "category": "显示",
+      "icon": "⏸️",
+      "steps": [
+        "line1 = ''",
+        "line2 = ''",
+        "line3 = ''",
+        "line4 = '-----'"
+      ]
+    },
+    "showError": {
+      "name": "显示错误",
+      "description": "line4显示Err",
+      "category": "显示",
+      "icon": "❌",
+      "steps": [
+        "line4 = 'Err'"
+      ]
+    },
+    "laserOn": {
+      "name": "开启激光",
+      "description": "显示激光图标(自动触发硬件)",
+      "category": "硬件",
+      "icon": "🔴",
+      "steps": [
+        "laser = true"
+      ]
+    },
+    "laserOff": {
+      "name": "关闭激光",
+      "description": "隐藏激光图标(自动触发硬件)",
+      "category": "硬件",
+      "icon": "⚫",
+      "steps": [
+        "laser = false"
+      ]
+    },
+    "measureSuccess": {
+      "name": "测量成功",
+      "description": "数据上移 + 显示结果 + 关激光",
+      "category": "测量",
+      "icon": "✅",
+      "steps": [
+        "line1 = line2",
+        "line2 = line3",
+        "line3 = line4",
+        "line4 = distance",
+        "laser = false"
+      ]
+    },
+    "measureFail": {
+      "name": "测量失败",
+      "description": "显示错误 + 关激光",
+      "category": "测量",
+      "icon": "❌",
+      "steps": [
+        "line4 = 'Err'",
+        "laser = false"
+      ]
+    }
+  }
+}

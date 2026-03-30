@@ -1,0 +1,117 @@
+{
+  "theme": "dark",
+  "language": "zh-CN",
+  "auto_connect": false,
+  "log_level": "INFO",
+  "default_baudrate": 115200,
+  "wave_max_points": 500,
+  "auto_save_interval": 60,
+  "ui_theme": "aurora",
+  "schema_version": 1,
+  "station": {
+    "stations": {
+      "默认工位": {
+        "name": "默认工位",
+        "tool_profile_id": "tool_default"
+      }
+    },
+    "current_station_id": "默认工位"
+  },
+  "tool_profiles": {
+    "tool_default": {
+      "slipway": {
+        "ip": "192.168.2.46",
+        "port": 6000,
+        "timeout_ms": 1500,
+        "retry": 2,
+        "max_position_mm": 38000,
+        "step_options_mm": [
+          1000,
+          5000,
+          10000,
+          50,
+          100
+        ],
+        "move_min_speed": 50000,
+        "move_max_speed": 600000,
+        "reset_fast_min_speed": 70000,
+        "reset_fast_max_speed": 500000,
+        "reset_slow_min_speed": 20000,
+        "reset_slow_max_speed": 50000,
+        "reset_ultra_slow_min_speed": 20000,
+        "reset_ultra_slow_max_speed": 50000,
+        "home_io_num": 4,
+        "home_io_active_level": 0,
+        "active_step_mm": 5000,
+        "io_watch": "",
+        "max_table_rows": 500,
+        "max_chart_points": 1000,
+        "max_results_memory": 5000,
+        "limit_io_num": 4,
+        "limit_io_active_level": 0,
+        "zero_confirm_io_num": -1,
+        "zero_confirm_io_active_level": 0,
+        "reset_limit_release_mm": 2,
+        "reset_io_poll_interval": 0.05,
+        "reset_home_confirm_samples": 3,
+        "reset_home_confirm_interval": 0.03
+      },
+      "rotary": {
+        "ip": "192.168.2.46",
+        "port": 6000,
+        "timeout_ms": 1500,
+        "retry": 2
+      },
+      "lift": {},
+      "measure": {
+        "type": "firmware"
+      }
+    }
+  },
+  "ui_font_family": "lxgw",
+  "ui_font_size": "large",
+  "reduce_motion": true,
+  "ui_font_scale": 125,
+  "ui_fx": "pro",
+  "competitor_protocols": {
+    "l1_ascii_default": {
+      "id": "l1_ascii_default",
+      "name": "L1 ASCII 默认",
+      "kind": "l1_ascii",
+      "params": {
+        "cmd": "iSM",
+        "timeout_ms": 350,
+        "send_cmd": true
+      },
+      "controls": {
+        "laser_on": "iLD:1",
+        "laser_off": "iLD:0",
+        "halt": "iHALT",
+        "set_ascii": "iSET:4,1",
+        "set_modbus": "iSET:4,0",
+        "set_hex": "iSET:4,2",
+        "get_proto": "iGET:4"
+      }
+    },
+    "modbus_rtu_template": {
+      "id": "modbus_rtu_template",
+      "name": "Modbus RTU 模板",
+      "kind": "modbus_rtu",
+      "params": {
+        "slave_id": 1,
+        "func": 3,
+        "reg_addr": 15,
+        "reg_count": 2,
+        "timeout_ms": 350,
+        "retries": 2,
+        "dist_offset_regs": 0,
+        "dist_size_regs": 2,
+        "dist_dtype": "u32",
+        "word_order": "be",
+        "scale": 0.001,
+        "unit": "m"
+      },
+      "controls": {}
+    }
+  }
+}

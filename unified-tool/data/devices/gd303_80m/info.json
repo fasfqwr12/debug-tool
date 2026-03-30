@@ -1,0 +1,9 @@
+{
+  "id": "gd303_80m",
+  "name": "GD303-80M",
+  "description": "GD303 80米测距仪",
+  "lcdType": "segment",
+  "modelPattern": "^GD303-80M$",
+  "createdAt": "2025-12-26",
+  "updatedAt": "2026-03-26T15:49:49.975394"
+}

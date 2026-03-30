@@ -1,0 +1,144 @@
+{
+  "version": "1.0",
+  
+  "workflows": {
+    "gd_calibration_3point": {
+      "id": "gd_calibration_3point",
+      "name": "GD三点标定",
+      "description": "5m/20m/25m 三点标定流程",
+      "icon": "🎯",
+      "category": "calibration",
+      "required_devices": ["gd_laser"],
+      "optional_devices": ["slipway"],
+      "params": {
+        "point1": { "type": "number", "default": 5000, "label": "标定点1(mm)", "min": 1000, "max": 30000 },
+        "point2": { "type": "number", "default": 20000, "label": "标定点2(mm)", "min": 1000, "max": 30000 },
+        "point3": { "type": "number", "default": 25000, "label": "标定点3(mm)", "min": 1000, "max": 30000 }
+      },
+      "steps": [
+        { "id": 1, "action": "scan_devices", "device_type": "gd_laser", "description": "扫描GD设备" },
+        { "id": 2, "action": "command", "device": "gd_laser", "cmd": "get_info", "description": "获取设备信息" },
+        { "id": 3, "action": "command", "device": "gd_laser", "cmd": "laser_on", "params": { "model": 0, "direction": 0 }, "description": "开启激光" },
+        { "id": 4, "action": "check_all", "on_fail": "blink_and_mark", "description": "检查所有设备响应" },
+        { "id": 5, "action": "move_slipway", "position": "${point1}", "optional": true, "description": "滑台移动到标定点1" },
+        { "id": 6, "action": "wait_confirm", "message": "请确认滑台已到位 ${point1}mm", "skip_if": "has_slipway", "description": "等待确认" },
+        { "id": 7, "action": "command", "device": "gd_laser", "cmd": "calibrate_p1", "params": { "distance": "${point1}" }, "description": "标定位置1" },
+        { "id": 8, "action": "move_slipway", "position": "${point2}", "optional": true, "description": "滑台移动到标定点2" },
+        { "id": 9, "action": "wait_confirm", "message": "请确认滑台已到位 ${point2}mm", "skip_if": "has_slipway", "description": "等待确认" },
+        { "id": 10, "action": "command", "device": "gd_laser", "cmd": "calibrate_p2", "params": { "distance": "${point2}" }, "description": "标定位置2" },
+        { "id": 11, "action": "move_slipway", "position": "${point3}", "optional": true, "description": "滑台移动到标定点3" },
+        { "id": 12, "action": "wait_confirm", "message": "请确认滑台已到位 ${point3}mm", "skip_if": "has_slipway", "description": "等待确认" },
+        { "id": 13, "action": "command", "device": "gd_laser", "cmd": "calibrate_p3", "params": { "distance": "${point3}" }, "description": "标定位置3" },
+        { "id": 14, "action": "command", "device": "gd_laser", "cmd": "laser_off", "description": "关闭激光" },
+        { "id": 15, "action": "generate_report", "template": "calibration", "description": "生成标定报告" }
+      ]
+    },
+    
+    "gd_test_5point": {
+      "id": "gd_test_5point",
+      "name": "GD五点测试",
+      "description": "5m/10m/15m/20m/25m 精度测试",
+      "icon": "📊",
+      "category": "test",
+      "required_devices": ["gd_laser"],
+      "optional_devices": ["slipway"],
+      "params": {
+        "test_points": { 
+          "type": "array", 
+          "default": [5000, 10000, 15000, 20000, 25000],
+          "label": "测试点(mm)"
+        },
+        "tolerance": { 
+          "type": "object", 
+          "default": { "5000": 10, "10000": 15, "15000": 20, "20000": 25, "25000": 30 },
+          "label": "允许误差(mm)"
+        }
+      },
+      "steps": [
+        { "id": 1, "action": "scan_devices", "device_type": "gd_laser", "description": "扫描GD设备" },
+        { "id": 2, "action": "command", "device": "gd_laser", "cmd": "laser_on", "description": "开启激光" },
+        { "id": 3, "action": "loop", "var": "point", "in": "${test_points}", "steps": [
+          { "action": "move_slipway", "position": "${point}", "optional": true },
+          { "action": "wait_confirm", "message": "请确认滑台已到位 ${point}mm", "skip_if": "has_slipway" },
+          { "action": "command", "device": "gd_laser", "cmd": "measure" },
+          { "action": "record_result", "expected": "${point}", "tolerance": "${tolerance[point]}" }
+        ], "description": "循环测试各点" },
+        { "id": 4, "action": "command", "device": "gd_laser", "cmd": "laser_off", "description": "关闭激光" },
+        { "id": 5, "action": "calculate_stats", "description": "计算统计数据" },
+        { "id": 6, "action": "generate_report", "template": "test", "description": "生成测试报告" }
+      ]
+    },
+    
+    "quick_measure": {
+      "id": "quick_measure",
+      "name": "快速测量",
+      "description": "单次距离测量",
+      "icon": "⚡",
+      "category": "quick",
+      "required_devices": ["gd_laser"],
+      "params": {},
+      "steps": [
+        { "id": 1, "action": "command", "device": "gd_laser", "cmd": "laser_on", "description": "开启激光" },
+        { "id": 2, "action": "delay", "ms": 500, "description": "等待稳定" },
+        { "id": 3, "action": "command", "device": "gd_laser", "cmd": "measure", "description": "测量距离" },
+        { "id": 4, "action": "command", "device": "gd_laser", "cmd": "laser_off", "description": "关闭激光" }
+      ]
+    },
+    
+    "slipway_calibration": {
+      "id": "slipway_calibration",
+      "name": "滑台联动标定",
+      "description": "滑台+转靶联动校准流程",
+      "icon": "🔗",
+      "category": "calibration",
+      "required_devices": ["gd_laser"],
+      "optional_devices": ["slipway", "rotary"],
+      "params": {
+        "distance": { "type": "number", "default": 5000, "label": "标定距离(mm)", "min": 1000, "max": 30000 },
+        "reflectivity": { "type": "select", "default": "10%", "label": "反射率", "options": ["10%", "20%", "50%", "80%", "100%"] },
+        "cal_point": { "type": "select", "default": 1, "label": "标定点", "options": [1, 2, 3] }
+      },
+      "steps": [
+        { "id": 1, "action": "move_rotary", "position": "${reflectivity}", "optional": true, "description": "转靶切换到${reflectivity}反射率" },
+        { "id": 2, "action": "move_slipway", "position": "${distance}", "optional": true, "description": "滑台移动到${distance}mm" },
+        { "id": 3, "action": "wait_slipway_done", "timeout": 60000, "optional": true, "description": "等待滑台到位" },
+        { "id": 4, "action": "command", "device": "gd_laser", "cmd": "laser_on", "params": { "model": 0, "direction": 0 }, "description": "开启激光" },
+        { "id": 5, "action": "delay", "ms": 1000, "description": "等待稳定" },
+        { "id": 6, "action": "command", "device": "gd_laser", "cmd": "calibrate_p${cal_point}", "params": { "distance": "${distance}" }, "description": "执行标定点${cal_point}" },
+        { "id": 7, "action": "command", "device": "gd_laser", "cmd": "laser_off", "description": "关闭激光" }
+      ]
+    },
+    
+    "slipway_multi_calibration": {
+      "id": "slipway_multi_calibration",
+      "name": "滑台三点联动标定",
+      "description": "自动完成三点标定(5m/20m/25m)",
+      "icon": "🎯",
+      "category": "calibration",
+      "required_devices": ["gd_laser"],
+      "optional_devices": ["slipway", "rotary"],
+      "params": {
+        "reflectivity": { "type": "select", "default": "10%", "label": "反射率", "options": ["10%", "20%", "50%", "80%", "100%"] },
+        "p1_distance": { "type": "number", "default": 5000, "label": "位置1(mm)" },
+        "p2_distance": { "type": "number", "default": 20000, "label": "位置2(mm)" },
+        "p3_distance": { "type": "number", "default": 25000, "label": "位置3(mm)" }
+      },
+      "steps": [
+        { "id": 1, "action": "move_rotary", "position": "${reflectivity}", "optional": true, "description": "转靶切换到${reflectivity}" },
+        { "id": 2, "action": "command", "device": "gd_laser", "cmd": "laser_on", "params": { "model": 0, "direction": 0 }, "description": "开启激光" },
+        { "id": 3, "action": "delay", "ms": 500, "description": "等待稳定" },
+        { "id": 4, "action": "move_slipway", "position": "${p1_distance}", "optional": true, "description": "滑台移动到${p1_distance}mm" },
+        { "id": 5, "action": "wait_slipway_done", "timeout": 60000, "optional": true, "description": "等待滑台到位" },
+        { "id": 6, "action": "command", "device": "gd_laser", "cmd": "calibrate_p1", "params": { "distance": "${p1_distance}" }, "description": "标定位置1" },
+        { "id": 7, "action": "move_slipway", "position": "${p2_distance}", "optional": true, "description": "滑台移动到${p2_distance}mm" },
+        { "id": 8, "action": "wait_slipway_done", "timeout": 90000, "optional": true, "description": "等待滑台到位" },
+        { "id": 9, "action": "command", "device": "gd_laser", "cmd": "calibrate_p2", "params": { "distance": "${p2_distance}" }, "description": "标定位置2" },
+        { "id": 10, "action": "move_slipway", "position": "${p3_distance}", "optional": true, "description": "滑台移动到${p3_distance}mm" },
+        { "id": 11, "action": "wait_slipway_done", "timeout": 60000, "optional": true, "description": "等待滑台到位" },
+        { "id": 12, "action": "command", "device": "gd_laser", "cmd": "calibrate_p3", "params": { "distance": "${p3_distance}" }, "description": "标定位置3" },
+        { "id": 13, "action": "command", "device": "gd_laser", "cmd": "laser_off", "description": "关闭激光" },
+        { "id": 14, "action": "notify", "message": "三点标定完成!", "description": "完成通知" }
+      ]
+    }
+  }
+}

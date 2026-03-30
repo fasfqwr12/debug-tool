@@ -1,0 +1,578 @@
+<!-- LCD动画效果编辑器 - 定义闪烁和序列帧动画 -->
+<style>
+    .anim-container {
+        display: grid;
+        grid-template-columns: 280px 1fr 320px;
+        grid-template-rows: 40px 1fr;
+        height: 100%;
+        background: var(--bg-primary);
+    }
+    
+    /* 工具栏 */
+    .anim-toolbar {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        gap: 10px;
+    }
+    .anim-toolbar h1 { font-size: 14px; margin: 0; }
+    .anim-toolbar-sep { width: 1px; height: 20px; background: var(--border-color); }
+    .anim-btn {
+        padding: 5px 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .anim-btn:hover { border-color: var(--accent-color); }
+    .anim-btn.primary { background: var(--accent-color); border-color: var(--accent-color); }
+    .anim-btn.success { background: #22c55e; border-color: #22c55e; }
+    .anim-btn.danger { background: #ef4444; border-color: #ef4444; }
+    
+    /* 左侧面板 */
+    .anim-left {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    .anim-panel-header {
+        padding: 8px 10px;
+        background: var(--bg-tertiary);
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .anim-panel-content { flex: 1; overflow-y: auto; padding: 8px; }
+    
+    /* 分类标题 */
+    .anim-category {
+        font-size: 10px;
+        color: var(--text-muted);
+        padding: 8px 4px 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .anim-category:first-child { padding-top: 0; }
+    
+    /* 动画列表项 */
+    .anim-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        font-size: 12px;
+    }
+    .anim-item:hover { border-color: var(--accent-color); }
+    .anim-item.selected { border-color: #ec4899; background: rgba(236,72,153,0.1); }
+    .anim-item .icon { font-size: 14px; }
+    .anim-item .name { flex: 1; }
+    .anim-item .type-tag {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: #3b82f6;
+        color: #fff;
+    }
+    .anim-item .type-tag.sequence { background: #8b5cf6; }
+    .anim-item .delete { color: #ef4444; cursor: pointer; opacity: 0.6; }
+    .anim-item .delete:hover { opacity: 1; }
+    
+    /* 中间预览区 */
+    .anim-preview {
+        display: flex;
+        flex-direction: column;
+        background: #0a0a0a;
+        overflow: hidden;
+    }
+    .anim-preview-header {
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+    }
+    .anim-preview-canvas {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+    #anim-lcd-canvas {
+        background: #1a1a2e;
+    }
+    
+    /* 播放控制 */
+    .anim-controls {
+        padding: 10px 12px;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .anim-controls .play-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #22c55e;
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .anim-controls .play-btn:hover { background: #16a34a; }
+    .anim-controls .play-btn.playing { background: #ef4444; }
+    .anim-controls .timeline {
+        flex: 1;
+        height: 4px;
+        background: var(--bg-tertiary);
+        border-radius: 2px;
+        position: relative;
+    }
+    .anim-controls .timeline-progress {
+        height: 100%;
+        background: #ec4899;
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.1s;
+    }
+    .anim-controls .time-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        min-width: 60px;
+        text-align: right;
+    }
+    
+    /* 右侧属性面板 */
+    .anim-right {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    .anim-right .anim-panel-content { padding: 10px; }
+    
+    /* 表单 */
+    .anim-form-group { margin-bottom: 12px; }
+    .anim-form-group label {
+        display: block;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    .anim-input, .anim-select, .anim-textarea {
+        width: 100%;
+        padding: 6px 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    .anim-textarea { min-height: 50px; resize: vertical; }
+    .anim-input:focus, .anim-select:focus, .anim-textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    
+    /* 区块 */
+    .anim-section {
+        background: var(--bg-primary);
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border: 1px solid var(--border-color);
+    }
+    .anim-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 10px;
+        background: var(--bg-tertiary);
+        border-radius: 6px 6px 0 0;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .anim-section-header:hover { background: var(--bg-secondary); }
+    .anim-section-content {
+        padding: 8px;
+        display: none;
+    }
+    .anim-section.expanded .anim-section-content { display: block; }
+    
+    /* 目标标签 */
+    .target-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: #3b82f630;
+        color: #3b82f6;
+        border-radius: 12px;
+        font-size: 11px;
+        margin: 2px;
+    }
+    .target-tag .remove { cursor: pointer; }
+    
+    /* 帧列表 */
+    .frame-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+    .frame-item:hover { border-color: var(--accent-color); }
+    .frame-item.selected { border-color: #ec4899; background: rgba(236,72,153,0.1); }
+    .frame-item .frame-num {
+        width: 24px;
+        height: 24px;
+        background: #8b5cf6;
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 600;
+    }
+    .frame-item .frame-info { flex: 1; }
+    .frame-item .frame-duration {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+    .frame-item .delete { color: #ef4444; cursor: pointer; }
+    
+    /* 空状态 */
+    .anim-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 20px;
+    }
+    .anim-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    
+    /* 添加按钮 */
+    .add-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px;
+        background: var(--bg-tertiary);
+        border: 1px dashed var(--border-color);
+        border-radius: 4px;
+        color: var(--text-muted);
+        font-size: 11px;
+        cursor: pointer;
+        margin-top: 6px;
+    }
+    .add-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+    }
+    
+    /* 行内输入 */
+    .inline-input {
+        width: 60px;
+        padding: 3px 6px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        font-size: 11px;
+        text-align: center;
+    }
+    .inline-input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    
+    /* 帧组件编辑 */
+    .frame-comp-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        font-size: 11px;
+    }
+    .frame-comp-item .comp-name {
+        font-weight: 500;
+        color: var(--text-primary);
+        min-width: 60px;
+    }
+    .frame-comp-item .comp-type {
+        font-size: 9px;
+        color: var(--text-muted);
+        padding: 1px 4px;
+        background: var(--bg-primary);
+        border-radius: 3px;
+    }
+    .frame-comp-item .comp-state {
+        flex: 1;
+        color: #22c55e;
+    }
+    .frame-comp-item .remove {
+        color: #ef4444;
+        cursor: pointer;
+        padding: 2px 4px;
+    }
+    .frame-comp-select {
+        flex: 1;
+        padding: 3px 6px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        font-size: 11px;
+    }
+    .frame-comp-select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    .frame-comp-input {
+        width: 70px;
+        padding: 3px 6px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        font-size: 11px;
+    }
+    .frame-comp-input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    
+    /* 元素标签 */
+    .element-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        background: rgba(59,130,246,0.2);
+        border: 1px solid #3b82f6;
+        border-radius: 10px;
+        font-size: 10px;
+        color: #3b82f6;
+    }
+    .element-tag .remove {
+        cursor: pointer;
+        color: #ef4444;
+    }
+    
+    /* 帧列表项优化 */
+    .frame-item .frame-desc {
+        flex: 1;
+        font-size: 10px;
+        color: var(--text-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .frame-item .frame-duration {
+        width: 50px;
+        padding: 2px 4px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        font-size: 10px;
+        text-align: center;
+    }
+    .frame-item .frame-unit {
+        font-size: 9px;
+        color: var(--text-muted);
+    }
+    .frame-item .frame-actions {
+        display: flex;
+        gap: 4px;
+    }
+    .frame-item .frame-actions span {
+        cursor: pointer;
+        opacity: 0.6;
+    }
+    .frame-item .frame-actions span:hover {
+        opacity: 1;
+    }
+    .frame-item .frame-count {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+    
+    /* 对话框 */
+    .anim-dialog-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .anim-dialog {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .anim-dialog-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .anim-dialog-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 18px;
+        cursor: pointer;
+    }
+    .anim-dialog-close:hover {
+        color: var(--text-primary);
+    }
+    .anim-dialog-body {
+        padding: 16px;
+    }
+    
+    /* 元素选择标签 */
+    .element-select-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .element-select-tag:hover {
+        border-color: var(--accent-color);
+        background: rgba(34,197,94,0.1);
+    }
+    
+    /* Line组件状态编辑器 */
+    .line-state-editor {
+        width: 100%;
+    }
+    .line-state-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    .line-state-row:last-child {
+        margin-bottom: 0;
+    }
+    .line-state-row label {
+        width: 50px;
+        font-size: 10px;
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+    .line-state-row .frame-comp-select,
+    .line-state-row .frame-comp-input {
+        flex: 1;
+    }
+</style>
+
+<div class="anim-container">
+    <!-- 工具栏 -->
+    <div class="anim-toolbar">
+        <h1>✨ 动画效果库</h1>
+        <div class="anim-toolbar-sep"></div>
+        <div id="anim-device-selector"></div>
+        <div style="flex:1;"></div>
+        <button class="anim-btn" onclick="AnimEditor.duplicate()">📄 复制</button>
+        <button class="anim-btn primary" onclick="AnimEditor.save()">💾 保存</button>
+    </div>
+    
+    <!-- 左侧动画列表 -->
+    <div class="anim-left">
+        <div class="anim-panel-header">
+            <span>动画列表</span>
+            <button class="anim-btn" style="padding:2px 8px;font-size:10px;" onclick="AnimEditor.showAddDialog()">+ 新建</button>
+        </div>
+        <div class="anim-panel-content" id="anim-list"></div>
+    </div>
+    
+    <!-- 中间预览 -->
+    <div class="anim-preview">
+        <div class="anim-preview-header">
+            <span>👁️ 预览</span>
+            <span id="anim-preview-name" style="color:#ec4899;"></span>
+            <div style="flex:1;"></div>
+            <span style="font-size:10px;color:var(--text-muted);">💡 点击图像选择元素</span>
+            <span id="anim-frame-info" style="font-size:10px;color:var(--text-muted);margin-left:10px;"></span>
+        </div>
+        <div class="anim-preview-canvas">
+            <canvas id="anim-lcd-canvas" width="600" height="400"></canvas>
+        </div>
+        <div class="anim-controls">
+            <button class="play-btn" id="anim-play-btn" onclick="AnimEditor.togglePlay()">▶</button>
+            <div class="timeline">
+                <div class="timeline-progress" id="anim-progress"></div>
+            </div>
+            <span class="time-label" id="anim-time">0ms / 0ms</span>
+        </div>
+    </div>
+    
+    <!-- 右侧属性 -->
+    <div class="anim-right">
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+            <div class="anim-panel-header">
+                <span>⚙️ 动画属性</span>
+            </div>
+            <div class="anim-panel-content" id="anim-properties" style="flex:1;overflow-y:auto;">
+                <div class="anim-empty">
+                    <div class="anim-empty-icon">✨</div>
+                    <div>选择或创建动画</div>
+                    <div style="font-size:11px;margin-top:8px;">支持闪烁(Blink)和<br>序列帧(Sequence)动画</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/pages/lcd_animation_editor.js"></script>

@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "actions": {
+    "K1短按": { "cmd": "key_measure", "category": "按键", "description": "测量键短按" },
+    "K1长按": { "cmd": "key_measure_long", "category": "按键", "description": "测量键长按(连续)" },
+    "K2短按": { "cmd": "key_mode", "category": "按键", "description": "模式键短按" },
+    "K2长按": { "cmd": "key_base", "category": "按键", "description": "基准键长按" },
+    "K3短按": { "cmd": "key_clear", "category": "按键", "description": "清除键短按" },
+    "K3长按": { "cmd": "key_backlight", "category": "按键", "description": "背光键长按" },
+    "模拟测距成功": { "cmd": "sim_ok", "params": ["distance", "signal"], "category": "模拟", "description": "模拟测距成功" },
+    "模拟测距失败": { "cmd": "sim_err", "params": ["error"], "category": "模拟", "description": "模拟测距失败" }
+  },
+  "expects": {
+    "laser": { "type": "enum", "options": ["ON", "OFF"], "description": "激光状态" },
+    "line4": { "type": "number", "tolerance": 0.01, "description": "第4行显示" },
+    "line3": { "type": "number", "tolerance": 0.01, "description": "第3行显示" },
+    "line2": { "type": "number", "tolerance": 0.01, "description": "第2行显示" },
+    "line1": { "type": "number", "tolerance": 0.01, "description": "第1行显示" },
+    "mode": { "type": "enum", "options": ["SINGLE", "AREA", "VOLUME", "CONTINUOUS"], "description": "测量模式" },
+    "unit": { "type": "enum", "options": ["m", "ft", "in"], "description": "单位" },
+    "base": { "type": "enum", "options": ["BACK", "FRONT"], "description": "基准" }
+  },
+  "templates": {}
+}

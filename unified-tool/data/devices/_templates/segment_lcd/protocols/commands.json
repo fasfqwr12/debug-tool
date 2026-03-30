@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "commands": {
+    "laser_on": {
+      "code": "F0",
+      "name": "开启激光",
+      "icon": "🟢",
+      "category": "control",
+      "timeout": 500,
+      "retry": 3,
+      "send_params": [],
+      "recv_params": [{ "name": "error", "type": "uint8" }]
+    },
+    "laser_off": {
+      "code": "F1",
+      "name": "关闭激光",
+      "icon": "⚫",
+      "category": "control",
+      "timeout": 500,
+      "retry": 3,
+      "send_params": [],
+      "recv_params": [{ "name": "error", "type": "uint8" }]
+    },
+    "measure": {
+      "code": "F2",
+      "name": "测距",
+      "icon": "📏",
+      "category": "measure",
+      "timeout": 5000,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        { "name": "error", "type": "uint8" },
+        { "name": "distance", "type": "uint32" },
+        { "name": "signal", "type": "uint8" }
+      ]
+    },
+    "get_version": {
+      "code": "A0",
+      "name": "获取版本",
+      "icon": "ℹ️",
+      "category": "info",
+      "timeout": 500,
+      "retry": 3,
+      "send_params": [],
+      "recv_params": [
+        { "name": "sw_version", "type": "string", "length": 16 },
+        { "name": "hw_version", "type": "string", "length": 16 }
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "default_workflow": "basic_calibration",
+  "workflows": [
+    {
+      "id": "basic_calibration",
+      "name": "基础校准",
+      "icon": "🎯",
+      "description": "基础三点校准流程",
+      "params": {
+        "p1_distance_mm": { "type": "number", "default": 5000, "label": "位置1距离(mm)" },
+        "p2_distance_mm": { "type": "number", "default": 15000, "label": "位置2距离(mm)" },
+        "p3_distance_mm": { "type": "number", "default": 25000, "label": "位置3距离(mm)" }
+      },
+      "steps": [
+        { "action": "command", "cmd": "laser_on", "description": "开启激光" },
+        { "action": "wait", "duration": 1000, "description": "等待稳定" },
+        { "action": "prompt", "message": "请将设备对准位置1 (${p1_distance_mm}mm)", "description": "提示用户" },
+        { "action": "command", "cmd": "measure", "description": "测量位置1" }
+      ]
+    }
+  ]
+}

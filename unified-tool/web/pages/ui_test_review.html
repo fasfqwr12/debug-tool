@@ -1,0 +1,919 @@
+<!-- UI测试结果审核页面 - 专业的测试用例审核工作流 (Percy/Applitools风格) -->
+<div class="review-page">
+<style>
+/* ===== 审核页面样式 - Percy/Applitools风格 ===== */
+.review-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-primary);
+}
+
+/* 顶部工具栏 */
+.review-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.review-toolbar .title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+.review-toolbar .stats {
+    display: flex;
+    gap: 16px;
+    margin-left: auto;
+}
+.review-toolbar .stat {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: var(--input-bg);
+}
+.review-toolbar .stat.pass { color: var(--color-success); }
+.review-toolbar .stat.fail { color: var(--color-danger); }
+.review-toolbar .stat.pending { color: var(--text-muted); }
+</style>
+
+<style>
+/* 主内容区 - 左右分栏 */
+.review-main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* 左侧：测试用例列表 */
+.review-cases {
+    width: 300px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+.review-cases-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.review-cases-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* 测试用例卡片 */
+.case-card {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.case-card:hover { background: color-mix(in srgb, var(--input-bg) 80%, var(--accent) 20%); }
+.case-card.active { border-color: var(--accent); background: rgba(0,255,136,0.1); }
+.case-card.approved { border-left-color: var(--color-success); }
+.case-card.rejected { border-left-color: var(--color-danger); }
+.case-card.pending { border-left-color: var(--text-muted); }
+
+.case-card .case-id {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.case-card .case-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 6px;
+}
+.case-card .case-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+}
+.case-card .step-count {
+    color: var(--text-muted);
+}
+.case-card .case-status {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+}
+.case-card .case-status.approved { background: rgba(0,255,136,0.2); color: var(--color-success); }
+.case-card .case-status.rejected { background: rgba(255,107,107,0.2); color: var(--color-danger); }
+.case-card .case-status.pending { background: var(--input-bg); color: var(--text-muted); }
+
+/* 分组层级样式 */
+.case-group {
+    margin-bottom: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+.case-group.approved { border-color: var(--color-success); }
+.case-group.rejected { border-color: var(--color-danger); }
+.case-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--input-bg);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+.case-group-header:hover { background: color-mix(in srgb, var(--input-bg) 80%, var(--accent) 20%); }
+.case-group-header .group-toggle {
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 12px;
+}
+.case-group-header .group-name {
+    flex: 1;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.case-group-header .group-name .group-category {
+    color: var(--accent);
+    font-weight: 600;
+}
+.case-group-header .group-name .group-case {
+    color: var(--text-color);
+    font-size: 11px;
+}
+.case-group-header .group-stats {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: var(--card-bg);
+    border-radius: 4px;
+}
+.case-group-items {
+    padding: 4px;
+    background: var(--card-bg);
+}
+.case-group-items .case-card {
+    margin-bottom: 4px;
+}
+</style>
+
+<style>
+/* 右侧：步骤详情 */
+.review-detail {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* 用例标题栏 */
+.detail-header {
+    padding: 16px 20px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.detail-header .case-info h2 {
+    font-size: 16px;
+    margin: 0 0 4px 0;
+    color: var(--text-color);
+}
+.detail-header .case-info .desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.detail-header .actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* 步骤网格 - 每个测试用例的步骤卡片集 */
+.steps-grid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    align-content: start;
+}
+
+/* 步骤卡片 - Percy风格 */
+.step-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+.step-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.step-card.approved { border-color: var(--color-success); }
+.step-card.rejected { border-color: var(--color-danger); }
+
+.step-card .step-header {
+    padding: 10px 14px;
+    background: var(--input-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+.step-card .step-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+}
+.step-card .step-cmd {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+.step-card .step-time {
+    font-size: 10px;
+    color: var(--text-dim);
+}
+</style>
+
+<style>
+/* LCD截图区域 */
+.step-card .step-lcd {
+    height: 160px;
+    background: #0a0f14;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+.step-card .step-lcd img {
+    max-width: 100%;
+    max-height: 100%;
+}
+.step-card .step-lcd .zoom-hint {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    background: rgba(0,0,0,0.5);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* 审批按钮区域 */
+.step-card .step-actions {
+    padding: 10px 14px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--border-color);
+}
+.step-card .approve-btn {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+.step-card .approve-btn.pass {
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+.step-card .approve-btn.pass:hover,
+.step-card .approve-btn.pass.active {
+    background: var(--color-success);
+    color: #000;
+}
+.step-card .approve-btn.fail {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+.step-card .approve-btn.fail:hover,
+.step-card .approve-btn.fail.active {
+    background: var(--color-danger);
+    color: #fff;
+}
+</style>
+
+<style>
+/* 备注区域 */
+.step-card .step-note {
+    padding: 8px 14px;
+    border-top: 1px solid var(--border-color);
+}
+.step-card .step-note textarea {
+    width: 100%;
+    min-height: 50px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 11px;
+    resize: vertical;
+}
+.step-card .step-note textarea::placeholder {
+    color: var(--text-muted);
+}
+
+/* 状态标签 */
+.step-card .step-status {
+    padding: 8px 14px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+}
+.step-card .step-status.approved {
+    background: rgba(0,255,136,0.1);
+    color: var(--color-success);
+}
+.step-card .step-status.rejected {
+    background: rgba(255,107,107,0.1);
+    color: var(--color-danger);
+}
+
+/* 空状态 */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state .text { font-size: 14px; }
+</style>
+
+<style>
+/* 图片预览弹窗 */
+.image-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+}
+.image-modal img {
+    max-width: 95%;
+    max-height: 95%;
+    border-radius: 8px;
+}
+
+/* 按钮样式 */
+.review-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+.review-btn:hover { border-color: var(--accent); color: var(--accent); }
+.review-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
+.review-btn.success { border-color: var(--color-success); color: var(--color-success); }
+.review-btn.danger { border-color: var(--color-danger); color: var(--color-danger); }
+
+/* 进度条 */
+.progress-bar {
+    height: 4px;
+    background: var(--input-bg);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+.progress-bar .progress {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s;
+}
+</style>
+
+<!-- 顶部工具栏 -->
+<div class="review-toolbar">
+    <span class="title">🔍 测试结果审核</span>
+    <div class="stats">
+        <span class="stat">用例: <strong id="rv-total">0</strong></span>
+        <span class="stat pass">✅ <strong id="rv-approved">0</strong></span>
+        <span class="stat fail">❌ <strong id="rv-rejected">0</strong></span>
+        <span class="stat pending">⏳ <strong id="rv-pending">0</strong></span>
+    </div>
+    <button class="review-btn" onclick="TestReview.loadFromTestPage()">📥 加载测试数据</button>
+    <button class="review-btn success" onclick="TestReview.approveAllPending()">✅ 全部通过</button>
+    <button class="review-btn" onclick="TestReview.exportReport()">📄 导出HTML</button>
+    <button class="review-btn primary" onclick="TestReview.exportDocReport()">📝 导出DOC</button>
+</div>
+
+<!-- 主内容区 -->
+<div class="review-main">
+    <!-- 左侧：测试用例列表 -->
+    <div class="review-cases">
+        <div class="review-cases-header">
+            <span>📋 测试用例</span>
+            <span id="rv-case-count">0 个</span>
+        </div>
+        <div class="progress-bar"><div class="progress" id="rv-progress" style="width:0%"></div></div>
+        <div class="review-cases-list" id="rv-cases-list">
+            <div class="empty-state">
+                <div class="icon">📭</div>
+                <div class="text">暂无测试数据</div>
+                <div class="text" style="font-size:12px;margin-top:8px;">请先在"执行测试"页面运行测试</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右侧：步骤详情 -->
+    <div class="review-detail">
+        <div class="detail-header" id="rv-detail-header" style="display:none;">
+            <div class="case-info">
+                <h2 id="rv-case-title">选择测试用例</h2>
+                <div class="desc" id="rv-case-desc"></div>
+            </div>
+            <div class="actions">
+                <button class="review-btn success" onclick="TestReview.approveCaseAll()">✅ 本用例全部通过</button>
+                <button class="review-btn danger" onclick="TestReview.rejectCaseAll()">❌ 本用例全部不通过</button>
+            </div>
+        </div>
+        <div class="steps-grid" id="rv-steps-grid">
+            <div class="empty-state">
+                <div class="icon">👈</div>
+                <div class="text">选择左侧测试用例查看步骤</div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+/**
+ * 测试结果审核模块 - Percy/Applitools风格
+ * 专业的测试用例审核工作流
+ */
+const TestReview = {
+    // 数据
+    testCases: [],      // 测试用例列表
+    groupedCases: {},   // 按分组组织的用例 { groupName: [cases] }
+    currentCaseKey: null,
+    
+    init() {
+        console.log('[TestReview] 初始化');
+        // 尝试从 UITestPage 加载数据
+        this.loadFromTestPage();
+    },
+    
+    destroy() {
+        console.log('[TestReview] 销毁');
+    },
+    
+    // 从 UITestPage 加载测试数据
+    loadFromTestPage() {
+        if (!window.UITestPage || !UITestPage.testReport) {
+            console.warn('[TestReview] UITestPage 数据不可用');
+            Utils?.toast?.('请先在"执行测试"页面运行测试', 'warning');
+            return;
+        }
+        
+        const report = UITestPage.testReport;
+        console.log('[TestReview] 加载测试数据:', {
+            testCases: report.testCases?.length || 0,
+            steps: report.steps?.length || 0,
+            stepsWithImage: (report.steps || []).filter(s => s.lcdImage).length
+        });
+        
+        if (!report.testCases || report.testCases.length === 0) {
+            Utils?.toast?.('没有测试数据', 'warning');
+            return;
+        }
+        
+        // 获取分组信息 (从 UITestPage.groups)
+        const groups = UITestPage.groups || [];
+        
+        // 构建分组映射: testKey -> groupName
+        const keyToGroup = {};
+        groups.forEach(g => {
+            (g.items || []).forEach(item => {
+                keyToGroup[item.key] = g.name;
+            });
+        });
+        
+        // 转换数据格式 - 每个测试用例包含其步骤
+        this.testCases = report.testCases.map(tc => {
+            // 获取该用例的步骤
+            const steps = (report.steps || [])
+                .filter(s => s.testKey === tc.key)
+                .map((s, idx) => {
+                    // 调试：检查 lcdImage
+                    if (idx === 0) {
+                        console.log(`[TestReview] 用例 ${tc.key} 第一步 lcdImage:`, s.lcdImage ? '有(' + s.lcdImage.length + '字符)' : '无');
+                    }
+                    return {
+                        ...s,
+                        index: idx,
+                        status: s.judgeResult === 'pass' ? 'approved' : 
+                                s.judgeResult === 'fail' ? 'rejected' : 'pending',
+                        note: s.note || ''
+                    };
+                });
+            
+            return {
+                key: tc.key,
+                name: tc.name,
+                desc: tc.desc || '',
+                groupName: keyToGroup[tc.key] || '未分组',
+                steps: steps,
+                status: this.calcCaseStatus(steps)
+            };
+        });
+        
+        // 按分组组织测试用例
+        this.groupedCases = {};
+        this.testCases.forEach(tc => {
+            const gn = tc.groupName;
+            if (!this.groupedCases[gn]) {
+                this.groupedCases[gn] = [];
+            }
+            this.groupedCases[gn].push(tc);
+        });
+        
+        this.renderCaseList();
+        this.updateStats();
+        
+        Utils?.toast?.(`已加载 ${this.testCases.length} 个测试用例`, 'success');
+    },
+
+    // 计算用例状态
+    calcCaseStatus(steps) {
+        if (steps.length === 0) return 'pending';
+        const hasRejected = steps.some(s => s.status === 'rejected');
+        if (hasRejected) return 'rejected';
+        const allApproved = steps.every(s => s.status === 'approved');
+        if (allApproved) return 'approved';
+        return 'pending';
+    },
+    
+    // 渲染用例列表 - 层级结构
+    renderCaseList() {
+        const container = document.getElementById('rv-cases-list');
+        const countEl = document.getElementById('rv-case-count');
+        if (!container) return;
+        
+        if (countEl) countEl.textContent = `${this.testCases.length} 个`;
+        
+        if (this.testCases.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <div class="text">暂无测试数据</div>
+                    <div class="text" style="font-size:12px;margin-top:8px;">请先在"执行测试"页面运行测试</div>
+                </div>`;
+            return;
+        }
+        
+        // 按分组渲染层级菜单
+        const groupNames = Object.keys(this.groupedCases);
+        
+        container.innerHTML = groupNames.map(groupName => {
+            const cases = this.groupedCases[groupName];
+            const groupApproved = cases.filter(c => c.status === 'approved').length;
+            const groupRejected = cases.filter(c => c.status === 'rejected').length;
+            const groupTotal = cases.length;
+            
+            // 分组状态
+            let groupStatus = 'pending';
+            if (groupRejected > 0) groupStatus = 'rejected';
+            else if (groupApproved === groupTotal) groupStatus = 'approved';
+            
+            // 分组是否展开 (默认展开包含当前选中用例的分组)
+            const hasSelected = cases.some(c => c.key === this.currentCaseKey);
+            const expanded = hasSelected || !this.currentCaseKey;
+            
+            return `
+                <div class="case-group ${groupStatus}">
+                    <div class="case-group-header" onclick="TestReview.toggleGroup(this)">
+                        <span class="group-toggle">${expanded ? '▼' : '▶'}</span>
+                        <span class="group-name">${this.formatGroupName(groupName)}</span>
+                        <span class="group-stats">${groupApproved}/${groupTotal}</span>
+                    </div>
+                    <div class="case-group-items" style="${expanded ? '' : 'display:none'}">
+                        ${cases.map(tc => {
+                            const isActive = this.currentCaseKey === tc.key;
+                            const statusText = tc.status === 'approved' ? '✅' : 
+                                              tc.status === 'rejected' ? '❌' : '⏳';
+                            const approvedCount = tc.steps.filter(s => s.status === 'approved').length;
+                            const totalSteps = tc.steps.length;
+                            
+                            return `
+                                <div class="case-card ${tc.status} ${isActive ? 'active' : ''}" 
+                                     onclick="TestReview.selectCase('${tc.key}')">
+                                    <div class="case-id">${tc.key}</div>
+                                    <div class="case-name">${tc.name}</div>
+                                    <div class="case-meta">
+                                        <span class="step-count">${approvedCount}/${totalSteps} 步骤</span>
+                                        <span class="case-status ${tc.status}">${statusText}</span>
+                                    </div>
+                                </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+        }).join('');
+    },
+    
+    // 格式化分组名称 - 提取关键部分
+    formatGroupName(name) {
+        // 分组名格式: "4. 面积模式 - 4.1 单次测量"
+        // 提取: "4. 面积模式" 和 "4.1 单次测量"
+        const parts = name.split(' - ');
+        if (parts.length >= 2) {
+            return `<span class="group-category">${parts[0]}</span><br><span class="group-case">${parts.slice(1).join(' - ')}</span>`;
+        }
+        return name;
+    },
+    
+    // 切换分组展开/收起
+    toggleGroup(headerEl) {
+        const groupEl = headerEl.parentElement;
+        const itemsEl = groupEl.querySelector('.case-group-items');
+        const toggleEl = headerEl.querySelector('.group-toggle');
+        
+        if (itemsEl.style.display === 'none') {
+            itemsEl.style.display = 'block';
+            toggleEl.textContent = '▼';
+        } else {
+            itemsEl.style.display = 'none';
+            toggleEl.textContent = '▶';
+        }
+    },
+    
+    // 选择用例
+    selectCase(key) {
+        this.currentCaseKey = key;
+        this.renderCaseList();
+        this.renderSteps();
+    },
+
+    // 渲染步骤 - 每个测试用例的步骤卡片集
+    renderSteps() {
+        const container = document.getElementById('rv-steps-grid');
+        const header = document.getElementById('rv-detail-header');
+        const titleEl = document.getElementById('rv-case-title');
+        const descEl = document.getElementById('rv-case-desc');
+        
+        if (!container) return;
+        
+        const tc = this.testCases.find(c => c.key === this.currentCaseKey);
+        if (!tc) {
+            header.style.display = 'none';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">👈</div>
+                    <div class="text">选择左侧测试用例查看步骤</div>
+                </div>`;
+            return;
+        }
+        
+        // 显示标题
+        header.style.display = 'flex';
+        titleEl.textContent = `${tc.key} - ${tc.name}`;
+        descEl.textContent = tc.desc || '';
+        
+        if (tc.steps.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <div class="text">该用例没有执行步骤</div>
+                </div>`;
+            return;
+        }
+        
+        container.innerHTML = tc.steps.map((step, idx) => {
+            const cmdName = this.getCmdName(step.cmd);
+            const time = step.time ? new Date(step.time).toLocaleTimeString() : '-';
+            
+            return `
+                <div class="step-card ${step.status}" data-step-idx="${idx}">
+                    <div class="step-header">
+                        <span class="step-num">步骤 ${idx + 1}</span>
+                        <span class="step-cmd">${cmdName}</span>
+                        <span class="step-time">${time}</span>
+                    </div>
+                    <div class="step-lcd" onclick="TestReview.showImage('${step.lcdImage || ''}')">
+                        ${step.lcdImage ? 
+                            `<img src="${step.lcdImage}" alt="LCD截图"><span class="zoom-hint">🔍 点击放大</span>` : 
+                            '<span style="color:#666">无截图</span>'}
+                    </div>
+                    ${step.status !== 'pending' ? `
+                        <div class="step-status ${step.status}">
+                            ${step.status === 'approved' ? '✅ 已通过' : '❌ 不通过'}
+                        </div>
+                    ` : ''}
+                    <div class="step-actions">
+                        <button class="approve-btn pass ${step.status === 'approved' ? 'active' : ''}"
+                                onclick="TestReview.approveStep(${idx}, 'approved')">
+                            ✅ 通过
+                        </button>
+                        <button class="approve-btn fail ${step.status === 'rejected' ? 'active' : ''}"
+                                onclick="TestReview.approveStep(${idx}, 'rejected')">
+                            ❌ 不通过
+                        </button>
+                    </div>
+                    <div class="step-note">
+                        <textarea placeholder="添加备注（可选）..." 
+                                  onchange="TestReview.updateNote(${idx}, this.value)">${step.note || ''}</textarea>
+                    </div>
+                </div>`;
+        }).join('');
+    },
+
+    // 审批步骤
+    approveStep(stepIdx, status) {
+        const tc = this.testCases.find(c => c.key === this.currentCaseKey);
+        if (!tc || !tc.steps[stepIdx]) return;
+        
+        tc.steps[stepIdx].status = status;
+        tc.status = this.calcCaseStatus(tc.steps);
+        
+        // 同步回 UITestPage
+        this.syncToTestPage(tc.key, stepIdx, status);
+        
+        this.renderCaseList();
+        this.renderSteps();
+        this.updateStats();
+    },
+    
+    // 更新备注
+    updateNote(stepIdx, note) {
+        const tc = this.testCases.find(c => c.key === this.currentCaseKey);
+        if (!tc || !tc.steps[stepIdx]) return;
+        
+        tc.steps[stepIdx].note = note;
+        
+        // 同步回 UITestPage
+        if (window.UITestPage && UITestPage.testReport) {
+            const steps = UITestPage.testReport.steps || [];
+            const caseSteps = steps.filter(s => s.testKey === tc.key);
+            if (caseSteps[stepIdx]) {
+                caseSteps[stepIdx].note = note;
+            }
+        }
+    },
+    
+    // 同步到 UITestPage
+    syncToTestPage(caseKey, stepIdx, status) {
+        if (!window.UITestPage || !UITestPage.testReport) return;
+        
+        const steps = UITestPage.testReport.steps || [];
+        const caseSteps = steps.filter(s => s.testKey === caseKey);
+        if (caseSteps[stepIdx]) {
+            caseSteps[stepIdx].judgeResult = status === 'approved' ? 'pass' : 'fail';
+        }
+    },
+    
+    // 本用例全部通过
+    approveCaseAll() {
+        const tc = this.testCases.find(c => c.key === this.currentCaseKey);
+        if (!tc) return;
+        
+        tc.steps.forEach((step, idx) => {
+            step.status = 'approved';
+            this.syncToTestPage(tc.key, idx, 'approved');
+        });
+        tc.status = 'approved';
+        
+        this.renderCaseList();
+        this.renderSteps();
+        this.updateStats();
+        Utils?.toast?.(`${tc.name} 全部通过`, 'success');
+    },
+    
+    // 本用例全部不通过
+    rejectCaseAll() {
+        const tc = this.testCases.find(c => c.key === this.currentCaseKey);
+        if (!tc) return;
+        
+        tc.steps.forEach((step, idx) => {
+            step.status = 'rejected';
+            this.syncToTestPage(tc.key, idx, 'rejected');
+        });
+        tc.status = 'rejected';
+        
+        this.renderCaseList();
+        this.renderSteps();
+        this.updateStats();
+    },
+
+    // 全部待审核通过
+    approveAllPending() {
+        let count = 0;
+        this.testCases.forEach(tc => {
+            tc.steps.forEach((step, idx) => {
+                if (step.status === 'pending') {
+                    step.status = 'approved';
+                    this.syncToTestPage(tc.key, idx, 'approved');
+                    count++;
+                }
+            });
+            tc.status = this.calcCaseStatus(tc.steps);
+        });
+        
+        this.renderCaseList();
+        this.renderSteps();
+        this.updateStats();
+        Utils?.toast?.(`${count} 个步骤已通过`, 'success');
+    },
+    
+    // 更新统计
+    updateStats() {
+        const total = this.testCases.length;
+        const approved = this.testCases.filter(c => c.status === 'approved').length;
+        const rejected = this.testCases.filter(c => c.status === 'rejected').length;
+        const pending = total - approved - rejected;
+        
+        document.getElementById('rv-total').textContent = total;
+        document.getElementById('rv-approved').textContent = approved;
+        document.getElementById('rv-rejected').textContent = rejected;
+        document.getElementById('rv-pending').textContent = pending;
+        
+        // 更新进度条
+        const progress = total > 0 ? ((approved + rejected) / total * 100) : 0;
+        const progressEl = document.getElementById('rv-progress');
+        if (progressEl) {
+            progressEl.style.width = `${progress}%`;
+            progressEl.style.background = rejected > 0 ? 'var(--color-danger)' : 'var(--color-success)';
+        }
+    },
+    
+    // 显示大图
+    showImage(src) {
+        if (!src) return;
+        
+        const modal = document.createElement('div');
+        modal.className = 'image-modal';
+        modal.onclick = () => modal.remove();
+        modal.innerHTML = `<img src="${src}" alt="LCD截图">`;
+        document.body.appendChild(modal);
+    },
+    
+    // 获取命令名称
+    getCmdName(cmd) {
+        const names = {
+            'key_measure': '📏 测量',
+            'key_measure_long': '🔁 连续',
+            'key_mode': '🔄 模式',
+            'key_base': '📐 基准',
+            'key_clear': '🗑️ 清除',
+            'key_backlight': '💡 背光',
+            'key_power_off': '⏻ 关机',
+            'sim_ok': '✅ 模拟OK',
+            'sim_err': '❌ 模拟ERR',
+            'set_unit': '📏 单位',
+            'get_status': '📡 状态',
+            'debug_mode': '🔧 调试模式',
+        };
+        return names[cmd] || cmd;
+    },
+    
+    // 导出HTML报告
+    exportReport() {
+        if (window.UITestPage && typeof UITestPage.exportReport === 'function') {
+            UITestPage.exportReport();
+        } else {
+            Utils?.toast?.('请先在"执行测试"页面运行测试', 'warning');
+        }
+    },
+    
+    // 导出DOC报告
+    async exportDocReport() {
+        if (window.UITestPage && typeof UITestPage.exportDocReport === 'function') {
+            await UITestPage.exportDocReport();
+        } else {
+            Utils?.toast?.('请先在"执行测试"页面运行测试', 'warning');
+        }
+    }
+};
+
+window.TestReview = TestReview;
+</script>

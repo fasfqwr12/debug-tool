@@ -1,0 +1,1207 @@
+<div class="page-container test-data-page" style="display:flex; flex-direction:column; height:calc(100vh - var(--topbar-h, 32px) - 40px); overflow:hidden;">
+    <div class="page-header" style="flex-shrink:0; padding:12px 16px;">
+        <h1>📈 测试数据</h1>
+        <div class="header-actions">
+            <button class="btn" id="btn-select-mode" onclick="TestDataPage.toggleSelectMode()">☐ 多选</button>
+            <button class="btn btn-primary" id="btn-export-temp" style="display:none;" onclick="TestDataPage.exportTemperatureReport()">📊 导出高低温报告</button>
+            <span id="select-count" style="margin-left:8px; color:var(--accent-color);"></span>
+            <button class="btn" onclick="TestDataPage.refresh()">🔄 刷新</button>
+            <button class="btn" onclick="TestDataPage.openDataFolder()">📁 文件夹</button>
+            <button class="btn" onclick="TestDataPage.exportAll()">📤 批量导出</button>
+        </div>
+    </div>
+
+    <!-- 主布局：左右分栏 -->
+    <div class="data-split-layout" style="flex:1; display:grid; grid-template-columns:400px 1fr; gap:0; min-height:0; overflow:hidden;">
+        <!-- 左侧：列表 -->
+        <div class="list-panel">
+            <!-- 筛选栏 -->
+            <div class="compact-filter">
+                <div class="filter-row">
+                    <input type="text" id="filter-model" list="model-list" placeholder="型号" onchange="TestDataPage.applyFilters()" onkeyup="TestDataPage.debounceSearch()" title="型号（可输入或选择）">
+                    <datalist id="model-list"></datalist>
+                    <input type="text" id="filter-type" list="type-list" placeholder="全部类型" onchange="TestDataPage.applyFilters()" onkeyup="TestDataPage.debounceSearch()" title="类型（可输入或选择）">
+                    <datalist id="type-list">
+                        <option value=""></option>
+                        <option value="accuracy"></option>
+                        <option value="calibration"></option>
+                        <option value="slipway"></option>
+                        <option value="firmware"></option>
+                    </datalist>
+                    <input type="text" id="filter-status" list="status-list" placeholder="全部状态" onchange="TestDataPage.applyFilters()" onkeyup="TestDataPage.debounceSearch()" title="状态（可输入或选择）">
+                    <datalist id="status-list">
+                        <option value=""></option>
+                        <option value="pending"></option>
+                        <option value="running"></option>
+                        <option value="completed"></option>
+                        <option value="failed"></option>
+                    </datalist>
+                </div>
+                <div class="filter-row">
+                    <input type="text" id="filter-device-id" list="device-list" placeholder="设备ID" onkeyup="TestDataPage.debounceSearch()" title="设备ID（可输入或选择）">
+                    <datalist id="device-list"></datalist>
+                    <input type="text" id="filter-crc" list="crc-list" placeholder="CRC" onkeyup="TestDataPage.debounceSearch()" title="CRC（可输入或选择）">
+                    <datalist id="crc-list"></datalist>
+                </div>
+                <div class="filter-row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="filter-current-device" onchange="TestDataPage.toggleCurrentDevice()">
+                        <span>当前设备</span>
+                    </label>
+                    <span class="current-device-info" id="current-device-info"></span>
+                </div>
+            </div>
+
+            <!-- 统计栏 -->
+            <div class="mini-stats">
+                <span><b id="stat-total">0</b> 条</span>
+                <span class="success"><b id="stat-completed">0</b> 完成</span>
+                <span class="error"><b id="stat-failed">0</b> 失败</span>
+            </div>
+
+            <!-- 数据列表 -->
+            <div class="session-list" id="session-list">
+                <!-- 动态生成 -->
+            </div>
+
+            <!-- 分页 -->
+            <div class="list-pagination">
+                <button onclick="TestDataPage.prevPage()" id="btn-prev" disabled>◀</button>
+                <span id="page-info">1/1</span>
+                <button onclick="TestDataPage.nextPage()" id="btn-next" disabled>▶</button>
+            </div>
+        </div>
+
+        <!-- 右侧：详情 -->
+        <div class="detail-panel" id="detail-panel">
+            <div class="detail-empty" id="detail-empty">
+                <div class="empty-icon">📊</div>
+                <div class="empty-text">选择左侧记录查看详情</div>
+            </div>
+            
+            <div class="detail-content" id="detail-content" style="display:none;">
+                <div class="detail-stats" id="detail-stats"></div>
+                <div class="detail-panel-scroll">
+                    <div class="detail-header" id="detail-summary-info"></div>
+                    <div class="detail-tags" id="detail-tags"></div>
+
+                    <div class="detail-flow-section">
+                        <div class="detail-flow-section-header">
+                            <span>🧭 测试流程</span>
+                            <span class="detail-flow-section-desc">每个测试流程单独查看误差和数据点</span>
+                        </div>
+                        <div class="detail-tabs" id="detail-tabs"></div>
+                        <div class="detail-flow-meta" id="detail-flow-meta"></div>
+                        <div class="detail-chart">
+                            <div class="chart-header">
+                                <span id="test-data-chart-title">📉 流程指标趋势</span>
+                                <div class="chart-actions">
+                                    <select id="test-data-chart-metric" onchange="TestDataPage.setChartMetric(this.value)" title="选择趋势指标">
+                                        <option value="error">误差</option>
+                                        <option value="measured">测量值</option>
+                                        <option value="amplitude">幅值</option>
+                                        <option value="rangeMm">极差</option>
+                                        <option value="timeMs">耗时</option>
+                                        <option value="fwTimeMs">FW耗时</option>
+                                        <option value="quality">质量</option>
+                                        <option value="apdVoltage">APD</option>
+                                    </select>
+                                    <button class="mini-btn" onclick="TestDataPage.toggleChartType()" title="切换图表">📊</button>
+                                    <button class="mini-btn" onclick="TestDataPage.openChartDialog()" title="弹窗查看">🗖</button>
+                                </div>
+                            </div>
+                            <div class="chart-container" id="chart-container">
+                                <canvas id="error-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="detail-points">
+                            <div class="points-header">
+                                <span>📋 流程数据点 (<span id="points-count">0</span>)</span>
+                                <div class="points-actions">
+                                    <button class="mini-btn" onclick="TestDataPage.exportCSV()">CSV</button>
+                                    <button class="mini-btn" onclick="TestDataPage.exportJSON()">JSON</button>
+                                </div>
+                            </div>
+                            <div class="points-table-container" id="detail-points-table"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-actions">
+                    <button class="btn" onclick="TestDataPage.openTagsDialog()">✏️ 编辑备注/标签</button>
+                    <button class="btn btn-danger" onclick="TestDataPage.deleteSession()">🗑️ 删除</button>
+                    <button class="btn btn-primary" onclick="TestDataPage.exportXLSX()">📥 导出Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详情对话框 -->
+<div class="dialog-overlay" id="detail-dialog" style="display:none;">
+    <div class="dialog" style="max-width: 900px; max-height: 90vh;">
+        <div class="dialog-header">
+            <span>测试详情</span>
+            <button class="dialog-close" onclick="TestDataPage.hideDetail()">×</button>
+        </div>
+        <div class="dialog-body" style="overflow-y: auto; max-height: 70vh;">
+            <div class="detail-info" id="detail-info-dialog">
+                <!-- 动态生成 -->
+            </div>
+            <div class="detail-stats" id="detail-stats-dialog">
+                <!-- 统计信息 -->
+            </div>
+            <div class="detail-data">
+                <!-- 图表区域 -->
+                <div class="chart-section">
+                    <h4>误差分析图</h4>
+                    <div class="chart-container">
+                        <canvas id="error-chart-dialog" width="800" height="300"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 数据点表格 -->
+                <div class="table-section">
+                    <h4>数据点</h4>
+                    <div class="data-points-container" id="detail-points-dialog">
+                        <!-- 数据点表格 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn btn-danger" onclick="TestDataPage.deleteSession()">删除</button>
+            <button class="btn" onclick="TestDataPage.exportCSV()">导出CSV</button>
+            <button class="btn btn-success" onclick="TestDataPage.exportXLSX()">导出Excel</button>
+            <button class="btn" onclick="TestDataPage.exportJSON()">导出JSON</button>
+            <button class="btn btn-primary" onclick="TestDataPage.hideDetail()">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 标签编辑弹窗 -->
+<div class="dialog-overlay" id="tags-dialog" style="display:none;">
+    <div class="dialog" style="max-width: 720px; max-height: 90vh;">
+        <div class="dialog-header">
+            <span>编辑测试信息</span>
+            <button class="dialog-close" onclick="TestDataPage.closeTagsDialog()">×</button>
+        </div>
+        <div class="dialog-body" style="overflow-y: auto; max-height: 70vh;">
+            <div class="detail-info" id="tags-dialog-info"></div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tag-form-row">
+                        <label>设备别名</label>
+                        <input type="text" id="tag-alias-dialog" placeholder="如：1#机、测试机A">
+                    </div>
+                    <div class="tag-form-row">
+                        <label>测试温度(℃)</label>
+                        <input type="number" id="tag-temperature-dialog" step="1" placeholder="25">
+                    </div>
+                    <div class="tag-form-row">
+                        <label>反射率(%)</label>
+                        <input type="number" id="tag-reflectance-dialog" min="0" max="100" placeholder="0=多反射率">
+                    </div>
+                    <div class="tag-form-row">
+                        <label>备注</label>
+                        <textarea id="tag-remark-dialog" placeholder="附加备注..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn" onclick="TestDataPage.closeTagsDialog()">取消</button>
+            <button class="btn btn-primary" onclick="TestDataPage.saveTagsAndRemarkFromDialog()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 导出修正弹窗 -->
+<div class="dialog-overlay" id="export-dialog" style="display:none;">
+    <div class="dialog" style="max-width: 840px; max-height: 90vh;">
+        <div class="dialog-header">
+            <span id="export-dialog-title">导出设置</span>
+            <button class="dialog-close" onclick="TestDataPage.closeExportDialog()">×</button>
+        </div>
+        <div class="dialog-body" style="overflow-y: auto; max-height: 70vh;">
+            <div class="detail-info" id="export-dialog-info"></div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tags-header">
+                        <span>📚 总览 Sheet</span>
+                    </div>
+                    <div style="margin-bottom:12px; color:var(--text-muted); line-height:1.6;">
+                        选择要额外生成的总览 sheet。每个指标会生成一个独立 sheet，用于看趋势和汇总。
+                    </div>
+                    <div id="export-sheet-metrics" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px;"></div>
+                </div>
+            </div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tags-header">
+                        <span>📏 误差轴范围</span>
+                    </div>
+                    <div class="tag-form-row" style="align-items:flex-end; gap:8px;">
+                        <div style="flex:1;">
+                            <label>范围模式</label>
+                            <select id="export-error-axis-mode">
+                                <option value="auto">自动</option>
+                                <option value="manual">手动</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label>下限(mm)</label>
+                            <input type="number" id="export-error-axis-min" step="0.001" placeholder="自动时忽略">
+                        </div>
+                        <div style="flex:1;">
+                            <label>上限(mm)</label>
+                            <input type="number" id="export-error-axis-max" step="0.001" placeholder="自动时忽略">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tags-header">
+                        <span>📐 流程偏移修正</span>
+                    </div>
+                    <div style="margin-bottom:12px; color:var(--text-muted); line-height:1.6;">
+                        导出时按流程把测量值执行：<b>修正后测量值 = 原始测量值 - 偏移</b>，
+                        并同步重算误差：<b>修正后误差 = 修正后测量值 - 目标位置</b>。
+                    </div>
+                    <div class="tag-form-row" style="align-items:flex-end; gap:8px;">
+                        <div style="flex:1;">
+                            <label>统一偏移(mm)</label>
+                            <input type="number" id="export-offset-all" step="0.001" placeholder="留空则不统一覆盖">
+                        </div>
+                        <button class="btn" type="button" onclick="TestDataPage.applyExportOffsetToAll()">应用到全部流程</button>
+                    </div>
+                    <div id="export-offset-list" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn" onclick="TestDataPage.closeExportDialog()">取消</button>
+            <button class="btn btn-primary" id="export-dialog-confirm" onclick="TestDataPage.confirmExportDialog()">开始导出</button>
+        </div>
+    </div>
+</div>
+
+<!-- 高低温导出修正弹窗 -->
+<div class="dialog-overlay" id="temperature-export-dialog" style="display:none;">
+    <div class="dialog" style="max-width: 880px; max-height: 90vh;">
+        <div class="dialog-header">
+            <span id="temperature-export-dialog-title">高低温导出设置</span>
+            <button class="dialog-close" onclick="TestDataPage.closeTemperatureExportDialog()">×</button>
+        </div>
+        <div class="dialog-body" style="overflow-y: auto; max-height: 70vh;">
+            <div class="detail-info" id="temperature-export-dialog-info"></div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tags-header">
+                        <span>🎯 0点对齐</span>
+                    </div>
+                    <div class="tag-form-row" style="align-items:flex-end; gap:8px;">
+                        <div style="flex:1;">
+                            <label>对齐模式</label>
+                            <select id="temperature-export-align-mode">
+                                <option value="auto">自动对齐0点(默认)</option>
+                                <option value="manual">手动设置偏移</option>
+                                <option value="none">不对齐</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="temperature-export-align-note" style="margin-top:10px; color:var(--text-muted); line-height:1.6;">
+                        默认按每个会话距 0 最近的点自动对齐。
+                    </div>
+                </div>
+            </div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tags-header">
+                        <span>📚 总览 Sheet</span>
+                    </div>
+                    <div style="margin-bottom:12px; color:var(--text-muted); line-height:1.6;">
+                        选择高低温报告中要额外生成的总览 sheet。默认会保留误差相关页，勾选的列会追加对应总览。
+                    </div>
+                    <div id="temperature-export-sheet-metrics" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px;"></div>
+                </div>
+            </div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tags-header">
+                        <span>📏 误差轴范围</span>
+                    </div>
+                    <div class="tag-form-row" style="align-items:flex-end; gap:8px;">
+                        <div style="flex:1;">
+                            <label>范围模式</label>
+                            <select id="temperature-export-error-axis-mode">
+                                <option value="auto">自动</option>
+                                <option value="manual">手动</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label>下限(mm)</label>
+                            <input type="number" id="temperature-export-error-axis-min" step="0.001" placeholder="自动时忽略">
+                        </div>
+                        <div style="flex:1;">
+                            <label>上限(mm)</label>
+                            <input type="number" id="temperature-export-error-axis-max" step="0.001" placeholder="自动时忽略">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-tags" style="margin-top:12px;">
+                <div class="tags-remark-section">
+                    <div class="tags-header">
+                        <span>📐 会话偏移修正</span>
+                    </div>
+                    <div style="margin-bottom:12px; color:var(--text-muted); line-height:1.6;">
+                        导出高低温报告时按会话把测量值执行：<b>修正后测量值 = 原始测量值 - 偏移</b>，
+                        并同步重算该会话在报告中的误差曲线。原始数据库数据不会被修改。
+                    </div>
+                    <div class="tag-form-row" style="align-items:flex-end; gap:8px;">
+                        <div style="flex:1;">
+                            <label>统一偏移(mm)</label>
+                            <input type="number" id="temperature-export-offset-all" step="0.001" placeholder="留空则不统一覆盖">
+                        </div>
+                        <button class="btn" type="button" onclick="TestDataPage.applyTemperatureExportOffsetToAll()">应用到全部会话</button>
+                    </div>
+                    <div id="temperature-export-offset-list" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn" onclick="TestDataPage.closeTemperatureExportDialog()">取消</button>
+            <button class="btn btn-primary" id="temperature-export-dialog-confirm" onclick="TestDataPage.confirmTemperatureExportDialog()">导出高低温报告</button>
+        </div>
+    </div>
+</div>
+
+<!-- 误差图弹窗 -->
+<div class="dialog-overlay" id="chart-dialog" style="display:none;">
+    <div class="dialog" style="max-width: 1100px; max-height: 90vh;">
+        <div class="dialog-header">
+            <span>误差分析图</span>
+            <button class="dialog-close" onclick="TestDataPage.closeChartDialog()">×</button>
+        </div>
+        <div class="dialog-body" style="overflow: hidden; max-height: 75vh;">
+            <div class="chart-container" style="height: 60vh; min-height: 360px;">
+                <canvas id="error-chart-popup"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 测试数据页面 - 左右分栏布局 */
+.test-data-page .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.test-data-page .page-header h1 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.test-data-page .header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* 左侧列表面板 */
+.list-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    min-height: 0;
+}
+
+.compact-filter {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.compact-filter .filter-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.compact-filter select, .compact-filter input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.2);
+    color: var(--text-primary);
+    font-size: 12px;
+    min-width: 0;
+}
+
+.compact-filter .date-sep {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.compact-filter .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.compact-filter .checkbox-label input {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.compact-filter .current-device-info {
+    font-size: 10px;
+    color: #00d4ff;
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mini-stats {
+    display: flex;
+    gap: 12px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.15);
+    font-size: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mini-stats b {
+    font-weight: 700;
+    color: var(--accent-color, #00e676);
+}
+
+.mini-stats .success b { color: #00e676; }
+.mini-stats .error b { color: #ff5252; }
+
+/* 会话列表 */
+.session-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.session-item {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.session-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.session-item.active {
+    background: rgba(0,230,118,0.1);
+    border-left: 3px solid #00e676;
+}
+
+.session-item .session-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.session-item .session-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.session-item .session-model {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.session-item .session-type {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.session-item .session-status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.session-item .session-status.completed { background: rgba(0,230,118,0.2); color: #00e676; }
+.session-item .session-status.failed { background: rgba(255,82,82,0.2); color: #ff5252; }
+.session-item .session-status.running { background: rgba(255,193,7,0.2); color: #ffc107; }
+
+.session-item .session-ids {
+    display: flex;
+    gap: 8px;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+.session-item .session-ids .id-tag {
+    color: #00d4ff;
+}
+
+.session-item .session-ids .crc-tag {
+    color: #ffd700;
+}
+
+.session-item .session-ids b {
+    font-family: monospace;
+}
+
+.session-item .session-error {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.session-item .session-error b {
+    color: #ffc107;
+}
+
+/* 列表分页 */
+.list-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.list-pagination button {
+    padding: 4px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.list-pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.list-pagination span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* 右侧详情面板 */
+.detail-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary, #0d1117);
+    min-height: 0;
+    overflow: hidden;
+}
+
+.detail-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.detail-empty .empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.detail-empty .empty-text {
+    font-size: 14px;
+}
+
+.detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px;
+    gap: 16px;
+}
+
+.detail-header {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.detail-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.detail-tab {
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.detail-tab:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary);
+}
+
+.detail-tab.active {
+    background: rgba(0,212,255,0.16);
+    border-color: rgba(0,212,255,0.45);
+    color: #00d4ff;
+}
+
+.detail-panel-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-right: 4px;
+}
+
+.detail-flow-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.detail-flow-section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.detail-flow-section-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.detail-flow-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.detail-flow-meta .flow-meta-item {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.detail-flow-meta .flow-meta-label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.detail-flow-meta .flow-meta-value {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.detail-header .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detail-header .info-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.detail-header .info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.detail-header .info-value.mono {
+    font-family: monospace;
+    color: #00d4ff;
+}
+
+.detail-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.detail-stats .stat-box {
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    padding: 8px 6px;
+    text-align: center;
+}
+
+.detail-stats .stat-box .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-color, #00e676);
+}
+
+.detail-stats .stat-box .stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.detail-chart {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: none;
+}
+
+.detail-chart .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.detail-chart .chart-container {
+    padding: 12px;
+    height: 260px;
+    min-height: 260px;
+    position: relative;
+}
+
+.detail-chart .chart-container canvas {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+}
+
+.detail-points {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-points .points-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.detail-points .points-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.points-table-container {
+    flex: 1;
+    overflow: auto;
+}
+
+.points-table-container table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.points-table-container th {
+    position: sticky;
+    top: 0;
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.points-table-container td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    white-space: nowrap;
+}
+
+.point-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0, 212, 255, 0.12);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    color: #8de0ff;
+    font-size: 10px;
+    line-height: 1.2;
+}
+
+.detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 8px;
+}
+
+.mini-btn {
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.mini-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* 弹窗样式保留 */
+.dialog-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(6px);
+}
+
+.dialog-overlay.show { display: flex !important; }
+
+.dialog {
+    width: min(92vw, 960px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(10, 18, 30, 0.98), rgba(6, 12, 22, 0.985));
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 14px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    color: var(--text-color);
+}
+
+.dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.dialog-header span {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.dialog-close {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.08);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.dialog-close:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(0,255,136,0.35);
+}
+
+.dialog-body {
+    padding: 18px 20px;
+    background: rgba(4, 10, 18, 0.72);
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.dialog .detail-info,
+.dialog .detail-header {
+    background: rgba(8, 15, 24, 0.88);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+}
+
+/* 合并的标签+备注区域样式 */
+.detail-tags {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tags-remark-section {
+    padding: 12px;
+}
+
+.dialog .detail-tags,
+.dialog .detail-chart,
+.dialog .detail-points,
+.dialog .detail-flow-meta .flow-meta-item,
+.dialog .detail-stats .stat-box {
+    background: rgba(8, 15, 24, 0.88);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.dialog .tag-form-row input,
+.dialog .tag-form-row textarea,
+.dialog #export-offset-list .export-offset-input,
+.dialog #temperature-export-offset-list .temperature-export-offset-input {
+    background: rgba(0, 0, 0, 0.36);
+    border-color: rgba(255,255,255,0.14);
+}
+
+.tags-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.tags-display-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.tags-row.remark-row {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.tag-item {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.tag-item b {
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-right: 4px;
+}
+
+.tag-value {
+    color: #00d4ff;
+}
+
+.tag-note {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    color: #8de0ff;
+    background: rgba(0, 212, 255, 0.12);
+}
+
+.tag-empty {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.tags-edit-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tag-form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tag-form-row label {
+    width: 90px;
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.tag-form-row input, .tag-form-row textarea {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.3);
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.tag-form-row input.auto-field {
+    background: rgba(0,0,0,0.15);
+    color: var(--text-muted);
+}
+
+.tag-form-row textarea {
+    min-height: 50px;
+    resize: vertical;
+}
+
+.tags-form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    justify-content: flex-end;
+}
+
+/* 多选模式样式 */
+.session-item {
+    position: relative;
+}
+
+.session-item.selected {
+    background: rgba(0,212,255,0.15);
+    border-left: 3px solid #00d4ff;
+}
+
+.session-checkbox {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #00d4ff;
+    z-index: 1;
+}
+
+.session-item.has-checkbox {
+    padding-left: 32px;
+}
+
+.session-tags {
+    font-size: 10px;
+    color: #ffc107;
+    margin-left: 6px;
+}
+
+#btn-select-mode.active {
+    background: rgba(0,212,255,0.2);
+    border-color: #00d4ff;
+    color: #00d4ff;
+}
+
+@media (max-width: 1200px) {
+    .data-split-layout {
+        grid-template-columns: 360px 1fr !important;
+    }
+
+    .detail-header {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .data-split-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    .list-panel {
+        max-height: 42vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-content {
+        min-height: 58vh;
+    }
+
+    .detail-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .detail-header {
+        grid-template-columns: 1fr;
+    }
+
+    .tag-form-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .tag-form-row label {
+        width: auto;
+    }
+}
+</style>
+
+<!-- Chart.js 已在 index.html 全局加载 -->

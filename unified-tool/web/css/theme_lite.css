@@ -1,0 +1,2002 @@
+/* ================================================================
+   🚀 Lite 简易主题 - 极致性能优化
+   
+   特点：
+   - 无动画、无模糊、无发光
+   - 纯色背景，最小GPU占用
+   - 适合低配电脑或长时间运行
+   
+   变体：
+   - lite: 深色简约 (默认)
+   - lite-dark: 深色简约 (别名)
+   - lite-light: 浅色简约
+   ================================================================ */
+
+/* ===== Lite 深色主题 (默认) ===== */
+[data-theme="lite"],
+[data-theme="lite-dark"] {
+    /* 强调色 - 简洁蓝 */
+    --accent: #3b82f6;
+    --accent-glow: transparent;
+    --accent-dim: rgba(59, 130, 246, 0.15);
+    
+    /* 文字颜色 */
+    --text-accent: #3b82f6;
+    --text-color: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --text-on-accent: #ffffff;
+    --text-on-danger: #ffffff;
+    
+    /* 禁用发光 */
+    --btn-grad-primary: transparent;
+    --btn-grad-start: transparent;
+    --btn-grad-stop: transparent;
+    --btn-grad-danger: transparent;
+    --btn-grad-conn: transparent;
+    --glow-color: transparent;
+    
+    /* 纯色背景 */
+    --card-bg: #1e293b;
+    --card-bg-hover: #334155;
+    --panel-bg: #1e293b;
+    --sidebar-bg: #0f172a;
+    --input-bg: #0f172a;
+
+    /* 简单边框 */
+    --border-color: #334155;
+    --border-highlight: #3b82f6;
+    
+    /* 禁用背景渐变 */
+    --bg-grad-1: none;
+    --bg-grad-2: none;
+    --bg-grad-3: none;
+    
+    /* 状态色 */
+    --color-success: #22c55e;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
+    
+    /* 主题别名 */
+    --primary-color: var(--accent);
+    --primary-hover: var(--accent-dim);
+    --hover-bg: rgba(255, 255, 255, 0.05);
+    
+    /* 圆角 */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+}
+
+/* ===== 禁用所有动画 ===== */
+[data-theme="lite"] *,
+[data-theme="lite-dark"] *,
+[data-theme="lite"] *::before,
+[data-theme="lite-dark"] *::before,
+[data-theme="lite"] *::after,
+[data-theme="lite-dark"] *::after {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* 保留必要的快速过渡 */
+[data-theme="lite"] .btn,
+[data-theme="lite-dark"] .btn,
+[data-theme="lite"] .nav-item,
+[data-theme="lite-dark"] .nav-item,
+[data-theme="lite"] input,
+[data-theme="lite-dark"] input,
+[data-theme="lite"] select,
+[data-theme="lite-dark"] select {
+    transition: background-color 0.1s, border-color 0.1s !important;
+}
+
+/* ===== 禁用模糊和滤镜 ===== */
+[data-theme="lite"] *,
+[data-theme="lite-dark"] * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+}
+
+/* ===== 禁用发光阴影 ===== */
+[data-theme="lite"] .btn,
+[data-theme="lite-dark"] .btn,
+[data-theme="lite"] .card,
+[data-theme="lite-dark"] .card,
+[data-theme="lite"] .nav-item,
+[data-theme="lite-dark"] .nav-item,
+[data-theme="lite"] input,
+[data-theme="lite-dark"] input,
+[data-theme="lite"] *,
+[data-theme="lite-dark"] * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* ===== 纯色背景 ===== */
+[data-theme="lite"] body,
+[data-theme="lite-dark"] body {
+    background: #0f172a !important;
+}
+
+[data-theme="lite"] body::before,
+[data-theme="lite-dark"] body::before,
+[data-theme="lite"] body::after,
+[data-theme="lite-dark"] body::after,
+[data-theme="lite"] .main-content::before,
+[data-theme="lite-dark"] .main-content::before {
+    display: none !important;
+    content: none !important;
+}
+
+/* ===== 侧边栏 ===== */
+[data-theme="lite"] .sidebar,
+[data-theme="lite-dark"] .sidebar {
+    background: #0f172a !important;
+    border-right: 1px solid #1e293b !important;
+}
+
+[data-theme="lite"] .sidebar-header,
+[data-theme="lite-dark"] .sidebar-header {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="lite"] .nav-item,
+[data-theme="lite-dark"] .nav-item {
+    border: 1px solid transparent !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .nav-item:hover,
+[data-theme="lite-dark"] .nav-item:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .nav-item.active,
+[data-theme="lite-dark"] .nav-item.active {
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-left: 3px solid #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .nav-folder-header,
+[data-theme="lite-dark"] .nav-folder-header {
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .nav-folder-header:hover,
+[data-theme="lite-dark"] .nav-folder-header:hover {
+    color: #e2e8f0 !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ===== 卡片样式 ===== */
+[data-theme="lite"] .card,
+[data-theme="lite-dark"] .card {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 6px !important;
+}
+
+[data-theme="lite"] .card:hover,
+[data-theme="lite-dark"] .card:hover {
+    border-color: #475569 !important;
+    transform: none !important;
+}
+
+[data-theme="lite"] .card-header,
+[data-theme="lite-dark"] .card-header {
+    border-bottom: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .card-header h4,
+[data-theme="lite-dark"] .card-header h4 {
+    color: #e2e8f0 !important;
+}
+
+/* ===== 按钮样式 ===== */
+[data-theme="lite"] .btn,
+[data-theme="lite-dark"] .btn {
+    background: #1e293b !important;
+    border: 1px solid #3b82f6 !important;
+    color: #3b82f6 !important;
+    border-radius: 4px !important;
+}
+
+[data-theme="lite"] .btn:hover,
+[data-theme="lite-dark"] .btn:hover {
+    background: #334155 !important;
+    transform: none !important;
+}
+
+[data-theme="lite"] .btn.primary,
+[data-theme="lite-dark"] .btn.primary,
+[data-theme="lite"] .btn-primary,
+[data-theme="lite-dark"] .btn-primary {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .btn.primary:hover,
+[data-theme="lite-dark"] .btn.primary:hover,
+[data-theme="lite"] .btn-primary:hover,
+[data-theme="lite-dark"] .btn-primary:hover {
+    background: #2563eb !important;
+}
+
+[data-theme="lite"] .btn.danger,
+[data-theme="lite-dark"] .btn.danger,
+[data-theme="lite"] .btn-danger,
+[data-theme="lite-dark"] .btn-danger {
+    background: #1e293b !important;
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+}
+
+[data-theme="lite"] .btn.danger:hover,
+[data-theme="lite-dark"] .btn.danger:hover,
+[data-theme="lite"] .btn-danger:hover,
+[data-theme="lite-dark"] .btn-danger:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+/* ===== 输入框 ===== */
+[data-theme="lite"] input[type="text"],
+[data-theme="lite-dark"] input[type="text"],
+[data-theme="lite"] input[type="number"],
+[data-theme="lite-dark"] input[type="number"],
+[data-theme="lite"] input[type="password"],
+[data-theme="lite-dark"] input[type="password"],
+[data-theme="lite"] select,
+[data-theme="lite-dark"] select,
+[data-theme="lite"] textarea,
+[data-theme="lite-dark"] textarea {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    border-radius: 4px !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] input:focus,
+[data-theme="lite-dark"] input:focus,
+[data-theme="lite"] select:focus,
+[data-theme="lite-dark"] select:focus,
+[data-theme="lite"] textarea:focus,
+[data-theme="lite-dark"] textarea:focus {
+    border-color: #3b82f6 !important;
+    outline: none !important;
+}
+
+/* ===== 状态栏 ===== */
+[data-theme="lite"] .device-status-bar,
+[data-theme="lite-dark"] .device-status-bar {
+    background: #1e293b !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .device-status-bar .status-expand-btn,
+[data-theme="lite-dark"] .device-status-bar .status-expand-btn {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ===== 徽章 ===== */
+[data-theme="lite"] .badge,
+[data-theme="lite-dark"] .badge {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #475569 !important;
+    border-radius: 4px !important;
+    padding: 2px 8px !important;
+}
+
+[data-theme="lite"] .badge.success,
+[data-theme="lite-dark"] .badge.success {
+    background: rgba(34, 197, 94, 0.15) !important;
+    color: #22c55e !important;
+    border-color: #22c55e !important;
+}
+
+[data-theme="lite"] .badge.warning,
+[data-theme="lite-dark"] .badge.warning {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+    border-color: #f59e0b !important;
+}
+
+[data-theme="lite"] .badge.danger,
+[data-theme="lite-dark"] .badge.danger {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* ===== 状态点 ===== */
+[data-theme="lite"] .status-dot,
+[data-theme="lite-dark"] .status-dot {
+    background: #64748b !important;
+}
+
+[data-theme="lite"] .status-dot.connected,
+[data-theme="lite-dark"] .status-dot.connected,
+[data-theme="lite"] .status-dot.online,
+[data-theme="lite-dark"] .status-dot.online {
+    background: #22c55e !important;
+}
+
+/* ===== 页面头部 ===== */
+[data-theme="lite"] .slipway-header,
+[data-theme="lite-dark"] .slipway-header {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .page-header h1,
+[data-theme="lite-dark"] .page-header h1 {
+    color: #e2e8f0 !important;
+}
+
+/* ===== 表格 ===== */
+[data-theme="lite"] .table-header,
+[data-theme="lite-dark"] .table-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .table-row,
+[data-theme="lite-dark"] .table-row {
+    border-bottom: 1px solid #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .table-row:hover,
+[data-theme="lite-dark"] .table-row:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ===== 日志样式 ===== */
+[data-theme="lite"] #cal-log .log-row,
+[data-theme="lite-dark"] #cal-log .log-row {
+    background: #0f172a !important;
+    border: 1px solid #1e293b !important;
+}
+
+[data-theme="lite"] #cal-log .log-row.tx,
+[data-theme="lite-dark"] #cal-log .log-row.tx {
+    color: #3b82f6 !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
+[data-theme="lite"] #cal-log .log-row.rx,
+[data-theme="lite-dark"] #cal-log .log-row.rx {
+    color: #a78bfa !important;
+    border-color: rgba(167, 139, 250, 0.3) !important;
+    background: rgba(167, 139, 250, 0.08) !important;
+}
+
+[data-theme="lite"] #cal-log .log-row.success,
+[data-theme="lite-dark"] #cal-log .log-row.success {
+    color: #22c55e !important;
+    border-color: rgba(34, 197, 94, 0.3) !important;
+    background: rgba(34, 197, 94, 0.08) !important;
+}
+
+[data-theme="lite"] #cal-log .log-row.error,
+[data-theme="lite-dark"] #cal-log .log-row.error {
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    background: rgba(239, 68, 68, 0.08) !important;
+}
+
+/* ===== 流程预览 ===== */
+[data-theme="lite"] .wf-preview,
+[data-theme="lite-dark"] .wf-preview {
+    background: #0f172a !important;
+    border: 1px solid #1e293b !important;
+}
+
+/* ===== 下拉菜单 ===== */
+[data-theme="lite"] .dropdown-menu,
+[data-theme="lite-dark"] .dropdown-menu,
+[data-theme="lite"] .context-menu,
+[data-theme="lite-dark"] .context-menu {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .dropdown-item,
+[data-theme="lite-dark"] .dropdown-item,
+[data-theme="lite"] .context-menu-item,
+[data-theme="lite-dark"] .context-menu-item {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .dropdown-item:hover,
+[data-theme="lite-dark"] .dropdown-item:hover,
+[data-theme="lite"] .context-menu-item:hover,
+[data-theme="lite-dark"] .context-menu-item:hover {
+    background: #334155 !important;
+}
+
+/* ===== 模态框 ===== */
+[data-theme="lite"] .modal,
+[data-theme="lite-dark"] .modal,
+[data-theme="lite"] .dialog,
+[data-theme="lite-dark"] .dialog {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .modal-header,
+[data-theme="lite-dark"] .modal-header,
+[data-theme="lite"] .dialog-header,
+[data-theme="lite-dark"] .dialog-header {
+    border-bottom: 1px solid #334155 !important;
+}
+
+/* ===== 标签页 ===== */
+[data-theme="lite"] .tab,
+[data-theme="lite-dark"] .tab,
+[data-theme="lite"] .tabs .tab-item,
+[data-theme="lite-dark"] .tabs .tab-item {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .tab.active,
+[data-theme="lite-dark"] .tab.active,
+[data-theme="lite"] .tabs .tab-item.active,
+[data-theme="lite-dark"] .tabs .tab-item.active {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    border-bottom-color: transparent !important;
+    color: #3b82f6 !important;
+}
+
+/* ===== 工具栏 ===== */
+[data-theme="lite"] .toolbar,
+[data-theme="lite-dark"] .toolbar {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ===== 面板 ===== */
+[data-theme="lite"] .panel,
+[data-theme="lite-dark"] .panel {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ===== 滚动条 ===== */
+[data-theme="lite"] ::-webkit-scrollbar,
+[data-theme="lite-dark"] ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+[data-theme="lite"] ::-webkit-scrollbar-track,
+[data-theme="lite-dark"] ::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+[data-theme="lite"] ::-webkit-scrollbar-thumb,
+[data-theme="lite-dark"] ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+
+[data-theme="lite"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="lite-dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* ===== 快捷配置面板 ===== */
+[data-theme="lite"] .quick-config-panel,
+[data-theme="lite-dark"] .quick-config-panel {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .quick-config-panel .config-item,
+[data-theme="lite-dark"] .quick-config-panel .config-item {
+    border-bottom: 1px solid #1e293b !important;
+}
+
+/* ===== 首页卡片 ===== */
+[data-theme="lite"] .home-card,
+[data-theme="lite-dark"] .home-card {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .home-card:hover,
+[data-theme="lite-dark"] .home-card:hover {
+    border-color: #3b82f6 !important;
+    transform: none !important;
+}
+
+/* ===== 统计卡片 ===== */
+[data-theme="lite"] .stats-bar .stat-box,
+[data-theme="lite-dark"] .stats-bar .stat-box {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ===== 信息网格 ===== */
+[data-theme="lite"] .info-grid .info-item,
+[data-theme="lite-dark"] .info-grid .info-item {
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="lite"] .info-grid .info-label,
+[data-theme="lite-dark"] .info-grid .info-label {
+    color: #64748b !important;
+}
+
+[data-theme="lite"] .info-grid .info-value,
+[data-theme="lite-dark"] .info-grid .info-value {
+    color: #3b82f6 !important;
+}
+
+/* ================================================================
+   🌞 Lite Light - 浅色简易主题
+   ================================================================ */
+
+[data-theme="lite-light"] {
+    /* 强调色 */
+    --accent: #2563eb;
+    --accent-glow: transparent;
+    --accent-dim: rgba(37, 99, 235, 0.1);
+    
+    /* 文字颜色 */
+    --text-accent: #2563eb;
+    --text-color: #1e293b;
+    --text-muted: #475569;
+    --text-dim: #64748b;
+    --text-on-accent: #ffffff;
+    
+    /* 纯色背景 */
+    --card-bg: #ffffff;
+    --card-bg-hover: #f8fafc;
+    --panel-bg: #ffffff;
+    --sidebar-bg: #f1f5f9;
+    --input-bg: #ffffff;
+    
+    /* 简单边框 */
+    --border-color: #e2e8f0;
+    --border-highlight: #2563eb;
+    
+    /* 禁用渐变 */
+    --bg-grad-1: none;
+    --bg-grad-2: none;
+    --bg-grad-3: none;
+    --glow-color: transparent;
+    
+    /* 状态色 */
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+    --color-info: #2563eb;
+}
+
+/* 禁用动画和模糊 */
+[data-theme="lite-light"] *,
+[data-theme="lite-light"] *::before,
+[data-theme="lite-light"] *::after {
+    animation: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+[data-theme="lite-light"] .btn,
+[data-theme="lite-light"] .nav-item,
+[data-theme="lite-light"] input,
+[data-theme="lite-light"] select {
+    transition: background-color 0.1s, border-color 0.1s !important;
+}
+
+/* ===== Lite Light 背景 ===== */
+[data-theme="lite-light"] body {
+    background: #f1f5f9 !important;
+}
+
+[data-theme="lite-light"] body::before,
+[data-theme="lite-light"] body::after,
+[data-theme="lite-light"] .main-content::before {
+    display: none !important;
+}
+
+/* ===== Lite Light 侧边栏 ===== */
+[data-theme="lite-light"] .sidebar {
+    background: #f1f5f9 !important;
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .sidebar-header {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .nav-item {
+    color: #475569 !important;
+    border: 1px solid transparent !important;
+}
+
+[data-theme="lite-light"] .nav-item:hover {
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .nav-item.active {
+    background: rgba(37, 99, 235, 0.1) !important;
+    border-left: 3px solid #2563eb !important;
+    color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .nav-folder-header {
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .nav-folder-header:hover {
+    color: #1e293b !important;
+}
+
+/* ===== Lite Light 卡片 ===== */
+[data-theme="lite-light"] .card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+}
+
+[data-theme="lite-light"] .card:hover {
+    border-color: #cbd5e1 !important;
+}
+
+[data-theme="lite-light"] .card-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .card-header h4 {
+    color: #1e293b !important;
+}
+
+/* ===== Lite Light 按钮 ===== */
+[data-theme="lite-light"] .btn {
+    background: #ffffff !important;
+    border: 1px solid #2563eb !important;
+    color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .btn:hover {
+    background: #eff6ff !important;
+}
+
+[data-theme="lite-light"] .btn.primary,
+[data-theme="lite-light"] .btn-primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .btn.primary:hover,
+[data-theme="lite-light"] .btn-primary:hover {
+    background: #1d4ed8 !important;
+}
+
+[data-theme="lite-light"] .btn.danger,
+[data-theme="lite-light"] .btn-danger {
+    background: #ffffff !important;
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+[data-theme="lite-light"] .btn.danger:hover,
+[data-theme="lite-light"] .btn-danger:hover {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+/* ===== Lite Light 输入框 ===== */
+[data-theme="lite-light"] input,
+[data-theme="lite-light"] select,
+[data-theme="lite-light"] textarea {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] input:focus,
+[data-theme="lite-light"] select:focus,
+[data-theme="lite-light"] textarea:focus {
+    border-color: #2563eb !important;
+}
+
+/* ===== Lite Light 状态栏 ===== */
+[data-theme="lite-light"] .device-status-bar {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+/* ===== Lite Light 徽章 ===== */
+[data-theme="lite-light"] .badge {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .badge.success {
+    background: rgba(22, 163, 74, 0.1) !important;
+    color: #16a34a !important;
+    border-color: #16a34a !important;
+}
+
+[data-theme="lite-light"] .badge.warning {
+    background: rgba(217, 119, 6, 0.1) !important;
+    color: #d97706 !important;
+    border-color: #d97706 !important;
+}
+
+[data-theme="lite-light"] .badge.danger {
+    background: rgba(220, 38, 38, 0.1) !important;
+    color: #dc2626 !important;
+    border-color: #dc2626 !important;
+}
+
+/* ===== Lite Light 表格 ===== */
+[data-theme="lite-light"] .table-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .table-row {
+    border-bottom: 1px solid #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .table-row:hover {
+    background: #f8fafc !important;
+}
+
+/* ===== Lite Light 日志 ===== */
+[data-theme="lite-light"] #cal-log .log-row {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] #cal-log .log-row.tx {
+    color: #2563eb !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+    background: rgba(37, 99, 235, 0.05) !important;
+}
+
+[data-theme="lite-light"] #cal-log .log-row.rx {
+    color: #7c3aed !important;
+    border-color: rgba(124, 58, 237, 0.3) !important;
+    background: rgba(124, 58, 237, 0.05) !important;
+}
+
+[data-theme="lite-light"] #cal-log .log-row.success {
+    color: #16a34a !important;
+    border-color: rgba(22, 163, 74, 0.3) !important;
+    background: rgba(22, 163, 74, 0.05) !important;
+}
+
+[data-theme="lite-light"] #cal-log .log-row.error {
+    color: #dc2626 !important;
+    border-color: rgba(220, 38, 38, 0.3) !important;
+    background: rgba(220, 38, 38, 0.05) !important;
+}
+
+/* ===== Lite Light 其他组件 ===== */
+[data-theme="lite-light"] .slipway-header {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .slipway-header .header-title {
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .page-header h1 {
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] h1,
+[data-theme="lite-light"] h2,
+[data-theme="lite-light"] h3,
+[data-theme="lite-light"] h4 {
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .panel,
+[data-theme="lite-light"] .toolbar {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .wf-preview {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .dropdown-menu,
+[data-theme="lite-light"] .context-menu {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .dropdown-item:hover,
+[data-theme="lite-light"] .context-menu-item:hover {
+    background: #f1f5f9 !important;
+}
+
+[data-theme="lite-light"] .modal,
+[data-theme="lite-light"] .dialog {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .home-card,
+[data-theme="lite-light"] .stats-bar .stat-box {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .info-grid .info-label {
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .info-grid .info-value {
+    color: #2563eb !important;
+}
+
+/* ===== Lite Light 滚动条 ===== */
+[data-theme="lite-light"] ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+[data-theme="lite-light"] ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+[data-theme="lite-light"] ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+[data-theme="lite-light"] ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ===== Lite Light Logo ===== */
+[data-theme="lite-light"] .logo-text {
+    background: linear-gradient(90deg, #1e293b, #475569) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+/* ===== Lite Light 快捷配置 ===== */
+[data-theme="lite-light"] .quick-config-panel {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .quick-config-panel .config-item {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+
+/* ================================================================
+   🚀 Lite 主题 - 页面特定组件覆盖
+   ================================================================ */
+
+/* ===== 工作台页面 ===== */
+[data-theme="lite"] .workbench-container,
+[data-theme="lite-dark"] .workbench-container {
+    background: #0f172a !important;
+}
+
+[data-theme="lite"] .wb-toolbar,
+[data-theme="lite-dark"] .wb-toolbar,
+[data-theme="lite"] .wb-tabs,
+[data-theme="lite-dark"] .wb-tabs {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="lite"] .wb-tab,
+[data-theme="lite-dark"] .wb-tab {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .wb-tab:hover,
+[data-theme="lite-dark"] .wb-tab:hover {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .wb-tab.active,
+[data-theme="lite-dark"] .wb-tab.active {
+    background: #0f172a !important;
+    color: #3b82f6 !important;
+    border-color: #334155 !important;
+    border-bottom-color: #0f172a !important;
+}
+
+[data-theme="lite"] .wb-btn,
+[data-theme="lite-dark"] .wb-btn {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .wb-btn:hover,
+[data-theme="lite-dark"] .wb-btn:hover {
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .wb-btn.primary,
+[data-theme="lite-dark"] .wb-btn.primary {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .wb-btn.danger,
+[data-theme="lite-dark"] .wb-btn.danger {
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+}
+
+[data-theme="lite"] .panel-col,
+[data-theme="lite-dark"] .panel-col,
+[data-theme="lite"] .exec-col,
+[data-theme="lite-dark"] .exec-col {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .panel-header,
+[data-theme="lite-dark"] .panel-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .mini-btn,
+[data-theme="lite-dark"] .mini-btn {
+    background: transparent !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .mini-btn:hover,
+[data-theme="lite-dark"] .mini-btn:hover {
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .list-item,
+[data-theme="lite-dark"] .list-item {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .list-item:hover,
+[data-theme="lite-dark"] .list-item:hover {
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .list-item.active,
+[data-theme="lite-dark"] .list-item.active {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+[data-theme="lite"] .toggle-btn,
+[data-theme="lite-dark"] .toggle-btn {
+    background: transparent !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .toggle-btn.active,
+[data-theme="lite-dark"] .toggle-btn.active {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+/* ===== 滑台测试页面 ===== */
+[data-theme="lite"] .glass-header,
+[data-theme="lite-dark"] .glass-header,
+[data-theme="lite"] .glass-footer,
+[data-theme="lite-dark"] .glass-footer {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="lite"] .glass-card,
+[data-theme="lite-dark"] .glass-card {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .tab-btn,
+[data-theme="lite-dark"] .tab-btn {
+    background: transparent !important;
+    border: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .tab-btn:hover,
+[data-theme="lite-dark"] .tab-btn:hover {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .tab-btn.active,
+[data-theme="lite-dark"] .tab-btn.active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .ctrl-btn,
+[data-theme="lite-dark"] .ctrl-btn {
+    background: #1e293b !important;
+    border: 1px solid #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .ctrl-btn:hover,
+[data-theme="lite-dark"] .ctrl-btn:hover {
+    background: #334155 !important;
+}
+
+[data-theme="lite"] .ctrl-btn.primary,
+[data-theme="lite-dark"] .ctrl-btn.primary {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .ctrl-btn.highlight,
+[data-theme="lite-dark"] .ctrl-btn.highlight {
+    background: #22c55e !important;
+    border-color: #22c55e !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .ctrl-btn.danger,
+[data-theme="lite-dark"] .ctrl-btn.danger {
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .glow-btn,
+[data-theme="lite-dark"] .glow-btn {
+    background: #1e293b !important;
+    border: 1px solid #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .glow-btn.primary,
+[data-theme="lite-dark"] .glow-btn.primary {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .ref-btn,
+[data-theme="lite-dark"] .ref-btn {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .ref-btn:hover,
+[data-theme="lite-dark"] .ref-btn:hover {
+    border-color: #3b82f6 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .ref-btn.active,
+[data-theme="lite-dark"] .ref-btn.active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .action-btn,
+[data-theme="lite-dark"] .action-btn {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .action-btn.start,
+[data-theme="lite-dark"] .action-btn.start {
+    background: #22c55e !important;
+    border-color: #22c55e !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .action-btn.stop,
+[data-theme="lite-dark"] .action-btn.stop {
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite"] .data-tab-btn,
+[data-theme="lite-dark"] .data-tab-btn {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .data-tab-btn.active,
+[data-theme="lite-dark"] .data-tab-btn.active {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #3b82f6 !important;
+}
+
+/* ===== 统计栏 ===== */
+[data-theme="lite"] .stats-bar,
+[data-theme="lite-dark"] .stats-bar {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .stat-item,
+[data-theme="lite-dark"] .stat-item {
+    border-right: 1px solid #1e293b !important;
+}
+
+[data-theme="lite"] .stat-val,
+[data-theme="lite-dark"] .stat-val {
+    color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .stat-val.error,
+[data-theme="lite-dark"] .stat-val.error {
+    color: #ef4444 !important;
+}
+
+[data-theme="lite"] .stat-val.success,
+[data-theme="lite-dark"] .stat-val.success {
+    color: #22c55e !important;
+}
+
+/* ===== 表格样式 ===== */
+[data-theme="lite"] .table-header-row,
+[data-theme="lite-dark"] .table-header-row {
+    background: #0f172a !important;
+    border-bottom: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .table-body,
+[data-theme="lite-dark"] .table-body {
+    background: #1e293b !important;
+}
+
+[data-theme="lite"] .data-row,
+[data-theme="lite-dark"] .data-row {
+    border-bottom: 1px solid #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .data-row:hover,
+[data-theme="lite-dark"] .data-row:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ===== 日志容器 ===== */
+[data-theme="lite"] .log-container,
+[data-theme="lite-dark"] .log-container,
+[data-theme="lite"] .exec-log,
+[data-theme="lite-dark"] .exec-log {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .log-line,
+[data-theme="lite-dark"] .log-line {
+    color: #94a3b8 !important;
+}
+
+/* ===== 输入组件 ===== */
+[data-theme="lite"] .input-group,
+[data-theme="lite-dark"] .input-group {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .input-row label,
+[data-theme="lite-dark"] .input-row label {
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .section-label,
+[data-theme="lite-dark"] .section-label {
+    color: #64748b !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+
+/* ===== 状态指示 ===== */
+[data-theme="lite"] .status-block,
+[data-theme="lite-dark"] .status-block {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .status-label,
+[data-theme="lite-dark"] .status-label {
+    color: #64748b !important;
+}
+
+[data-theme="lite"] .status-value,
+[data-theme="lite-dark"] .status-value {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .status-value.online,
+[data-theme="lite-dark"] .status-value.online {
+    color: #22c55e !important;
+}
+
+[data-theme="lite"] .dot.online,
+[data-theme="lite-dark"] .dot.online {
+    background: #22c55e !important;
+}
+
+/* ===== 快捷配置面板 ===== */
+[data-theme="lite"] .quick-config-panel,
+[data-theme="lite-dark"] .quick-config-panel {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .config-item,
+[data-theme="lite-dark"] .config-item {
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="lite"] .config-item:hover,
+[data-theme="lite-dark"] .config-item:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+[data-theme="lite"] .config-item .config-icon,
+[data-theme="lite-dark"] .config-item .config-icon {
+    color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .config-item .config-path,
+[data-theme="lite-dark"] .config-item .config-path {
+    color: #64748b !important;
+}
+
+/* ===== LCD 显示区域 ===== */
+[data-theme="lite"] .lcd-box,
+[data-theme="lite-dark"] .lcd-box {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ===== 嵌入容器 ===== */
+[data-theme="lite"] .embed-container,
+[data-theme="lite-dark"] .embed-container {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .embed-hint,
+[data-theme="lite-dark"] .embed-hint {
+    background: #0f172a !important;
+    border-top: 1px solid #334155 !important;
+}
+
+/* ===== 报告布局 ===== */
+[data-theme="lite"] .report-col,
+[data-theme="lite-dark"] .report-col {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .report-summary,
+[data-theme="lite-dark"] .report-summary {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ===== 状态栏 ===== */
+[data-theme="lite"] .wb-statusbar,
+[data-theme="lite-dark"] .wb-statusbar {
+    background: #1e293b !important;
+    border-top: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+
+/* ===== 导出按钮 ===== */
+[data-theme="lite"] .export-btn,
+[data-theme="lite-dark"] .export-btn {
+    background: #1e293b !important;
+    border: 1px solid #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+[data-theme="lite"] .export-btn:hover,
+[data-theme="lite-dark"] .export-btn:hover {
+    background: #334155 !important;
+}
+
+/* ================================================================
+   🌞 Lite Light - 页面特定组件覆盖
+   ================================================================ */
+
+/* ===== 工作台页面 ===== */
+[data-theme="lite-light"] .workbench-container {
+    background: #f1f5f9 !important;
+}
+
+[data-theme="lite-light"] .wb-toolbar,
+[data-theme="lite-light"] .wb-tabs {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .wb-tab {
+    background: transparent !important;
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .wb-tab:hover {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .wb-tab.active {
+    background: #f1f5f9 !important;
+    color: #2563eb !important;
+    border-color: #e2e8f0 !important;
+    border-bottom-color: #f1f5f9 !important;
+}
+
+[data-theme="lite-light"] .wb-btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .wb-btn.primary {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .wb-btn.danger {
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+[data-theme="lite-light"] .panel-col,
+[data-theme="lite-light"] .exec-col {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .panel-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .mini-btn {
+    background: transparent !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #475569 !important;
+}
+
+[data-theme="lite-light"] .mini-btn:hover {
+    border-color: #2563eb !important;
+    color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .list-item {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .list-item:hover {
+    border-color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .list-item.active {
+    border-color: #2563eb !important;
+    background: rgba(37, 99, 235, 0.1) !important;
+}
+
+/* ===== Lite Light 滑台测试页面 ===== */
+[data-theme="lite-light"] .glass-header,
+[data-theme="lite-light"] .glass-footer {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .glass-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .tab-btn {
+    background: transparent !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .tab-btn:hover {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .tab-btn.active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .ctrl-btn {
+    background: #ffffff !important;
+    border: 1px solid #2563eb !important;
+    color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .ctrl-btn:hover {
+    background: #eff6ff !important;
+}
+
+[data-theme="lite-light"] .ctrl-btn.primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .ctrl-btn.highlight {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .ctrl-btn.danger {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .glow-btn {
+    background: #ffffff !important;
+    border: 1px solid #2563eb !important;
+    color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .glow-btn.primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .ref-btn {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .ref-btn:hover {
+    border-color: #2563eb !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .ref-btn.active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .action-btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .action-btn.start {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .action-btn.stop {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .data-tab-btn {
+    background: transparent !important;
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .data-tab-btn.active {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #2563eb !important;
+}
+
+/* ===== Lite Light 统计栏 ===== */
+[data-theme="lite-light"] .stats-bar {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .stat-item {
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .stat-val {
+    color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .stat-val.error {
+    color: #dc2626 !important;
+}
+
+[data-theme="lite-light"] .stat-val.success {
+    color: #16a34a !important;
+}
+
+/* ===== Lite Light 表格 ===== */
+[data-theme="lite-light"] .table-header-row {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .table-body {
+    background: #ffffff !important;
+}
+
+[data-theme="lite-light"] .data-row {
+    border-bottom: 1px solid #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .data-row:hover {
+    background: #f8fafc !important;
+}
+
+/* ===== Lite Light 日志 ===== */
+[data-theme="lite-light"] .log-container,
+[data-theme="lite-light"] .exec-log {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .log-line {
+    color: #475569 !important;
+}
+
+/* ===== Lite Light 输入组件 ===== */
+[data-theme="lite-light"] .input-group {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .input-row label {
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .section-label {
+    color: #64748b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* ===== Lite Light 状态指示 ===== */
+[data-theme="lite-light"] .status-block {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .status-label {
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .status-value {
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .status-value.online {
+    color: #16a34a !important;
+}
+
+[data-theme="lite-light"] .dot.online {
+    background: #16a34a !important;
+}
+
+/* ===== Lite Light LCD 显示区域 ===== */
+[data-theme="lite-light"] .lcd-box {
+    background: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* ===== Lite Light 嵌入容器 ===== */
+[data-theme="lite-light"] .embed-container {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .embed-hint {
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+/* ===== Lite Light 报告布局 ===== */
+[data-theme="lite-light"] .report-col {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .report-summary {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* ===== Lite Light 状态栏 ===== */
+[data-theme="lite-light"] .wb-statusbar {
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+/* ===== Lite Light 导出按钮 ===== */
+[data-theme="lite-light"] .export-btn {
+    background: #ffffff !important;
+    border: 1px solid #2563eb !important;
+    color: #2563eb !important;
+}
+
+[data-theme="lite-light"] .export-btn:hover {
+    background: #eff6ff !important;
+}
+
+/* ================================================================
+   🚀 Lite 主题 - 通用组件补充
+   ================================================================ */
+
+/* ===== 进度条 ===== */
+[data-theme="lite"] .progress-bar,
+[data-theme="lite-dark"] .progress-bar {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .progress-fill,
+[data-theme="lite-dark"] .progress-fill {
+    background: #3b82f6 !important;
+}
+
+[data-theme="lite-light"] .progress-bar {
+    background: #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="lite-light"] .progress-fill {
+    background: #2563eb !important;
+}
+
+/* ===== 开关/复选框 ===== */
+[data-theme="lite"] .switch,
+[data-theme="lite-dark"] .switch {
+    background: #334155 !important;
+}
+
+[data-theme="lite"] .switch.on,
+[data-theme="lite-dark"] .switch.on {
+    background: #3b82f6 !important;
+}
+
+[data-theme="lite-light"] .switch {
+    background: #cbd5e1 !important;
+}
+
+[data-theme="lite-light"] .switch.on {
+    background: #2563eb !important;
+}
+
+/* ===== 提示框/Toast ===== */
+[data-theme="lite"] .toast,
+[data-theme="lite-dark"] .toast {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .toast {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+/* ===== 分隔线 ===== */
+[data-theme="lite"] hr,
+[data-theme="lite-dark"] hr,
+[data-theme="lite"] .divider,
+[data-theme="lite-dark"] .divider {
+    border-color: #334155 !important;
+    background: #334155 !important;
+}
+
+[data-theme="lite-light"] hr,
+[data-theme="lite-light"] .divider {
+    border-color: #e2e8f0 !important;
+    background: #e2e8f0 !important;
+}
+
+/* ===== 代码块 ===== */
+[data-theme="lite"] code,
+[data-theme="lite-dark"] code,
+[data-theme="lite"] pre,
+[data-theme="lite-dark"] pre {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] code,
+[data-theme="lite-light"] pre {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+/* ===== 图表区域 ===== */
+[data-theme="lite"] .chart-container,
+[data-theme="lite-dark"] .chart-container {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite-light"] .chart-container {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* ===== 空状态提示 ===== */
+[data-theme="lite"] .empty-hint,
+[data-theme="lite-dark"] .empty-hint {
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .empty-hint {
+    color: #94a3b8 !important;
+}
+
+/* ===== 加载状态 ===== */
+[data-theme="lite"] .loading,
+[data-theme="lite-dark"] .loading,
+[data-theme="lite"] .spinner,
+[data-theme="lite-dark"] .spinner {
+    border-color: #334155 !important;
+    border-top-color: #3b82f6 !important;
+}
+
+[data-theme="lite-light"] .loading,
+[data-theme="lite-light"] .spinner {
+    border-color: #e2e8f0 !important;
+    border-top-color: #2563eb !important;
+}
+
+/* ===== 设备选择器 ===== */
+[data-theme="lite"] .device-selector-container,
+[data-theme="lite-dark"] .device-selector-container {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .device-selector-container select,
+[data-theme="lite-dark"] .device-selector-container select {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .device-selector-container {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .device-selector-container select {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+/* ===== 步进按钮 ===== */
+[data-theme="lite"] .step-btn,
+[data-theme="lite-dark"] .step-btn {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite"] .step-btn:hover,
+[data-theme="lite-dark"] .step-btn:hover {
+    border-color: #3b82f6 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .step-btn.active,
+[data-theme="lite-dark"] .step-btn.active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="lite-light"] .step-btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+[data-theme="lite-light"] .step-btn:hover {
+    border-color: #2563eb !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .step-btn.active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+/* ===== 单选/复选框标签 ===== */
+[data-theme="lite"] .radio-item,
+[data-theme="lite-dark"] .radio-item,
+[data-theme="lite"] .check-item,
+[data-theme="lite-dark"] .check-item {
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite-light"] .radio-item,
+[data-theme="lite-light"] .check-item {
+    color: #475569 !important;
+}
+
+/* ===== 模式切换 ===== */
+[data-theme="lite"] .mode-switch,
+[data-theme="lite-dark"] .mode-switch {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite-light"] .mode-switch {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* ===== 数据页脚 ===== */
+[data-theme="lite"] .data-footer,
+[data-theme="lite-dark"] .data-footer {
+    background: #0f172a !important;
+    border-top: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite-light"] .data-footer {
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+/* ===== 连接状态卡片 ===== */
+[data-theme="lite"] .connect-card,
+[data-theme="lite-dark"] .connect-card {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite"] .connect-row input,
+[data-theme="lite-dark"] .connect-row input {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="lite"] .connect-status,
+[data-theme="lite-dark"] .connect-status {
+    color: #94a3b8 !important;
+}
+
+[data-theme="lite-light"] .connect-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="lite-light"] .connect-row input {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+[data-theme="lite-light"] .connect-status {
+    color: #64748b !important;
+}
+
+/* ===== 标题发光效果禁用 ===== */
+[data-theme="lite"] .title-glow,
+[data-theme="lite-dark"] .title-glow,
+[data-theme="lite-light"] .title-glow {
+    text-shadow: none !important;
+    color: inherit !important;
+}
+
+/* ===== 控制网格 ===== */
+[data-theme="lite"] .ctrl-grid,
+[data-theme="lite-dark"] .ctrl-grid,
+[data-theme="lite"] .status-grid,
+[data-theme="lite-dark"] .status-grid {
+    background: #0f172a !important;
+}
+
+[data-theme="lite-light"] .ctrl-grid,
+[data-theme="lite-light"] .status-grid {
+    background: #f8fafc !important;
+}
+
+/* ===== 执行进度 ===== */
+[data-theme="lite"] .exec-progress,
+[data-theme="lite-dark"] .exec-progress {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="lite-light"] .exec-progress {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* ===== 执行按钮组 ===== */
+[data-theme="lite"] .exec-btns,
+[data-theme="lite-dark"] .exec-btns {
+    background: #1e293b !important;
+}
+
+[data-theme="lite-light"] .exec-btns {
+    background: #ffffff !important;
+}
+
+/* ===== 测试动作按钮 ===== */
+[data-theme="lite"] .test-actions,
+[data-theme="lite-dark"] .test-actions {
+    background: #1e293b !important;
+}
+
+[data-theme="lite-light"] .test-actions {
+    background: #ffffff !important;
+}

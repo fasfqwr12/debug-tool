@@ -1,0 +1,1327 @@
+<div class="page-container" style="display:flex; flex-direction:column; height:calc(100vh - 80px); overflow:hidden;">
+    <div class="page-header" style="flex-shrink:0;">
+        <h1>📸 版本快照</h1>
+        <div class="header-actions">
+            <input id="vault-crc-search" type="text" placeholder="CRC反查 (0x...)" 
+                   style="width:160px; padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color); font-size:12px; font-family:monospace;"
+                   onkeydown="if(event.key==='Enter') VaultPage.searchCRC()">
+            <button class="header-btn" onclick="VaultPage.searchCRC()">🔍 CRC查找</button>
+            <button class="header-btn" onclick="VaultPage.showStats()">📊 统计</button>
+            <button class="header-btn" onclick="VaultPage.addProject()">➕ 添加项目</button>
+        </div>
+    </div>
+
+    <div class="git-layout" style="flex:1; min-height:0; display:grid; grid-template-columns:180px 1fr 300px; gap:8px;">
+        <!-- 左侧：项目列表 -->
+        <div class="panel project-panel">
+            <div class="panel-header">
+                <span>项目列表</span>
+            </div>
+            <div class="project-list" id="vault-project-list">
+                <div class="empty-hint">暂无项目，点击添加</div>
+            </div>
+        </div>
+
+        <!-- 中间：状态 + 变更文件 -->
+        <div class="panel git-panel">
+            <div class="panel-header">
+                <span id="vault-title">选择项目</span>
+                <button class="text-btn" id="vault-open-btn" style="display:none"
+                        onclick="VaultPage.openProjectDir()">📂 打开目录</button>
+            </div>
+
+            <!-- 操作区 -->
+            <div class="git-status-area" id="vault-main-area">
+                <!-- 状态栏 -->
+                <div class="git-info-bar">
+                    <div class="git-info-item">
+                        <span class="label">状态</span>
+                        <span id="vault-status-badge" class="status-badge clean">未选择项目</span>
+                    </div>
+                    <div class="git-info-item">
+                        <span class="label">基准</span>
+                        <span id="vault-base-info" style="font-size:12px;">--</span>
+                    </div>
+                    <div class="git-info-item">
+                        <span class="label">路径</span>
+                        <span id="vault-project-path" style="font-size:11px; color:var(--text-muted); cursor:pointer;"
+                              onclick="VaultPage.openProjectDir()" title="点击打开">--</span>
+                    </div>
+                    <div class="git-info-item" id="vault-desc-item" style="display:none; flex-basis:100%;">
+                        <span class="label">描述</span>
+                        <span id="vault-project-desc" style="font-size:12px;">--</span>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="git-actions">
+                    <button class="git-btn primary" onclick="VaultPage.createSnapshot()" disabled>
+                        <span class="icon">📸</span> 保存快照
+                    </button>
+                    <button class="git-btn" onclick="VaultPage.refreshStatus()" disabled>
+                        <span class="icon">🔄</span> 刷新
+                    </button>
+                    <button class="git-btn" onclick="VaultPage.editExcludes()">
+                        <span class="icon">⚙️</span> 排除规则
+                    </button>
+                    <button class="git-btn" onclick="VaultPage.previewScan()">
+                        <span class="icon">🔍</span> 预览
+                    </button>
+                </div>
+
+                <!-- 变更文件列表 -->
+                <div class="changes-section">
+                    <div class="section-header">
+                        <span>📝 变更文件</span>
+                        <span class="badge" id="vault-changes-count">0</span>
+                    </div>
+                    <div id="vault-filter-bar" style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; align-items:center;">
+                        <button class="vf-chip active" onclick="VaultPage.toggleFilter(this,'all')">全部</button>
+                        <button class="vf-chip active" onclick="VaultPage.toggleFilter(this,'.c')">.c</button>
+                        <button class="vf-chip active" onclick="VaultPage.toggleFilter(this,'.h')">.h</button>
+                        <button class="vf-chip active" onclick="VaultPage.toggleFilter(this,'.py')">.py</button>
+                        <button class="vf-chip active" onclick="VaultPage.toggleFilter(this,'.html')">.html</button>
+                        <button class="vf-chip active" onclick="VaultPage.toggleFilter(this,'.md')">.md</button>
+                        <input id="vault-changes-filter" type="text" placeholder="关键字..."
+                               style="margin-left:auto; width:100px; padding:3px 8px; border-radius:4px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color); font-size:11px;"
+                               oninput="VaultPage.filterChanges()">
+                    </div>
+                    <div class="changes-list" id="vault-changes-list">
+                        <div class="empty-hint">无变更</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 未选择项目提示 -->
+            <div class="not-git" id="vault-empty-area">
+                <div class="icon">📁</div>
+                <p>选择一个项目开始</p>
+                <p class="hint">或点击右上角添加项目</p>
+            </div>
+        </div>
+
+        <!-- 右侧：版本历史 -->
+        <div class="panel history-panel" style="display:flex; flex-direction:column; min-height:0; overflow:hidden;">
+            <div class="panel-header" style="flex-shrink:0;">
+                <span>📜 版本历史</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-muted);">
+                        <input id="vault-history-artifacts-only" type="checkbox" onchange="VaultPage.filterSnapshots()">
+                        仅产物
+                    </label>
+                    <input id="vault-history-filter" type="text" placeholder="标签/备注/CRC"
+                           style="width:110px; padding:3px 8px; border-radius:4px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color); font-size:11px;"
+                           oninput="VaultPage.filterSnapshots()">
+                </div>
+            </div>
+            <div class="commit-list" id="vault-history-list" style="flex:1; overflow-y:auto; min-height:0; max-height:none;">
+                <div class="empty-hint">选择项目查看历史</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 对比/详情弹窗 -->
+<div class="modal-overlay" id="vault-modal" style="display:none">
+    <div class="modal-content" style="width:700px; max-width:90%; max-height:80vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+            <h3 id="vault-modal-title">详情</h3>
+            <button class="close-btn" onclick="VaultPage.closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="vault-modal-body" style="flex:1; overflow-y:auto;"></div>
+    </div>
+</div>
+
+<!-- 保存快照对话框 -->
+<div class="modal-overlay" id="vault-snapshot-modal" style="display:none">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="vault-snapshot-modal-title">📸 保存快照</h3>
+            <button class="close-btn" onclick="document.getElementById('vault-snapshot-modal').style.display='none'">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>标签 *</label>
+                <input type="text" id="vault-tag" placeholder="如: F1校准完成、VBR重写、高温测试前">
+            </div>
+            <div class="form-group">
+                <label>备注说明</label>
+                <textarea id="vault-note" rows="3" placeholder="本次改了什么...（可选）"></textarea>
+                <div style="margin-top:6px; font-size:11px; color:var(--text-muted);">`Enter` 提交标签，`Ctrl+Enter` 提交备注</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="document.getElementById('vault-snapshot-modal').style.display='none'">取消</button>
+            <button class="btn-confirm" id="vault-snapshot-confirm" onclick="VaultPage.submitSnapshotDialog()">保存快照</button>
+        </div>
+    </div>
+</div>
+
+<!-- 进度条遮罩 -->
+<div id="vault-progress-overlay" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="width:360px;">
+        <div style="padding:24px; text-align:center;">
+            <div style="font-size:16px; font-weight:600; margin-bottom:16px;" id="vault-progress-title">⏳ 正在创建快照...</div>
+            <div style="background:var(--input-bg); border-radius:8px; height:8px; overflow:hidden; margin-bottom:10px;">
+                <div id="vault-progress-bar" style="height:100%; background:var(--accent, #00ff88); width:0%; transition:width 0.3s; border-radius:8px;"></div>
+            </div>
+            <div id="vault-progress-text" style="font-size:12px; color:var(--text-muted);">准备中...</div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ========== 基础布局（独立于dev_git） ========== */
+.git-layout .panel {
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    border-radius: 8px; display: flex; flex-direction: column;
+    overflow: hidden; height: 100%; min-height: 0;
+}
+.git-layout .panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; background: var(--input-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600; font-size: 12px; flex-shrink: 0;
+}
+.git-layout .text-btn {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 12px;
+}
+.git-layout .text-btn:hover { color: var(--primary-color); }
+
+/* 项目列表 */
+.git-layout .project-list { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px; }
+.git-layout .project-card {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px; border-radius: 6px; cursor: pointer;
+    margin-bottom: 4px; border-left: 2px solid transparent;
+    transition: all 0.2s; overflow: hidden;
+}
+.git-layout .project-card:hover { background: var(--input-bg); }
+.git-layout .project-card.active { background: var(--accent-dim); border-left-color: var(--accent); }
+.git-layout .project-card .icon { font-size: 18px; flex-shrink: 0; }
+.git-layout .project-card .info { flex: 1; min-width: 0; overflow: hidden; }
+.git-layout .project-card .name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.git-layout .project-card .path { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.git-layout .project-remove {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 1px solid transparent; background: rgba(0,0,0,0.15);
+    color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.git-layout .project-remove:hover { border-color: rgba(239,68,68,0.7); color: rgba(239,68,68,0.95); }
+
+/* 状态区 */
+.git-status-area { padding: 10px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.git-info-bar { display: flex; gap: 16px; padding: 8px 12px; background: var(--input-bg); border-radius: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.git-info-item { display: flex; align-items: center; gap: 6px; }
+.git-info-item .label { font-size: 11px; color: var(--text-muted); }
+.status-badge { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.status-badge.clean { background: var(--accent-dim); color: var(--accent); }
+.status-badge.dirty { background: rgba(245,158,11,0.15); color: var(--color-warning, #f59e0b); }
+
+/* 操作按钮 */
+.git-actions { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.git-btn {
+    display: flex; align-items: center; gap: 4px;
+    padding: 5px 10px; border-radius: 4px;
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    color: var(--text-color); cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+}
+.git-btn:hover { border-color: var(--accent); color: var(--accent); }
+.git-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--text-on-accent); }
+.git-btn.primary:hover { box-shadow: 0 0 10px var(--accent-glow); }
+.git-btn .icon { font-size: 14px; }
+
+/* 变更文件 */
+.changes-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+.badge { background: var(--accent); color: var(--text-on-accent); padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+.changes-list { flex: 1; overflow-y: auto; }
+
+/* 提示 */
+.not-git { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); }
+.not-git .icon { font-size: 48px; margin-bottom: 16px; }
+.not-git .hint { font-size: 12px; }
+.empty-hint { color: var(--text-muted); text-align: center; padding: 40px; font-size: 13px; }
+
+/* 历史列表 */
+.commit-list { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; }
+
+/* 模态框 */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: rgba(12,20,35,0.98); border: 2px solid rgba(0,255,136,0.3); border-radius: 12px; width: 400px; max-width: 90%; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-color); }
+.modal-header h3 { margin: 0; font-size: 16px; }
+.modal-header .close-btn { width: 28px; height: 28px; border-radius: 4px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; }
+.modal-body { padding: 16px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px; border-top: 1px solid rgba(0,255,136,0.2); }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.form-group input, .form-group textarea { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 13px; box-sizing: border-box; }
+.form-group textarea { resize: none; }
+.btn-cancel, .btn-confirm { padding: 10px 24px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600; transition: all 0.25s; }
+.btn-cancel { background: rgba(15,30,50,0.95); border: 2px solid rgba(0,212,255,0.5); color: #00d4ff; }
+.btn-confirm { background: rgba(10,40,30,0.95); border: 2px solid #00ff88; color: #00ff88; }
+
+/* 页面头部 */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-header h1 { margin: 0; font-size: 22px; }
+.page-header .header-actions { display: flex; gap: 10px; align-items: center; }
+.header-btn { padding: 8px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); cursor: pointer; font-size: 13px; }
+.header-btn:hover { border-color: var(--primary-color); }
+
+/* ========== Vault 特有样式 ========== */
+
+/* 变更文件类型标签 */
+.vault-change-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 4px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    margin-bottom: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.vault-change-item:hover { background: rgba(0, 255, 136, 0.08); }
+.vault-change-item .vtype {
+    min-width: 22px; width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold; flex-shrink: 0;
+}
+/* 过滤标签 */
+.vf-chip {
+    padding: 2px 8px; font-size: 10px; border-radius: 10px;
+    border: 1px solid var(--border-color); background: transparent;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+}
+.vf-chip.active { background: var(--accent, #00ff88); color: #000; border-color: var(--accent, #00ff88); font-weight: 600; }
+.vf-chip:hover { border-color: var(--accent, #00ff88); }
+
+.vault-change-item .vtype.M { background: #f59e0b; color: #000; }
+.vault-change-item .vtype.A { background: #22c55e; color: #fff; }
+.vault-change-item .vtype.D { background: #ef4444; color: #fff; }
+.vault-change-item .vfile { flex: 1; font-family: monospace; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: help; }
+.vault-change-item .vsize { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+
+/* 版本历史卡片 */
+.vault-snap-card {
+    padding: 8px; border-radius: 6px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    margin-bottom: 6px;
+    transition: border-color 0.15s;
+}
+.vault-snap-card:hover { border-color: var(--accent, #00ff88); }
+.vault-snap-card.current { border-left: 3px solid var(--primary-color, #00ff88); background: rgba(0,255,157,0.08); }
+.vault-snap-card .header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.vault-snap-card .snap-id {
+    background: var(--card-bg); padding: 2px 6px;
+    border-radius: 4px; font-family: monospace; font-size: 11px;
+    color: var(--primary-color, #00ff88);
+}
+.vault-snap-card .snap-tag {
+    background: var(--accent, #00ff88); color: var(--text-on-accent, #000);
+    padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;
+}
+.vault-snap-card .snap-date { font-size: 11px; color: var(--text-muted); }
+.vault-snap-card .snap-msg { font-size: 12px; line-height: 1.4; margin-top: 2px; }
+.vault-snap-card .snap-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.vault-snap-card .snap-crc {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 6px;
+}
+.vault-artifact-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    max-width: 100%;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: #b9f4ff;
+    font-size: 10px;
+    cursor: pointer;
+}
+.vault-artifact-chip:hover {
+    border-color: rgba(0,212,255,0.45);
+    background: rgba(0,212,255,0.16);
+}
+.vault-artifact-chip .crc {
+    font-family: monospace;
+    color: #00d4ff;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.vault-artifact-chip .meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.vault-snap-card .snap-actions {
+    display: flex; gap: 4px; margin-top: 6px;
+}
+.vault-snap-card .snap-actions button {
+    padding: 3px 8px; font-size: 11px; border-radius: 4px;
+    background: transparent; border: 1px solid var(--border-color);
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+}
+.vault-snap-card .snap-actions button:hover {
+    border-color: var(--primary-color, #00ff88);
+    color: var(--primary-color, #00ff88);
+}
+
+/* 统计卡片 */
+.v-stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px; margin-bottom: 12px;
+}
+.v-stats-card {
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 10px; text-align: center;
+}
+.v-stats-card .val { font-size: 18px; font-weight: 700; color: var(--primary-color, #00ff88); }
+.v-stats-card .lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* diff视图 */
+.v-diff-line { padding: 1px 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+.v-diff-line.add { background: rgba(34,197,94,0.2); color: #4ade80; }
+.v-diff-line.del { background: rgba(239,68,68,0.2); color: #f87171; }
+.v-diff-line.info { background: rgba(59,130,246,0.15); color: #60a5fa; }
+</style>
+
+<script>
+window.VaultPage = {
+    currentProject: null,
+    snapshots: [],
+    compareA: null,
+    snapshotDialogMode: 'create',
+    editingSnapshotId: null,
+    _statusCache: {},      // 变更检测结果缓存 { projectId: { data, timestamp } }
+    _statusCacheTTL: 120000, // 缓存有效期2分钟（切换项目时用缓存）
+    _bgRefreshCooldown: 30000, // 后台刷新冷却30秒
+
+    async init() {
+        console.log('[Vault] init() called, currentProject:', this.currentProject?.id, 'cacheKeys:', Object.keys(this._statusCache));
+        const tagInput = document.getElementById('vault-tag');
+        const noteInput = document.getElementById('vault-note');
+        tagInput?.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                this.submitSnapshotDialog();
+            }
+        });
+        noteInput?.addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                event.preventDefault();
+                this.submitSnapshotDialog();
+            }
+        });
+        await this.loadProjects();
+        // 如果之前已选中项目，恢复选中状态（不重新扫描）
+        if (this.currentProject) {
+            const pid = this.currentProject.id;
+            // 重新高亮
+            document.querySelectorAll('#vault-project-list .project-card').forEach(el => el.classList.remove('active'));
+            const card = document.querySelector(`#vault-project-list .project-card[onclick*="${pid}"]`);
+            if (card) card.classList.add('active');
+            // 如果有缓存，直接渲染
+            const cached = this._statusCache[pid];
+            if (cached) {
+                this._renderStatus(cached.data);
+            }
+        }
+    },
+
+    // ========== 项目管理 ==========
+    async loadProjects(forceReload) {
+        // 有缓存且非强制刷新时，直接用缓存渲染
+        if (!forceReload && this._projectsCache && this._projectsCache.length > 0) {
+            this._renderProjectList();
+            return;
+        }
+        const el = document.getElementById('vault-project-list');
+        el.innerHTML = '<div class="empty-hint">加载中...</div>';
+
+        // 项目列表只查数据库，不扫描文件，很快
+        const r = await pywebview.api.vault_get_projects();
+        if (r.success) {
+            this._projectsCache = r.projects || [];
+            this._renderProjectList();
+        } else {
+            el.innerHTML = '<div class="empty-hint">加载失败</div>';
+        }
+    },
+
+    async _loadProjectsList() {
+        const r = await pywebview.api.vault_get_projects();
+        if (!r.success) return;
+        this._projectsCache = r.projects || [];
+        this._renderProjectList();
+    },
+
+    _renderProjectList() {
+        const el = document.getElementById('vault-project-list');
+        const projects = this._projectsCache || [];
+        if (!projects.length) {
+            el.innerHTML = '<div class="empty-hint">暂无项目，点击添加</div>';
+            return;
+        }
+        el.innerHTML = projects.map(p => {
+            const active = this.currentProject?.id === p.id ? 'active' : '';
+            const shortPath = p.path.replace(/\\/g, '/').split('/').slice(-2).join('/');
+            const descTip = p.description ? ` — ${p.description}` : '';
+            return `<div class="project-card ${active}" onclick="VaultPage.selectProject('${p.id}')">
+                <span class="icon">📦</span>
+                <div class="info" style="min-width:0;">
+                    <div class="name" title="${p.name}${descTip}">${p.name}</div>
+                    <div class="path" title="${p.path}">${shortPath}</div>
+                </div>
+                <button class="project-remove" onclick="event.stopPropagation(); VaultPage.removeProject('${p.id}')" title="移除">×</button>
+            </div>`;
+        }).join('');
+    },
+
+    async addProject() {
+        const r = await pywebview.api.vault_browse_folder();
+        if (!r.success) return;
+        const path = r.path;
+        const name = prompt('项目名称:', path.split(/[/\\]/).pop());
+        if (!name) return;
+        const desc = prompt('简要说明 (可选):', '') || '';
+        const res = await pywebview.api.vault_add_project(name, path, desc);
+        if (res.success) {
+            await this.loadProjects(true); // 强制刷新
+            this.selectProject(res.project_id);
+        } else {
+            alert('添加失败: ' + res.error);
+        }
+    },
+
+    async removeProject(projectId) {
+        if (!confirm('确定要移除项目吗？仅移除引用，不影响快照数据。')) return;
+        const r = await pywebview.api.vault_delete_project(projectId);
+        if (r.success) {
+            this.currentProject = null;
+            this.resetProjectState();
+        }
+        await this.loadProjects(true);
+    },
+
+    resetProjectState() {
+        this.snapshots = [];
+        this.snapshotDialogMode = 'create';
+        this.editingSnapshotId = null;
+        document.getElementById('vault-title').textContent = '选择项目';
+        document.getElementById('vault-project-path').textContent = '--';
+        document.getElementById('vault-desc-item').style.display = 'none';
+        document.getElementById('vault-status-badge').textContent = '未选择项目';
+        document.getElementById('vault-base-info').textContent = '--';
+        document.getElementById('vault-open-btn').style.display = 'none';
+        document.getElementById('vault-history-list').innerHTML = '<div class="empty-hint">选择项目查看历史</div>';
+        document.getElementById('vault-history-filter').value = '';
+        document.getElementById('vault-history-artifacts-only').checked = false;
+        document.getElementById('vault-empty-area').style.display = '';
+        
+        // 禁用需要项目的按钮
+        document.querySelectorAll('.git-actions button').forEach(btn => {
+            if (btn.onclick?.toString().includes('editExcludes') || btn.onclick?.toString().includes('previewScan')) {
+                btn.disabled = false; // 排除规则和预览始终可用
+            } else {
+                btn.disabled = true; // 其他按钮需要选择项目
+            }
+        });
+    },
+
+    async selectProject(projectId) {
+        console.log(`[Vault] selectProject(${projectId}), cache:`, !!this._statusCache[projectId]);
+        // 使用缓存的项目数据，避免重复API调用和扫描
+        if (!this.currentProject || this.currentProject.id !== projectId) {
+            if (!this._projectsCache) {
+                await this._loadProjectsList();
+            }
+            this.currentProject = this._projectsCache.find(p => p.id === projectId);
+        }
+        if (!this.currentProject) return;
+
+        document.getElementById('vault-title').textContent = this.currentProject.name;
+        document.getElementById('vault-project-path').textContent = this.currentProject.path;
+        const descEl = document.getElementById('vault-project-desc');
+        const descItem = document.getElementById('vault-desc-item');
+        if (this.currentProject.description) {
+            descEl.textContent = this.currentProject.description;
+            descItem.style.display = '';
+        } else {
+            descItem.style.display = 'none';
+        }
+        document.getElementById('vault-open-btn').style.display = '';
+        document.getElementById('vault-empty-area').style.display = 'none';
+
+        // 启用操作按钮
+        document.querySelectorAll('.git-actions button').forEach(btn => {
+            btn.disabled = false;
+        });
+
+        // 高亮
+        document.querySelectorAll('#vault-project-list .project-card').forEach(el => el.classList.remove('active'));
+        document.querySelector(`#vault-project-list .project-card[onclick*="${projectId}"]`)?.classList.add('active');
+
+        await this.loadSnapshots();
+
+        // 优化：有缓存且未过期 → 先显示缓存，后台静默刷新
+        const cached = this._statusCache[projectId];
+        const cacheAge = cached ? Date.now() - cached.timestamp : 'none';
+        console.log(`[Vault] cache check: age=${cacheAge}, ttl=${this._statusCacheTTL}, hit=${cached && cacheAge < this._statusCacheTTL}`);
+        if (cached && (Date.now() - cached.timestamp < this._statusCacheTTL)) {
+            this._renderStatus(cached.data);
+            this._bgRefreshStatus();  // 后台不阻塞
+        } else {
+            await this.refreshStatus();
+        }
+    },
+
+    openProjectDir() {
+        if (this.currentProject) pywebview.api.vault_open_folder(this.currentProject.path);
+    },
+
+    // ========== 变更检测 ==========
+    async refreshStatus() {
+        if (!this.currentProject) return;
+        console.log(`[Vault] refreshStatus() called for ${this.currentProject.id}, will scan`);
+        // 清除缓存，强制重新扫描
+        delete this._statusCache[this.currentProject.id];
+        const badge = document.getElementById('vault-status-badge');
+
+        badge.textContent = '⏳ 检测中...';
+        badge.className = 'status-badge';
+
+        // 接收后端扫描进度推送
+        window.onVaultProgress = (data) => {
+            if (data.stage === 'scanning') {
+                badge.textContent = `🔍 ${data.message}`;
+            } else if (data.stage === 'scan_complete') {
+                badge.textContent = '⏳ 对比变更...';
+            }
+        };
+
+        const r = await pywebview.api.vault_get_changed_files(this.currentProject.id);
+        if (!r.success) {
+            badge.textContent = '⚠️ 错误';
+            badge.className = 'status-badge dirty';
+            return;
+        }
+
+        // 缓存结果
+        this._statusCache[this.currentProject.id] = { data: r, timestamp: Date.now() };
+        this._renderStatus(r);
+    },
+
+    // 后台静默刷新（不显示"检测中"，不阻塞UI）
+    _bgRefreshStatus() {
+        if (!this.currentProject) return;
+        const pid = this.currentProject.id;
+        // 冷却期内不重复后台刷新
+        const cached = this._statusCache[pid];
+        if (cached && (Date.now() - cached.timestamp < this._bgRefreshCooldown)) return;
+
+        pywebview.api.vault_get_changed_files(pid).then(r => {
+            if (!r.success) return;
+            this._statusCache[pid] = { data: r, timestamp: Date.now() };
+            // 只有当前仍在同一项目时才更新UI
+            if (this.currentProject && this.currentProject.id === pid) {
+                this._renderStatus(r);
+            }
+        }).catch(() => {});
+    },
+
+    // 渲染变更状态（纯UI，不发请求）
+    _renderStatus(r) {
+        const badge = document.getElementById('vault-status-badge');
+        const baseInfo = document.getElementById('vault-base-info');
+        const changesList = document.getElementById('vault-changes-list');
+        const countBadge = document.getElementById('vault-changes-count');
+
+        if (!r.base_snapshot) {
+            badge.textContent = '📌 无基准';
+            badge.className = 'status-badge dirty';
+            baseInfo.textContent = '请先保存第一个快照';
+            changesList.innerHTML = '<div class="empty-hint">保存第一个快照后自动检测变更</div>';
+            countBadge.textContent = '0';
+            return;
+        }
+
+        // 用项目内序号代替全局ID
+        const snapCount = this.snapshots.length;
+        const baseIdx = this.snapshots.findIndex(s => s.id === r.base_snapshot);
+        const baseSeq = baseIdx >= 0 ? (snapCount - baseIdx) : r.base_snapshot;
+        baseInfo.textContent = `#${baseSeq} ${r.base_tag || ''}`;
+
+        const total = r.added.length + r.deleted.length + r.modified.length;
+        countBadge.textContent = total;
+
+        if (total === 0) {
+            badge.textContent = '✓ 干净';
+            badge.className = 'status-badge clean';
+            changesList.innerHTML = '<div class="empty-hint">无变更</div>';
+        } else {
+            badge.textContent = `● ${total} 变更`;
+            badge.className = 'status-badge dirty';
+
+            let html = '';
+            r.modified.forEach(f => {
+                const p = f.path.replace(/\\/g,'/').replace(/'/g,"\\'");
+                const fname = f.path.replace(/\\/g,'/').split('/').pop();
+                html += `<div class="vault-change-item" onclick="VaultPage.viewWorkingDiff('${p}','M')" title="${f.path}">
+                    <span class="vtype M">M</span>
+                    <span class="vfile">${fname}</span>
+                    <span class="vsize">${this._fmtSize(f.size)}</span>
+                </div>`;
+            });
+            r.added.forEach(f => {
+                const p = f.path.replace(/\\/g,'/').replace(/'/g,"\\'");
+                const fname = f.path.replace(/\\/g,'/').split('/').pop();
+                html += `<div class="vault-change-item" onclick="VaultPage.viewWorkingDiff('${p}','A')" title="${f.path}">
+                    <span class="vtype A">A</span>
+                    <span class="vfile">${fname}</span>
+                    <span class="vsize">${this._fmtSize(f.size)}</span>
+                </div>`;
+            });
+            r.deleted.forEach(f => {
+                const p = f.path.replace(/\\/g,'/').replace(/'/g,"\\'");
+                const fname = f.path.replace(/\\/g,'/').split('/').pop();
+                html += `<div class="vault-change-item" onclick="VaultPage.viewWorkingDiff('${p}','D')" title="${f.path}">
+                    <span class="vtype D">D</span>
+                    <span class="vfile">${fname}</span>
+                    <span class="vsize">${this._fmtSize(f.size)}</span>
+                </div>`;
+            });
+            changesList.innerHTML = html;
+        }
+    },
+
+    toggleFilter(btn, ext) {
+        const allBtn = document.querySelector('#vault-filter-bar .vf-chip');
+        const chips = document.querySelectorAll('#vault-filter-bar .vf-chip:not(:first-child)');
+
+        if (ext === 'all') {
+            // 全部按钮：切换全选/全不选
+            const allActive = btn.classList.contains('active');
+            if (allActive) {
+                // 取消全选
+                btn.classList.remove('active');
+                chips.forEach(c => c.classList.remove('active'));
+            } else {
+                // 全选
+                btn.classList.add('active');
+                chips.forEach(c => c.classList.add('active'));
+            }
+        } else {
+            // 单个扩展名按钮
+            btn.classList.toggle('active');
+            // 检查是否全选
+            const activeCount = document.querySelectorAll('#vault-filter-bar .vf-chip.active:not(:first-child)').length;
+            if (activeCount === chips.length) {
+                allBtn.classList.add('active');
+            } else {
+                allBtn.classList.remove('active');
+            }
+        }
+        this.filterChanges();
+    },
+
+    filterChanges() {
+        const items = document.querySelectorAll('#vault-changes-list .vault-change-item');
+        const keyword = (document.getElementById('vault-changes-filter')?.value || '').trim().toLowerCase();
+        const allBtn = document.querySelector('#vault-filter-bar .vf-chip');
+        const showAll = allBtn && allBtn.classList.contains('active');
+
+        // 收集激活的扩展名
+        const activeExts = [];
+        document.querySelectorAll('#vault-filter-bar .vf-chip.active:not(:first-child)').forEach(c => {
+            activeExts.push(c.textContent.trim().toLowerCase());
+        });
+
+        let visible = 0;
+        items.forEach(el => {
+            const fname = (el.querySelector('.vfile')?.textContent || '').toLowerCase();
+            const fullPath = (el.getAttribute('title') || '').toLowerCase();
+
+            // 扩展名过滤：全部=显示所有，否则只显示选中的扩展名
+            let extMatch = showAll;
+            if (!showAll) {
+                if (activeExts.length === 0) {
+                    extMatch = false; // 没选任何类型，全部隐藏
+                } else {
+                    extMatch = activeExts.some(ext => fname.endsWith(ext) || fullPath.endsWith(ext));
+                }
+            }
+
+            // 关键字过滤
+            let kwMatch = true;
+            if (keyword) {
+                kwMatch = fname.includes(keyword) || fullPath.includes(keyword);
+            }
+
+            const show = extMatch && kwMatch;
+            el.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        document.getElementById('vault-changes-count').textContent = items.length > 0 ? `${visible}/${items.length}` : '0';
+    },
+
+    // ========== 快照 ==========
+    createSnapshot() {
+        if (!this.currentProject) return;
+        this.snapshotDialogMode = 'create';
+        this.editingSnapshotId = null;
+        document.getElementById('vault-snapshot-modal-title').textContent = '📸 保存快照';
+        document.getElementById('vault-snapshot-confirm').textContent = '保存快照';
+        document.getElementById('vault-tag').value = '';
+        document.getElementById('vault-note').value = '';
+        document.getElementById('vault-snapshot-modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('vault-tag')?.focus(), 0);
+    },
+
+    editSnapshot(snapId) {
+        const snap = this.snapshots.find(s => s.id === snapId);
+        if (!snap) return;
+        this.snapshotDialogMode = 'edit';
+        this.editingSnapshotId = snapId;
+        document.getElementById('vault-snapshot-modal-title').textContent = `✏️ 编辑快照 #${snapId}`;
+        document.getElementById('vault-snapshot-confirm').textContent = '保存修改';
+        document.getElementById('vault-tag').value = snap.tag || '';
+        document.getElementById('vault-note').value = snap.note || '';
+        document.getElementById('vault-snapshot-modal').style.display = 'flex';
+        setTimeout(() => {
+            const input = document.getElementById('vault-tag');
+            input?.focus();
+            input?.select();
+        }, 0);
+    },
+
+    async submitSnapshotDialog() {
+        if (this.snapshotDialogMode === 'edit') {
+            return this.saveSnapshotMeta();
+        }
+        return this.doSnapshot();
+    },
+
+    async saveSnapshotMeta() {
+        const snapId = this.editingSnapshotId;
+        if (!snapId) return;
+
+        const tag = document.getElementById('vault-tag').value.trim();
+        const note = document.getElementById('vault-note').value.trim();
+        if (!tag) { alert('请输入标签'); return; }
+
+        const r = await pywebview.api.vault_update_snapshot(snapId, tag, note);
+        if (!r.success) {
+            alert('保存失败: ' + r.error);
+            return;
+        }
+
+        document.getElementById('vault-snapshot-modal').style.display = 'none';
+        await this.loadSnapshots();
+    },
+
+    async doSnapshot() {
+        const tag = document.getElementById('vault-tag').value.trim();
+        const note = document.getElementById('vault-note').value.trim();
+        if (!tag) { alert('请输入标签'); return; }
+
+        document.getElementById('vault-snapshot-modal').style.display = 'none';
+        this._showProgress('⏳ 正在创建快照...', '扫描文件中...');
+        window.onVaultProgress = (data) => {
+            this._updateProgress(this._calcSnapshotProgress(data), data.message || '处理中...');
+        };
+
+        try {
+            const r = await pywebview.api.vault_create_snapshot(this.currentProject.id, tag, note);
+            if (r.success) {
+                this._updateProgress(100, '完成!');
+                setTimeout(() => this._hideProgress(), 400);
+                await this.loadSnapshots();
+                await this.refreshStatus();
+                const artifactInfo = (r.artifacts && r.artifacts.length)
+                    ? `<div style="font-size:12px; color:var(--text-muted); margin-top:6px;">识别到 ${r.artifacts.length} 个HEX/AXF产物</div>`
+                    : '';
+                // 简洁提示
+                this._showModal('快照创建成功', `
+                    <div style="text-align:center; padding:12px;">
+                        <div style="font-size:28px; margin-bottom:8px;">✅</div>
+                        <div style="font-size:14px; margin-bottom:12px;"><b>${r.file_count}</b> 文件, ${this._fmtSize(r.total_size)}</div>
+                        <div style="font-size:12px; color:var(--text-muted);">新增存储 ${this._fmtSize(r.stored_size)}, 耗时 ${r.elapsed}s</div>
+                        ${artifactInfo}
+                    </div>`);
+            } else {
+                this._hideProgress();
+                alert('快照失败: ' + r.error);
+            }
+        } catch (err) {
+            this._hideProgress();
+            alert('快照失败: ' + (err?.message || err));
+        } finally {
+            window.onVaultProgress = null;
+        }
+    },
+
+    _showProgress(title, text) {
+        document.getElementById('vault-progress-title').textContent = title;
+        document.getElementById('vault-progress-text').textContent = text;
+        document.getElementById('vault-progress-bar').style.width = '0%';
+        document.getElementById('vault-progress-overlay').style.display = 'flex';
+    },
+    _updateProgress(pct, text) {
+        document.getElementById('vault-progress-bar').style.width = pct + '%';
+        if (text) document.getElementById('vault-progress-text').textContent = text;
+    },
+    _hideProgress() {
+        document.getElementById('vault-progress-overlay').style.display = 'none';
+    },
+
+    _calcSnapshotProgress(data) {
+        const stage = data?.stage || '';
+        const current = Number(data?.current || 0);
+        const total = Number(data?.total || 0);
+        const ratio = total > 0 ? Math.max(0, Math.min(current / total, 1)) : 0;
+
+        if (stage === 'scanning' && total <= 0) {
+            return Math.min(30, 5 + Math.log10(current + 1) * 10);
+        }
+
+        const ranges = {
+            scan_start: [2, 5],
+            scanning: [5, 30],
+            scan_complete: [30, 34],
+            hashing: [34, 72],
+            storing: [72, 88],
+            writing: [88, 94],
+            artifacts: [94, 99],
+            done: [100, 100],
+        };
+        const [start, end] = ranges[stage] || [10, 90];
+        if (start === end) return start;
+        return start + (end - start) * ratio;
+    },
+
+    // ========== 版本历史 ==========
+    async loadSnapshots() {
+        if (!this.currentProject) return;
+        const r = await pywebview.api.vault_get_snapshots(this.currentProject.id);
+
+        if (!r.success || !r.snapshots.length) {
+            this.snapshots = [];
+            this.filterSnapshots();
+            return;
+        }
+
+        this.snapshots = r.snapshots;
+        this.filterSnapshots();
+    },
+
+    filterSnapshots() {
+        const el = document.getElementById('vault-history-list');
+        const keyword = (document.getElementById('vault-history-filter')?.value || '').trim().toLowerCase();
+        const artifactsOnly = !!document.getElementById('vault-history-artifacts-only')?.checked;
+
+        if (!this.snapshots.length) {
+            el.innerHTML = '<div class="empty-hint">暂无快照</div>';
+            return;
+        }
+
+        const seqMap = new Map(this.snapshots.map((snap, idx) => [snap.id, this.snapshots.length - idx]));
+        const list = this.snapshots.filter((snap) => {
+            if (artifactsOnly && !(snap.artifacts && snap.artifacts.length)) {
+                return false;
+            }
+            if (!keyword) {
+                return true;
+            }
+            const parts = [snap.tag, snap.note, snap.created_at];
+            (snap.artifacts || []).forEach((a) => {
+                parts.push(a.crc32, a.file_path, a.fw_version, a.fw_model, a.file_type);
+            });
+            return parts.filter(Boolean).join('\n').toLowerCase().includes(keyword);
+        });
+
+        if (!list.length) {
+            el.innerHTML = '<div class="empty-hint">没有匹配的快照</div>';
+            return;
+        }
+
+        el.innerHTML = list.map((s, idx) => {
+            const seq = seqMap.get(s.id) || (list.length - idx);
+            const date = s.created_at.replace('T', ' ').substring(0, 16);
+            const currentCls = this.snapshots[0]?.id === s.id ? 'current' : '';
+            const currentBadge = this.snapshots[0]?.id === s.id ? '<span class="snap-tag" style="background:#00d4ff;">当前</span>' : '';
+            const tagHtml = s.tag ? `<span class="snap-tag">${s.tag}</span>` : '';
+            const noteHtml = s.note ? `<div class="snap-msg">${s.note}</div>` : '';
+            const artifactsHtml = this._renderArtifactSummary(s.artifacts || []);
+
+            return `<div class="vault-snap-card ${currentCls}" id="vault-snap-${s.id}">
+                <div class="header">
+                    <span class="snap-id">#${seq}</span>
+                    <span class="snap-date">${date}</span>
+                    ${currentBadge}
+                    ${tagHtml}
+                </div>
+                <div class="snap-meta">${s.file_count} 文件 · ${this._fmtSize(s.total_size)} · +${this._fmtSize(s.stored_size)}</div>
+                ${noteHtml}
+                <div class="snap-crc" id="snap-crc-${s.id}">${artifactsHtml}</div>
+                <div class="snap-actions">
+                    <button onclick="VaultPage.rollbackTo(${s.id})">⏪ 回退</button>
+                    <button onclick="VaultPage.editSnapshot(${s.id})">✏️ 编辑</button>
+                    <button onclick="VaultPage.viewFiles(${s.id})">📄 文件</button>
+                    <button onclick="VaultPage.startCompare(${s.id})">🔀 对比</button>
+                    <button onclick="VaultPage.restoreSnapshot(${s.id})">📂 导出</button>
+                    <button onclick="VaultPage.deleteSnapshot(${s.id})" style="color:#ef4444;">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    },
+
+    // ========== 回退 ==========
+    async rollbackTo(snapId) {
+        const snap = this.snapshots.find(s => s.id === snapId);
+        const label = snap ? `#${snap.id} ${snap.tag || ''}` : `#${snapId}`;
+
+        if (!confirm(`⏪ 回退到快照 ${label}\n\n` +
+            `项目目录将恢复到该快照状态：\n` +
+            `• 修改过的文件 → 还原\n` +
+            `• 新增的文件 → 删除\n` +
+            `• 缺失的文件 → 恢复\n\n` +
+            `回退前会自动保存当前状态\n确定？`)) return;
+
+        const r = await pywebview.api.vault_rollback(this.currentProject.id, snapId);
+        if (r.success) {
+            let msg = `✅ 回退完成\n恢复/覆盖: ${r.restored} 文件\n删除: ${r.deleted} 文件`;
+            if (r.backup_id) msg += `\n\n回退前已自动备份为 #${r.backup_id}`;
+            if (r.errors?.length) msg += `\n\n${r.errors.length} 个错误:\n` + r.errors.slice(0,3).join('\n');
+            alert(msg);
+            await this.loadSnapshots();
+            await this.refreshStatus();
+        } else {
+            alert('回退失败: ' + r.error);
+        }
+    },
+
+    // ========== 导出到其他目录 ==========
+    async restoreSnapshot(snapId) {
+        if (!confirm('导出该快照到其他目录？')) return;
+        const br = await pywebview.api.vault_restore_browse();
+        if (!br.success) return;
+        const r = await pywebview.api.vault_restore_snapshot(snapId, br.path);
+        if (r.success) {
+            alert(`导出完成: ${r.restored}/${r.total} 文件\n目录: ${br.path}`);
+        } else {
+            alert('导出失败: ' + r.error);
+        }
+    },
+
+    // ========== 文件列表 ==========
+    async viewFiles(snapId) {
+        const r = await pywebview.api.vault_get_snapshot_files(snapId);
+        if (!r.success) return;
+
+        const dirs = {};
+        r.files.forEach(f => {
+            const parts = f.path.replace(/\\/g, '/').split('/');
+            const dir = parts.length > 1 ? parts.slice(0, -1).join('/') : '(根目录)';
+            if (!dirs[dir]) dirs[dir] = [];
+            dirs[dir].push(f);
+        });
+
+        let html = `<div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">${r.files.length} 文件, ${this._fmtSize(r.files.reduce((s,f)=>s+f.size, 0))}</div>`;
+        for (const [dir, files] of Object.entries(dirs).sort()) {
+            html += `<div style="margin-top:6px;"><div style="font-weight:600; font-size:12px; color:var(--text-muted); padding:2px 0;">📁 ${dir} (${files.length})</div>`;
+            files.forEach(f => {
+                const name = f.path.replace(/\\/g, '/').split('/').pop();
+                html += `<div style="padding:2px 8px 2px 16px; font-size:12px; font-family:monospace; display:flex; gap:8px;">
+                    <span style="flex:1;">${name}</span>
+                    <span style="color:var(--text-muted);">${this._fmtSize(f.size)}</span>
+                </div>`;
+            });
+            html += '</div>';
+        }
+
+        this._showModal(`#${snapId} 文件列表`, html);
+    },
+
+    // ========== 对比 ==========
+    startCompare(snapId) {
+        if (!this.compareA) {
+            this.compareA = snapId;
+            alert(`已选 #${snapId} 为基准，现在点另一个快照的"对比"`);
+            return;
+        }
+        const idA = this.compareA;
+        this.compareA = null;
+        this.doCompare(idA, snapId);
+    },
+
+    async doCompare(idA, idB) {
+        const r = await pywebview.api.vault_compare_snapshots(idA, idB);
+        if (!r.success) return;
+
+        let html = `<div class="v-stats-grid">
+            <div class="v-stats-card"><div class="val" style="color:#4ade80;">+${r.added.length}</div><div class="lbl">新增</div></div>
+            <div class="v-stats-card"><div class="val" style="color:#f87171;">-${r.deleted.length}</div><div class="lbl">删除</div></div>
+            <div class="v-stats-card"><div class="val" style="color:#fbbf24;">~${r.modified.length}</div><div class="lbl">修改</div></div>
+            <div class="v-stats-card"><div class="val">${r.unchanged}</div><div class="lbl">未变</div></div>
+        </div>`;
+
+        if (r.modified.length) {
+            html += '<div style="font-weight:600; margin:8px 0 4px;">修改的文件</div>';
+            r.modified.forEach(f => {
+                html += `<div class="vault-change-item" onclick="VaultPage.viewDiff(${idA},${idB},'${f.path.replace(/\\/g,'/')}')">
+                    <span class="vtype M">M</span><span class="vfile">${f.path}</span>
+                    <span class="vsize">${this._fmtSize(f.size_a)} → ${this._fmtSize(f.size_b)}</span>
+                </div>`;
+            });
+        }
+        if (r.added.length) {
+            html += '<div style="font-weight:600; margin:8px 0 4px;">新增的文件</div>';
+            r.added.forEach(f => {
+                html += `<div class="vault-change-item"><span class="vtype A">A</span><span class="vfile">${f.path}</span><span class="vsize">${this._fmtSize(f.size)}</span></div>`;
+            });
+        }
+        if (r.deleted.length) {
+            html += '<div style="font-weight:600; margin:8px 0 4px;">删除的文件</div>';
+            r.deleted.forEach(f => {
+                html += `<div class="vault-change-item"><span class="vtype D">D</span><span class="vfile">${f.path}</span><span class="vsize">${this._fmtSize(f.size)}</span></div>`;
+            });
+        }
+
+        this._showModal(`对比: #${idA} ↔ #${idB}`, html);
+    },
+
+    async viewDiff(idA, idB, filePath) {
+        const r = await pywebview.api.vault_diff_file(idA, idB, filePath);
+        if (!r.success) { alert(r.error); return; }
+
+        const diffHtml = r.diff ? r.diff.split('\n').map(line => {
+            let cls = '';
+            if (line.startsWith('+') && !line.startsWith('+++')) cls = 'add';
+            else if (line.startsWith('-') && !line.startsWith('---')) cls = 'del';
+            else if (line.startsWith('@@')) cls = 'info';
+            return `<div class="v-diff-line ${cls}">${this._esc(line)}</div>`;
+        }).join('') : '<div class="empty-hint">无文本差异（可能是二进制文件）</div>';
+
+        this._showModal(filePath, diffHtml);
+    },
+
+    // ========== 删除快照 ==========
+    async deleteSnapshot(snapId) {
+        if (!confirm(`删除快照 #${snapId}？`)) return;
+        await pywebview.api.vault_delete_snapshot(snapId);
+        await this.loadSnapshots();
+    },
+
+    // ========== 排除规则 ==========
+    async editExcludes() {
+        if (!this.currentProject) return;
+        const r = await pywebview.api.vault_get_excludes(this.currentProject.id);
+        if (!r.success) return;
+        const text = prompt('排除规则（每行一条，支持通配符）:', r.patterns.join('\n'));
+        if (text === null) return;
+        const patterns = text.split('\n').map(s => s.trim()).filter(s => s);
+        await pywebview.api.vault_set_excludes(this.currentProject.id, patterns);
+        alert('排除规则已更新');
+    },
+
+    // ========== 预览 ==========
+    async previewScan() {
+        if (!this.currentProject) return;
+        const r = await pywebview.api.vault_preview_scan(this.currentProject.id);
+        if (!r.success) { alert(r.error); return; }
+
+        let html = `<div class="v-stats-grid">
+            <div class="v-stats-card"><div class="val">${r.file_count}</div><div class="lbl">文件数</div></div>
+            <div class="v-stats-card"><div class="val">${this._fmtSize(r.total_size)}</div><div class="lbl">总大小</div></div>
+        </div>
+        <table style="width:100%; font-size:12px; border-collapse:collapse;">
+            <tr style="text-align:left; color:var(--text-muted);"><th style="padding:4px;">扩展名</th><th>数量</th><th>大小</th></tr>`;
+        r.ext_stats.forEach(e => {
+            html += `<tr><td style="padding:2px 4px; font-family:monospace;">${e.ext}</td><td>${e.count}</td><td>${this._fmtSize(e.size)}</td></tr>`;
+        });
+        html += '</table>';
+        this._showModal('扫描预览', html);
+    },
+
+    // ========== 存储统计 ==========
+    async showStats() {
+        const r = await pywebview.api.vault_get_storage_stats();
+        if (!r.success) return;
+        let html = `<div class="v-stats-grid">
+            <div class="v-stats-card"><div class="val">${r.project_count}</div><div class="lbl">项目</div></div>
+            <div class="v-stats-card"><div class="val">${r.snapshot_count}</div><div class="lbl">快照</div></div>
+            <div class="v-stats-card"><div class="val">${r.pool_objects}</div><div class="lbl">对象</div></div>
+            <div class="v-stats-card"><div class="val">${this._fmtSize(r.pool_size)}</div><div class="lbl">对象池</div></div>
+            <div class="v-stats-card"><div class="val">${this._fmtSize(r.db_size)}</div><div class="lbl">数据库</div></div>
+            <div class="v-stats-card"><div class="val">${r.file_entry_count}</div><div class="lbl">文件条目</div></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="git-btn" onclick="VaultPage.runGC()">🗑️ 垃圾回收</button>
+            <button class="git-btn" onclick="VaultPage.rescanArtifacts()">� 重扫CRC</button>
+        </div>`;
+        this._showModal('存储统计', html);
+    },
+
+    async runGC() {
+        const r = await pywebview.api.vault_gc();
+        if (r.success) alert(`清理: 删除 ${r.removed} 对象, 释放 ${this._fmtSize(r.freed)}`);
+    },
+
+    async rescanArtifacts() {
+        if (!confirm('重新扫描所有快照的hex/axf产物CRC？\n（修复旧数据中错误的CRC值）')) return;
+        this._showProgress('🔄 重新扫描CRC...', '从存储对象中解析固件metadata...');
+        const r = await pywebview.api.vault_rescan_artifacts();
+        this._hideProgress();
+        if (r.success) {
+            alert(`扫描完成!\n${r.snapshots_scanned} 个快照已检查\n${r.artifacts_updated} 个产物CRC已更新`);
+            this.closeModal();
+            if (this.currentProject) await this.loadSnapshots();
+        } else {
+            alert('扫描失败: ' + r.error);
+        }
+    },
+
+    // ========== 工具 ==========
+    _showModal(title, html) {
+        document.getElementById('vault-modal-title').textContent = title;
+        document.getElementById('vault-modal-body').innerHTML = html;
+        document.getElementById('vault-modal').style.display = 'flex';
+    },
+    closeModal() {
+        document.getElementById('vault-modal').style.display = 'none';
+    },
+    _fmtSize(b) {
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+        if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+        return (b / 1073741824).toFixed(2) + ' GB';
+    },
+    // ========== 工作区文件变更查看 ==========
+    async viewWorkingDiff(filePath, changeType) {
+        if (!this.currentProject) return;
+        const r = await pywebview.api.vault_diff_working_file(this.currentProject.id, filePath, changeType);
+        if (!r.success) { alert(r.error); return; }
+
+        let html = '';
+        if (r.type === 'new') {
+            html = `<div style="font-size:12px; color:#4ade80; margin-bottom:6px;">新增文件 · ${r.lines} 行${r.truncated ? ' (仅显示前100行)' : ''}</div>`;
+            html += `<div style="max-height:400px; overflow:auto; background:rgba(0,0,0,0.3); border-radius:6px; padding:8px;">`;
+            html += r.content.split('\n').map(line =>
+                `<div class="v-diff-line add">+${this._esc(line)}</div>`
+            ).join('');
+            html += '</div>';
+        } else if (r.type === 'deleted') {
+            html = `<div style="font-size:12px; color:#f87171; margin-bottom:6px;">已删除文件 · ${r.lines} 行${r.truncated ? ' (仅显示前100行)' : ''}</div>`;
+            html += `<div style="max-height:400px; overflow:auto; background:rgba(0,0,0,0.3); border-radius:6px; padding:8px;">`;
+            html += r.content.split('\n').map(line =>
+                `<div class="v-diff-line del">-${this._esc(line)}</div>`
+            ).join('');
+            html += '</div>';
+        } else {
+            if (!r.diff) {
+                html = '<div class="empty-hint">二进制文件，无文本差异</div>';
+            } else {
+                html = `<div style="max-height:400px; overflow:auto; background:rgba(0,0,0,0.3); border-radius:6px; padding:8px;">`;
+                html += r.diff.split('\n').map(line => {
+                    let cls = '';
+                    if (line.startsWith('+') && !line.startsWith('+++')) cls = 'add';
+                    else if (line.startsWith('-') && !line.startsWith('---')) cls = 'del';
+                    else if (line.startsWith('@@')) cls = 'info';
+                    return `<div class="v-diff-line ${cls}">${this._esc(line)}</div>`;
+                }).join('');
+                html += '</div>';
+            }
+        }
+        this._showModal(filePath.replace(/\\/g,'/').split('/').pop(), html);
+    },
+
+    // ========== CRC ==========
+    async loadSnapCRC(snapId) {
+        const r = await pywebview.api.vault_get_artifacts(snapId);
+        const el = document.getElementById(`snap-crc-${snapId}`);
+        if (!el || !r.success || !r.artifacts.length) return;
+        el.innerHTML = this._renderArtifactSummary(r.artifacts);
+    },
+
+    showArtifactDetail(a) {
+        const name = a.file_path.replace(/\\/g,'/').split('/').pop();
+        let html = `<div style="padding:4px 0;">
+            <table style="width:100%; font-size:13px; border-collapse:collapse;">
+                <tr><td style="padding:6px 8px; color:var(--text-muted); width:80px;">文件</td><td style="padding:6px; font-family:monospace;">${a.file_path}</td></tr>
+                <tr><td style="padding:6px 8px; color:var(--text-muted);">类型</td><td style="padding:6px;">${a.file_type.toUpperCase()}</td></tr>
+                <tr><td style="padding:6px 8px; color:var(--text-muted);">大小</td><td style="padding:6px;">${this._fmtSize(a.file_size)}</td></tr>
+                <tr><td style="padding:6px 8px; color:var(--text-muted);">CRC32</td><td style="padding:6px; font-family:monospace; color:#00d4ff; font-weight:bold;">${a.crc32}</td></tr>
+                ${a.fw_version ? `<tr><td style="padding:6px 8px; color:var(--text-muted);">固件版本</td><td style="padding:6px; font-weight:600;">${a.fw_version}</td></tr>` : ''}
+                ${a.fw_model ? `<tr><td style="padding:6px 8px; color:var(--text-muted);">型号</td><td style="padding:6px;">${a.fw_model}</td></tr>` : ''}
+            </table>
+            <div style="margin-top:12px; display:flex; gap:8px;">
+                <button class="git-btn" onclick="navigator.clipboard.writeText('${a.crc32}'); this.textContent='✓ 已复制'; setTimeout(()=>this.textContent='📋 复制CRC', 1500)">📋 复制CRC</button>
+                <button class="git-btn" onclick="VaultPage.closeModal(); App.vaultLookupCRC('${a.crc32}')">🔍 全局查找此CRC</button>
+            </div>
+        </div>`;
+        this._showModal(`固件详情: ${name}`, html);
+    },
+
+    _renderArtifactSummary(artifacts) {
+        if (!artifacts || !artifacts.length) return '';
+        return artifacts.map(a => {
+            const name = a.file_path.replace(/\\/g,'/').split('/').pop();
+            const meta = [a.file_type ? a.file_type.toUpperCase() : '', a.fw_model, a.fw_version].filter(Boolean).join(' · ');
+            const payload = JSON.stringify(a).replace(/"/g,'&quot;');
+            const title = [a.file_path, a.crc32, meta].filter(Boolean).join(' | ');
+            return `<span class="vault-artifact-chip" title="${this._escAttr(title)}" onclick="event.stopPropagation(); VaultPage.showArtifactDetail(${payload})">
+                <span class="crc">${a.crc32}</span>
+                <span class="meta">${this._esc(name)}${meta ? ` · ${this._esc(meta)}` : ''}</span>
+            </span>`;
+        }).join('');
+    },
+
+    async searchCRC() {
+        const input = document.getElementById('vault-crc-search').value.trim();
+        if (!input) { alert('请输入CRC值'); return; }
+
+        const r = await pywebview.api.vault_lookup_crc(input);
+        if (!r.success) { alert(r.error); return; }
+
+        if (!r.results.length) {
+            alert(`未找到匹配 CRC=${input} 的快照`);
+            return;
+        }
+
+        let html = `<div style="margin-bottom:8px;">CRC <b>${input}</b> 匹配到 ${r.results.length} 条记录:</div>`;
+        r.results.forEach(m => {
+            const date = m.snap_date ? m.snap_date.replace('T', ' ').substring(0, 16) : '';
+            const name = m.file_path.replace(/\\/g,'/').split('/').pop();
+            html += `<div class="vault-change-item" onclick="VaultPage.selectProject('${m.project_id}')" style="cursor:pointer;">
+                <span class="vtype" style="background:#00d4ff; color:#000; font-size:10px;">CRC</span>
+                <div style="flex:1;">
+                    <div style="font-weight:600;">${m.project_name} · #${m.snapshot_id} ${m.tag || ''}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">${name} · ${m.crc32} · ${m.fw_version || ''} ${m.fw_model || ''}</div>
+                    <div style="font-size:10px; color:var(--text-muted);">${date}</div>
+                </div>
+            </div>`;
+        });
+
+        this._showModal(`CRC 查找: ${input}`, html);
+    },
+
+    _esc(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    },
+
+    _escAttr(s) {
+        return this._esc(String(s)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+};
+
+if (window.VaultPage) window.VaultPage.init();
+</script>

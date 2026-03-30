@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIStore v2.0 演示 - 傻瓜式状态管理</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e; color: #eee; padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #00d4ff; margin-bottom: 10px; }
+        .subtitle { color: #888; margin-bottom: 20px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: #16213e; border-radius: 12px; padding: 20px; }
+        .panel h2 { color: #00d4ff; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        .control-group { margin-bottom: 15px; }
+        .control-group label { display: block; color: #888; font-size: 12px; margin-bottom: 5px; }
+        .control-row { display: flex; gap: 10px; align-items: center; }
+        
+        input[type="number"], input[type="text"], select {
+            background: #0f0f23; border: 1px solid #333; color: #fff;
+            padding: 8px 12px; border-radius: 6px; font-size: 14px;
+        }
+        input[type="number"] { width: 100px; }
+        input[type="text"] { flex: 1; }
+        select { min-width: 120px; }
+        
+        button {
+            background: #00d4ff; color: #000; border: none;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer;
+            font-weight: 600; transition: all 0.2s;
+        }
+        button:hover { background: #00a8cc; }
+        button.secondary { background: #333; color: #fff; }
+        button.secondary:hover { background: #444; }
+        
+        .unit-buttons { display: flex; gap: 5px; }
+        .unit-buttons button { padding: 6px 12px; font-size: 12px; }
+        .unit-buttons button.active { background: #00d4ff; }
+        .unit-buttons button:not(.active) { background: #333; color: #888; }
+        
+        .lcd-display {
+            background: #0a3d0a; border-radius: 8px; padding: 20px;
+            font-family: 'Courier New', monospace; min-height: 200px;
+        }
+        .lcd-line {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #0d4d0d;
+        }
+        .lcd-line:last-child { border-bottom: none; }
+        .lcd-label { color: #4a4; font-size: 12px; width: 60px; }
+        .lcd-value { 
+            color: #0f0; font-size: 24px; font-weight: bold; 
+            text-align: right; flex: 1; letter-spacing: 2px;
+        }
+        .lcd-unit { color: #0f0; font-size: 14px; width: 40px; text-align: right; }
+        .lcd-value.empty { color: #060; }
+        
+        .lcd-icons {
+            display: flex; gap: 15px; padding: 10px 0;
+            border-top: 1px solid #0d4d0d; margin-top: 10px;
+        }
+        .lcd-icon { font-size: 12px; color: #060; display: flex; align-items: center; gap: 4px; }
+        .lcd-icon.active { color: #0f0; }
+        .lcd-icon .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        
+        .state-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .state-item {
+            background: #0f0f23; padding: 10px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .state-name { color: #888; font-size: 12px; }
+        .state-value { color: #00d4ff; font-weight: bold; }
+        
+        .action-input { display: flex; gap: 10px; margin-bottom: 10px; }
+        .action-input input { flex: 1; }
+        .action-history {
+            background: #0f0f23; border-radius: 6px; padding: 10px;
+            max-height: 150px; overflow-y: auto; font-size: 12px;
+        }
+        .action-item { padding: 4px 0; border-bottom: 1px solid #222; color: #888; }
+        .action-item:last-child { border-bottom: none; }
+        .action-item .cmd { color: #0f0; }
+        
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .quick-actions button { font-size: 11px; padding: 5px 10px; }
+        
+        .log-panel {
+            background: #0f0f23; border-radius: 6px; padding: 10px;
+            max-height: 200px; overflow-y: auto; font-size: 11px; font-family: monospace;
+        }
+        .log-item { padding: 2px 0; }
+        .log-item.info { color: #888; }
+        .log-item.action { color: #0f0; }
+        .log-item.binding { color: #ff0; }
+        .log-item.hardware { color: #f0f; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 UIStore v2.0 演示</h1>
+        <p class="subtitle">傻瓜式状态管理 - 组件名 = 变量名，无需定义变量和绑定</p>
+        
+        <div class="grid">
+            <div>
+                <div class="panel">
+                    <h2>📊 组件控制 (直接赋值)</h2>
+                    <div class="control-group">
+                        <label>Line4 (主显示行)</label>
+                        <div class="control-row">
+                            <input type="number" id="line4Value" value="12.345" step="0.001">
+                            <button onclick="setLine4()">设置</button>
+                            <button class="secondary" onclick="setLine4Dash()">-----</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Line3</label>
+                        <div class="control-row">
+                            <input type="number" id="line3Value" value="5.678" step="0.001">
+                            <button onclick="setLine3()">设置</button>
+                            <button class="secondary" onclick="setLine3Empty()">清空</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>数据类型</label>
+                        <div class="control-row">
+                            <select id="dataType" onchange="changeDataType()">
+                                <option value="length">长度 (m/ft/in)</option>
+                                <option value="area">面积 (m²/ft²/in²)</option>
+                                <option value="volume">体积 (m³/ft³/in³)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel" style="margin-top: 20px;">
+                    <h2>🌐 全局变量</h2>
+                    <div class="control-group">
+                        <label>单位 (unit)</label>
+                        <div class="unit-buttons">
+                            <button id="unitBtn0" class="active" onclick="setUnit(0)">米 (m)</button>
+                            <button id="unitBtn1" onclick="setUnit(1)">英尺 (ft)</button>
+                            <button id="unitBtn2" onclick="setUnit(2)">英寸 (in)</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>图标控制</label>
+                        <div class="control-row">
+                            <button onclick="toggleLaser()">🔴 激光</button>
+                            <button onclick="toggleBluetooth()">📶 蓝牙</button>
+                            <button onclick="toggleWiFi()">📡 WiFi</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>电量 (Battery)</label>
+                        <div class="control-row">
+                            <button onclick="setBattery(0)">0</button>
+                            <button onclick="setBattery(1)">1</button>
+                            <button onclick="setBattery(2)">2</button>
+                            <button onclick="setBattery(3)">3</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel" style="margin-top: 20px;">
+                    <h2>⚡ 状态机动作 (简化语法)</h2>
+                    <div class="action-input">
+                        <input type="text" id="actionInput" placeholder="Line4 = 12.345" onkeypress="if(event.key==='Enter')executeAction()">
+                        <button onclick="executeAction()">执行</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button onclick="quickAction('Line4 = distance')">Line4 = distance</button>
+                        <button onclick="quickAction('Line4 = \\'-----\\'')">Line4 = '-----'</button>
+                        <button onclick="quickAction('Laser = true')">Laser = true</button>
+                        <button onclick="quickAction('unit = 1')">unit = 1</button>
+                    </div>
+                    <div class="action-history" id="actionHistory"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div class="panel">
+                    <h2>📺 LCD 显示 (自动单位转换)</h2>
+                    <div class="lcd-display">
+                        <div class="lcd-line">
+                            <span class="lcd-label">Line1</span>
+                            <span class="lcd-value empty" id="lcdLine1">-----</span>
+                            <span class="lcd-unit" id="lcdUnit1"></span>
+                        </div>
+                        <div class="lcd-line">
+                            <span class="lcd-label">Line2</span>
+                            <span class="lcd-value empty" id="lcdLine2">-----</span>
+                            <span class="lcd-unit" id="lcdUnit2"></span>
+                        </div>
+                        <div class="lcd-line">
+                            <span class="lcd-label">Line3</span>
+                            <span class="lcd-value empty" id="lcdLine3">-----</span>
+                            <span class="lcd-unit" id="lcdUnit3"></span>
+                        </div>
+                        <div class="lcd-line">
+                            <span class="lcd-label">Line4</span>
+                            <span class="lcd-value" id="lcdLine4">12.345</span>
+                            <span class="lcd-unit" id="lcdUnit4">m</span>
+                        </div>
+                        <div class="lcd-icons">
+                            <span class="lcd-icon" id="iconLaser"><span class="dot"></span> 激光</span>
+                            <span class="lcd-icon" id="iconBluetooth"><span class="dot"></span> 蓝牙</span>
+                            <span class="lcd-icon" id="iconWiFi"><span class="dot"></span> WiFi</span>
+                            <span class="lcd-icon" id="iconBattery"><span class="dot"></span> 电量: <span id="batteryLevel">3</span></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel" style="margin-top: 20px;">
+                    <h2>📋 当前状态</h2>
+                    <div class="state-grid" id="stateGrid"></div>
+                </div>
+                
+                <div class="panel" style="margin-top: 20px;">
+                    <h2>📝 事件日志</h2>
+                    <div class="log-panel" id="logPanel"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/unit_converter.js"></script>
+    <script>
+        let currentUnit = 0;
+        let currentDataType = 'length';
+        let lineValues = { Line1: 0, Line2: 0, Line3: 0, Line4: 12.345 };
+        let icons = { Laser: false, Bluetooth: false, WiFi: false };
+        let batteryLevel = 3;
+        let businessData = { distance: 12.345, length: 5.0, width: 3.0, area_result: 15.0 };
+        
+        window.UIStore = {
+            set(name, value) {
+                log('action', `UIStore.set('${name}', ${JSON.stringify(value)})`);
+                if (name.startsWith('Line')) {
+                    lineValues[name] = value;
+                    updateLineDisplay(name, value);
+                } else if (name === 'Laser' || name === 'Bluetooth' || name === 'WiFi') {
+                    icons[name] = value;
+                    updateIcon(name, value);
+                } else if (name === 'Battery') {
+                    batteryLevel = value;
+                    updateBattery(value);
+                } else if (name === 'unit') {
+                    currentUnit = value;
+                    updateUnitButtons();
+                    updateAllDisplays();
+                    log('binding', '单位切换 → 所有Line重新渲染');
+                } else if (name in businessData) {
+                    businessData[name] = value;
+                }
+                updateStateGrid();
+            },
+            get(name) {
+                if (name.startsWith('Line')) return lineValues[name];
+                if (name === 'unit') return currentUnit;
+                if (name in businessData) return businessData[name];
+                return undefined;
+            },
+            executeAction(action) {
+                log('action', `执行动作: ${action}`);
+                const match = action.match(/^\s*(\w+)\s*=\s*(.+)\s*$/);
+                if (!match) { log('info', '无法解析动作'); return; }
+                const [, name, valueStr] = match;
+                let value;
+                if (valueStr === 'true') value = true;
+                else if (valueStr === 'false') value = false;
+                else if (valueStr.startsWith("'") || valueStr.startsWith('"')) value = valueStr.slice(1, -1);
+                else if (!isNaN(parseFloat(valueStr))) value = parseFloat(valueStr);
+                else if (valueStr in businessData) { value = businessData[valueStr]; log('info', `引用: ${valueStr} = ${value}`); }
+                else value = valueStr;
+                this.set(name, value);
+            }
+        };
+        
+        function updateLineDisplay(lineName, value) {
+            const lineNum = lineName.replace('Line', '');
+            const valueEl = document.getElementById(`lcdLine${lineNum}`);
+            const unitEl = document.getElementById(`lcdUnit${lineNum}`);
+            if (value === 0 || value === null || value === '' || value === '-----') {
+                valueEl.textContent = '-----';
+                valueEl.classList.add('empty');
+                unitEl.textContent = '';
+                return;
+            }
+            if (typeof value === 'number') {
+                const result = UnitConverter.toDisplay(value, currentUnit, currentDataType);
+                valueEl.textContent = result.display;
+                unitEl.textContent = UnitConverter.getSymbol(currentUnit, currentDataType);
+                valueEl.classList.remove('empty');
+            } else {
+                valueEl.textContent = value;
+                valueEl.classList.remove('empty');
+                unitEl.textContent = '';
+            }
+        }
+        
+        function updateAllDisplays() {
+            for (const [name, value] of Object.entries(lineValues)) updateLineDisplay(name, value);
+        }
+        function updateIcon(name, active) {
+            const el = document.getElementById(`icon${name}`);
+            if (el) el.classList.toggle('active', active);
+        }
+        function updateBattery(level) {
+            document.getElementById('batteryLevel').textContent = level;
+            document.getElementById('iconBattery').classList.toggle('active', level > 0);
+        }
+        function updateUnitButtons() {
+            for (let i = 0; i < 3; i++) document.getElementById(`unitBtn${i}`).classList.toggle('active', i === currentUnit);
+        }
+        function updateStateGrid() {
+            const grid = document.getElementById('stateGrid');
+            const states = [
+                { name: 'unit', value: ['m', 'ft', 'in'][currentUnit] },
+                { name: 'dataType', value: currentDataType },
+                { name: 'Battery', value: batteryLevel },
+                { name: 'Laser', value: icons.Laser },
+                { name: 'Line4', value: lineValues.Line4 },
+                { name: 'distance', value: businessData.distance },
+            ];
+            grid.innerHTML = states.map(s => `<div class="state-item"><span class="state-name">${s.name}</span><span class="state-value">${s.value}</span></div>`).join('');
+        }
+        
+        function setLine4() { UIStore.set('Line4', parseFloat(document.getElementById('line4Value').value)); }
+        function setLine4Dash() { UIStore.set('Line4', '-----'); }
+        function setLine3() { UIStore.set('Line3', parseFloat(document.getElementById('line3Value').value)); }
+        function setLine3Empty() { UIStore.set('Line3', 0); }
+        function setUnit(unit) { UIStore.set('unit', unit); }
+        function changeDataType() { currentDataType = document.getElementById('dataType').value; log('info', `数据类型: ${currentDataType}`); updateAllDisplays(); }
+        function toggleLaser() { UIStore.set('Laser', !icons.Laser); if (icons.Laser) log('hardware', '硬件回调: 激光开启'); }
+        function toggleBluetooth() { UIStore.set('Bluetooth', !icons.Bluetooth); }
+        function toggleWiFi() { UIStore.set('WiFi', !icons.WiFi); }
+        function setBattery(level) { UIStore.set('Battery', level); }
+        function executeAction() {
+            const input = document.getElementById('actionInput');
+            if (input.value.trim()) { UIStore.executeAction(input.value.trim()); addActionHistory(input.value.trim()); input.value = ''; }
+        }
+        function quickAction(action) { document.getElementById('actionInput').value = action; executeAction(); }
+        function addActionHistory(action) {
+            const history = document.getElementById('actionHistory');
+            const item = document.createElement('div');
+            item.className = 'action-item';
+            item.innerHTML = `<span class="cmd">${action}</span>`;
+            history.insertBefore(item, history.firstChild);
+            while (history.children.length > 10) history.removeChild(history.lastChild);
+        }
+        function log(type, message) {
+            const panel = document.getElementById('logPanel');
+            const item = document.createElement('div');
+            item.className = `log-item ${type}`;
+            item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            panel.insertBefore(item, panel.firstChild);
+            while (panel.children.length > 50) panel.removeChild(panel.lastChild);
+        }
+        
+        // 初始化
+        log('info', '初始化 UIStore v2.0 演示...');
+        updateAllDisplays();
+        updateStateGrid();
+        log('info', '初始化完成');
+    </script>
+</body>
+</html>

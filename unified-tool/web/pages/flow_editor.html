@@ -1,0 +1,725 @@
+<!-- 流程编辑器页面 -->
+<div class="page-container flow-editor-page">
+    <div class="page-header">
+        <h2>🔀 流程编辑器</h2>
+        <div class="header-actions">
+            <div id="flow-device-selector"></div>
+            <button class="btn btn-primary" onclick="FlowEditor.save()">💾 保存</button>
+        </div>
+    </div>
+    
+    <div class="flow-editor-layout">
+        <!-- 左侧：模式列表 -->
+        <div class="flow-sidebar">
+            <div class="flow-tabs">
+                <button class="flow-tab active" data-tab="modes" onclick="FlowEditor.switchTab('modes')">📐 测量模式</button>
+                <button class="flow-tab" data-tab="actions" onclick="FlowEditor.switchTab('actions')">⚡ 流程动作</button>
+            </div>
+            
+            <div class="flow-list-header">
+                <input type="text" id="flow-search" placeholder="搜索..." oninput="FlowEditor.filterList()">
+                <button class="btn btn-sm" onclick="FlowEditor.addMode()">+ 新建</button>
+            </div>
+            
+            <div class="flow-list" id="flow-list">
+                <!-- 动态渲染 -->
+            </div>
+        </div>
+        
+        <!-- 中间：流程图/编辑区 -->
+        <div class="flow-main">
+            <div class="flow-canvas-container">
+                <div class="flow-canvas-toolbar">
+                    <span id="flow-canvas-title">选择一个模式查看流程</span>
+                    <div class="flow-canvas-actions">
+                        <button class="btn btn-sm" onclick="FlowEditor.zoomIn()" title="放大">🔍+</button>
+                        <button class="btn btn-sm" onclick="FlowEditor.zoomOut()" title="缩小">🔍-</button>
+                        <button class="btn btn-sm" onclick="FlowEditor.fitView()" title="适应">📐</button>
+                    </div>
+                </div>
+                <canvas id="flow-canvas" width="800" height="500"></canvas>
+            </div>
+            
+            <!-- 步骤编辑区 -->
+            <div class="flow-steps-panel" id="flow-steps-panel" style="display:none;">
+                <div class="flow-steps-header">
+                    <h4>📋 步骤配置</h4>
+                    <button class="btn btn-sm" onclick="FlowEditor.addStep()">+ 添加步骤</button>
+                </div>
+                <div class="flow-steps-list" id="flow-steps-list">
+                    <!-- 动态渲染 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧：属性面板 -->
+        <div class="flow-props">
+            <div class="flow-props-header">
+                <span id="flow-props-title">属性</span>
+                <span class="flow-props-badge" id="flow-props-badge"></span>
+            </div>
+            
+            <div class="flow-props-content" id="flow-props-content">
+                <div class="flow-empty-hint">
+                    <div class="icon">📐</div>
+                    <div>选择一个模式或动作</div>
+                    <div class="sub">查看和编辑属性</div>
+                </div>
+            </div>
+            
+            <!-- 预览区 -->
+            <div class="flow-preview" id="flow-preview">
+                <h4>📄 JSON预览</h4>
+                <pre id="flow-json-preview"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.flow-editor-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-primary);
+}
+
+.flow-editor-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.flow-editor-page .page-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.flow-editor-page .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.flow-editor-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 左侧边栏 */
+.flow-sidebar {
+    width: 280px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+}
+
+.flow-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.flow-tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.flow-tab:hover {
+    background: var(--bg-tertiary);
+}
+
+.flow-tab.active {
+    color: var(--accent-color);
+    background: var(--bg-tertiary);
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.flow-list-header {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.flow-list-header input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.flow-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.flow-item {
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.flow-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.flow-item.selected {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--accent-color);
+}
+
+.flow-item .name {
+    font-weight: 500;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flow-item .desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.flow-item .meta {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+}
+
+.flow-item .meta span {
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+}
+
+/* 中间主区域 */
+.flow-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.flow-canvas-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    position: relative;
+}
+
+.flow-canvas-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.flow-canvas-toolbar span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.flow-canvas-actions {
+    display: flex;
+    gap: 4px;
+}
+
+#flow-canvas {
+    flex: 1;
+    width: 100%;
+}
+
+/* 步骤面板 */
+.flow-steps-panel {
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.flow-steps-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--bg-secondary);
+    z-index: 1;
+}
+
+.flow-steps-header h4 {
+    margin: 0;
+    font-size: 12px;
+}
+
+.flow-steps-list {
+    padding: 8px;
+}
+
+.flow-empty-steps {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.flow-empty-steps button {
+    margin-top: 12px;
+}
+
+.flow-step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 4px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.flow-step-item:hover {
+    border-color: var(--accent-color);
+}
+
+.flow-step-item.selected {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.flow-step-item.dragging {
+    opacity: 0.5;
+}
+
+.flow-step-item .step-drag-handle {
+    color: var(--text-muted);
+    cursor: grab;
+    font-size: 10px;
+    padding: 0 4px;
+}
+
+.flow-step-item .step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.flow-step-item.selected .step-num {
+    background: #f59e0b;
+}
+
+.flow-step-item .step-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.flow-step-item .step-name {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.flow-step-item .step-meta {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.flow-step-item .step-meta .tag {
+    font-size: 10px;
+    padding: 1px 5px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    color: var(--text-muted);
+}
+
+.flow-step-item .step-meta .tag.var {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.flow-step-item .step-meta .tag.scroll {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.flow-step-item .step-actions {
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.flow-step-item:hover .step-actions {
+    opacity: 1;
+}
+
+.btn-xs {
+    padding: 2px 6px;
+    font-size: 10px;
+}
+
+/* 右侧属性面板 */
+.flow-props {
+    width: 320px;
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+}
+
+.flow-props-header {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow-props-header span:first-child {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.flow-props-badge {
+    padding: 2px 8px;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 10px;
+    font-size: 10px;
+}
+
+.flow-props-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.flow-empty-hint {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.flow-empty-hint .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.flow-empty-hint .sub {
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+/* 表单样式 */
+.flow-form-section {
+    margin-bottom: 16px;
+}
+
+.flow-form-section h5 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flow-form-section h5 .hint {
+    font-weight: normal;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.flow-form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.flow-form-row label {
+    width: 80px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.flow-form-row input,
+.flow-form-row select,
+.flow-form-row textarea {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.flow-form-row textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+.flow-form-row input:focus,
+.flow-form-row select:focus,
+.flow-form-row textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.flow-actions-row {
+    display: flex;
+    gap: 8px;
+}
+
+/* 图标选择器 */
+.icon-picker {
+    flex: 1;
+    position: relative;
+}
+
+.icon-picker input {
+    width: 100%;
+}
+
+.icon-suggestions {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.icon-suggestions span {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.icon-suggestions span:hover {
+    background: var(--bg-tertiary);
+}
+
+/* 开关样式 */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary);
+    transition: 0.3s;
+    border-radius: 20px;
+}
+
+.switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+    background-color: var(--accent-color);
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(16px);
+}
+
+/* 变量标签 */
+.var-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.var-tag {
+    padding: 2px 8px;
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: monospace;
+}
+
+.var-tag:hover {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+/* 公式预览 */
+.formula-preview {
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.formula-preview .label {
+    color: var(--text-muted);
+    margin-right: 8px;
+}
+
+.formula-preview code {
+    font-family: monospace;
+}
+
+.formula-preview code .var {
+    color: #60a5fa;
+    font-weight: bold;
+}
+
+.formula-preview code .func {
+    color: #a78bfa;
+}
+
+.formula-preview code .muted {
+    color: var(--text-muted);
+}
+
+/* 预览区 */
+.flow-preview {
+    border-top: 1px solid var(--border-color);
+    padding: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.flow-preview h4 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.flow-preview pre {
+    margin: 0;
+    padding: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    font-size: 10px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* 动作列表样式 */
+.flow-action-category {
+    margin-bottom: 8px;
+}
+
+.flow-action-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.flow-action-category-header:hover {
+    background: var(--bg-primary);
+}
+
+.flow-action-category.collapsed .flow-action-items {
+    display: none;
+}
+
+.flow-action-items {
+    padding: 4px 0 4px 12px;
+}
+
+.flow-action-item {
+    padding: 6px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flow-action-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.flow-action-item.selected {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.flow-action-item code {
+    font-family: monospace;
+    padding: 2px 4px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    font-size: 10px;
+}
+
+/* 警告按钮 */
+.btn-warning {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+}
+</style>

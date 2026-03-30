@@ -1,0 +1,669 @@
+<!-- 系统设置页面 -->
+<div class="page-container settings-page">
+    <div class="page-header">
+        <h1>⚙️ 系统设置</h1>
+        <div class="save-status" id="save-status"></div>
+    </div>
+
+    <!-- Tab导航 -->
+    <div class="settings-tabs">
+        <button class="tab active" data-tab="ui" onclick="SettingsPage.switchTab('ui')">🎨 界面</button>
+        <button class="tab" data-tab="station" onclick="SettingsPage.switchTab('station')">🏭 工位管理</button>
+        <button class="tab" data-tab="competitor" onclick="SettingsPage.switchTab('competitor')">🧪 竞品协议</button>
+        <button class="tab" data-tab="users" onclick="SettingsPage.switchTab('users')">👥 用户管理</button>
+        <button class="tab" data-tab="email" onclick="SettingsPage.switchTab('email')">📧 邮件通知</button>
+        <button class="tab" data-tab="git" onclick="SettingsPage.switchTab('git')">📦 Git仓库</button>
+        <button class="tab" data-tab="info" onclick="SettingsPage.switchTab('info')">ℹ️ 系统</button>
+    </div>
+
+    <div class="settings-content">
+        <!-- 界面设置 -->
+        <div class="tab-panel active" id="tab-ui">
+            <div class="panel">
+                <div class="panel-header"><span>主题与显示</span></div>
+                <div class="panel-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">主题风格</span>
+                            <span class="setting-desc">选择界面配色主题</span>
+                        </div>
+                        <button class="btn" onclick="switchPage('theme_selector')">选择主题 →</button>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">字体选择</span>
+                            <span class="setting-desc">选择界面字体</span>
+                        </div>
+                        <select id="font-family-select" onchange="SettingsPage.setFontFamily(this.value)">
+                            <option value="default">思源黑体</option>
+                            <option value="zcool">站酷快乐体</option>
+                            <option value="lxgw">霞鹜文楷</option>
+                            <option value="system">系统默认</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">字体大小</span>
+                            <span class="setting-desc">调整界面文字大小</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; min-width: 220px; justify-content: flex-end;">
+                            <input id="font-scale-range" type="range" min="80" max="140" step="5" value="100" oninput="SettingsPage.onFontScaleInput(this.value)" onchange="SettingsPage.setFontScale(this.value)">
+                            <span id="font-scale-label" style="min-width: 52px; text-align:right; color: var(--text-muted); font-size: var(--font-size-sm);">100%</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">减少动效</span>
+                            <span class="setting-desc">关闭动画提升性能</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="reduce-motion" onchange="SettingsPage.setReduceMotion(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 工位管理 -->
+        <div class="tab-panel" id="tab-station">
+            <div class="panel">
+                <div class="panel-header"><span>工位/工装配置（本机）</span></div>
+                <div class="panel-body">
+                    <div class="setting-row" style="border-bottom: none; padding-bottom: 8px;">
+                        <div class="setting-info">
+                            <span class="setting-label">这是做什么的？</span>
+                            <span class="setting-desc">用于在不同电脑/不同产线工位保存不同的工装连接参数（例如滑台控制器IP/端口）。切换工位后，下面的工装配置会跟着切换。</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">当前工位</span>
+                            <span class="setting-desc">选择后会加载该工位绑定的工装配置</span>
+                        </div>
+                        <select id="station-select" style="width:180px;"></select>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">新建工位</span>
+                            <span class="setting-desc">例如：A线-3号工位</span>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input id="station-new-id" type="text" placeholder="工位ID" style="width:180px;">
+                            <button class="btn" onclick="SettingsPage.createStation()">新建</button>
+                            <button class="btn danger" onclick="SettingsPage.deleteCurrentStation()">删除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 16px;">
+                <div class="panel-header"><span>滑台/转靶（TCP控制器）</span></div>
+                <div class="panel-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">控制器IP</span>
+                            <span class="setting-desc">滑台/转靶通常共用同一控制器</span>
+                        </div>
+                        <input id="tool-ip" type="text" placeholder="192.168.2.46" style="width:180px;">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">端口</span>
+                            <span class="setting-desc">默认 6000</span>
+                        </div>
+                        <input id="tool-port" type="number" placeholder="6000" style="width:180px;">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">超时 (ms)</span>
+                            <span class="setting-desc">默认 1500</span>
+                        </div>
+                        <input id="tool-timeout" type="number" placeholder="1500" style="width:180px;">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">重试次数</span>
+                            <span class="setting-desc">默认 2</span>
+                        </div>
+                        <input id="tool-retry" type="number" placeholder="2" style="width:180px;">
+                    </div>
+
+                    <div class="setting-row" style="border-bottom:none;">
+                        <div class="setting-info">
+                            <span class="setting-label">保存</span>
+                            <span class="setting-desc">保存到当前工位绑定的工装配置</span>
+                        </div>
+                        <button class="btn" onclick="SettingsPage.saveToolProfile()">保存工装配置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 竞品协议库 -->
+        <div class="tab-panel" id="tab-competitor">
+            <div class="panel">
+                <div class="panel-header"><span>竞品协议库（本机）</span></div>
+                <div class="panel-body">
+                    <div class="setting-row" style="border-bottom: none; padding-bottom: 8px;">
+                        <div class="setting-info">
+                            <span class="setting-label">这是做什么的？</span>
+                            <span class="setting-desc">把竞品协议配置化管理成 Profile。滑台测试与顶部工具栏会引用同一个 Profile，实现“写明白协议就能用”，新竞品来不需要改代码（多数情况）。</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">协议Profile</span>
+                            <span class="setting-desc">选择一个profile进行编辑/测试</span>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <select id="competitor-proto-select" style="width:260px;"></select>
+                            <button class="btn" onclick="SettingsPage.createCompetitorProto()">新建</button>
+                            <button class="btn danger" onclick="SettingsPage.deleteCompetitorProto()">删除</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-row" style="align-items:flex-start;">
+                        <div class="setting-info">
+                            <span class="setting-label">Profile JSON</span>
+                            <span class="setting-desc">kind 支持: l1_ascii / custom_ascii / custom_fixed_frame。controls 可选（开激光等）。</span>
+                        </div>
+                        <textarea id="competitor-proto-json" style="width:520px; height:260px; font-family: ui-monospace,Consolas,monospace; font-size:12px; line-height:1.5;" spellcheck="false"></textarea>
+                    </div>
+
+                    <div class="setting-row" style="border-bottom:none;">
+                        <div class="setting-info">
+                            <span class="setting-label">操作</span>
+                            <span class="setting-desc">保存后，可在滑台设置里选择该profile作为测距来源</span>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn primary" onclick="SettingsPage.saveCompetitorProto()">保存Profile</button>
+                            <button class="btn" onclick="SettingsPage.reloadCompetitorProto()">重新加载</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户管理 -->
+        <div class="tab-panel" id="tab-users">
+            <div class="panel">
+                <div class="panel-header">
+                    <span>用户列表</span>
+                    <button class="btn primary" onclick="SettingsPage.showAddUserDialog()">+ 添加用户</button>
+                </div>
+                <div class="panel-body">
+                    <div class="user-list" id="user-list">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 邮件通知设置 -->
+        <div class="tab-panel" id="tab-email">
+            <div class="panel">
+                <div class="panel-header"><span>📧 SMTP邮件配置</span></div>
+                <div class="panel-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">启用邮件通知</span>
+                            <span class="setting-desc">任务分配时自动发送邮件</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="email-enabled">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">SMTP服务器</span>
+                            <span class="setting-desc">如: smtp.qq.com, smtp.163.com</span>
+                        </div>
+                        <input type="text" id="email-smtp-server" placeholder="smtp.example.com" style="width:200px" onchange="SettingsPage.onEmailConfigChange()">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">端口</span>
+                            <span class="setting-desc">TLS通常为587，SSL通常为465</span>
+                        </div>
+                        <input type="number" id="email-smtp-port" placeholder="587" style="width:100px" onchange="SettingsPage.onEmailConfigChange()">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">使用TLS</span>
+                            <span class="setting-desc">推荐启用加密传输</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="email-use-tls" checked onchange="SettingsPage.onEmailConfigChange()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">用户名</span>
+                            <span class="setting-desc">通常是发件邮箱地址</span>
+                        </div>
+                        <input type="text" id="email-username" placeholder="user@example.com" style="width:200px" onchange="SettingsPage.onEmailConfigChange()">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">密码/授权码</span>
+                            <span class="setting-desc">QQ/163等需使用授权码</span>
+                        </div>
+                        <input type="password" id="email-password" placeholder="授权码或密码" style="width:200px" onchange="SettingsPage.onEmailConfigChange()">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">发件人名称</span>
+                            <span class="setting-desc">邮件中显示的发件人</span>
+                        </div>
+                        <input type="text" id="email-sender-name" placeholder="GreenLaser任务系统" style="width:200px" onchange="SettingsPage.onEmailConfigChange()">
+                    </div>
+                    <div class="setting-row" style="border-bottom:none">
+                        <div class="setting-info">
+                            <span class="setting-label">操作</span>
+                            <span class="setting-desc">保存配置后可测试</span>
+                        </div>
+                        <div style="display:flex; gap:8px">
+                            <button class="btn primary" onclick="SettingsPage.saveEmailConfig()">💾 保存配置</button>
+                            <button class="btn" onclick="SettingsPage.testEmailConnection()">🔌 测试连接</button>
+                            <button class="btn" onclick="SettingsPage.sendTestEmail()">📨 发送测试</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel" style="margin-top:16px">
+                <div class="panel-header"><span>💡 配置说明</span></div>
+                <div class="panel-body" style="font-size:13px; color:var(--text-secondary); line-height:1.6">
+                    <p><strong>QQ邮箱：</strong>smtp.qq.com:587，需在QQ邮箱设置中开启SMTP并获取授权码</p>
+                    <p><strong>163邮箱：</strong>smtp.163.com:465(SSL)或25，需开启SMTP并设置客户端授权码</p>
+                    <p><strong>企业邮箱：</strong>请联系IT获取SMTP服务器地址和端口</p>
+                    <p style="margin-top:8px; color:var(--text-muted)">配置完成后，分配任务时会自动发送邮件通知到测试人员邮箱（需在用户管理中填写邮箱）</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Git仓库设置 -->
+        <div class="tab-panel" id="tab-git">
+            <div class="panel">
+                <div class="panel-header"><span>📦 远程Git仓库配置</span></div>
+                <div class="panel-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">启用远程Git</span>
+                            <span class="setting-desc">任务自动同步到远程仓库</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="git-enabled">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">远程仓库URL</span>
+                            <span class="setting-desc">如: git@github.com:user/tasks.git</span>
+                        </div>
+                        <input type="text" id="git-remote-url" placeholder="git@github.com:user/tasks.git" style="width:300px">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">SSH私钥路径</span>
+                            <span class="setting-desc">如: C:\Users\user\.ssh\id_rsa</span>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" id="git-ssh-key" placeholder="C:\Users\user\.ssh\id_rsa" style="width:250px">
+                            <button class="btn" onclick="SettingsPage.selectSshKey()">选择</button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">测试连接</span>
+                            <span class="setting-desc">验证Git仓库和SSH密钥</span>
+                        </div>
+                        <button class="btn" onclick="SettingsPage.testGitConnection()">测试连接</button>
+                    </div>
+                    <div class="setting-row" style="border-bottom:none">
+                        <div class="setting-info">
+                            <span class="setting-label">保存配置</span>
+                            <span class="setting-desc">保存后任务将自动同步</span>
+                        </div>
+                        <button class="btn primary" onclick="SettingsPage.saveGitConfig()">保存配置</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel" style="margin-top: 16px;">
+                <div class="panel-header"><span>🌐 Web任务看板</span></div>
+                <div class="panel-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">启动Web服务器</span>
+                            <span class="setting-desc">在浏览器中查看任务看板</span>
+                        </div>
+                        <button class="btn" onclick="SettingsPage.startGitWebServer()">启动看板</button>
+                    </div>
+                    <div class="setting-row" style="border-bottom:none">
+                        <div class="setting-info">
+                            <span class="setting-label">访问地址</span>
+                            <span class="setting-desc">Web看板URL</span>
+                        </div>
+                        <span id="git-web-url" style="color: var(--accent);">未启动</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统信息 -->
+        <div class="tab-panel" id="tab-info">
+            <div class="panel">
+                <div class="panel-header"><span>版本信息</span></div>
+                <div class="panel-body">
+                    <div class="info-row">
+                        <span class="info-label">应用版本</span>
+                        <span class="info-value" id="app-version">v2.0.0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Python版本</span>
+                        <span class="info-value" id="python-version">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">运行时间</span>
+                        <span class="info-value" id="uptime">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">工作目录</span>
+                        <span class="info-value" id="work-dir">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 内存监控 -->
+            <div class="panel" style="margin-top: 16px;">
+                <div class="panel-header">
+                    <span>💾 内存监控</span>
+                    <button class="btn" onclick="SettingsPage.refreshMemoryStatus()">刷新</button>
+                </div>
+                <div class="panel-body">
+                    <div class="info-row">
+                        <span class="info-label">当前内存使用</span>
+                        <span class="info-value" id="memory-usage">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">垃圾回收状态</span>
+                        <span class="info-value" id="gc-status">-</span>
+                    </div>
+                    <div class="setting-row" style="border-bottom: none;">
+                        <div class="setting-info">
+                            <span class="setting-label">手动清理内存</span>
+                            <span class="setting-desc">立即执行垃圾回收</span>
+                        </div>
+                        <button class="btn" onclick="SettingsPage.runGC()">清理内存</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 内存配置 -->
+            <div class="panel" style="margin-top: 16px;">
+                <div class="panel-header"><span>⚙️ 内存优化配置</span></div>
+                <div class="panel-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">日志缓冲区最大条数</span>
+                            <span class="setting-desc">调试日志保留的最大条数</span>
+                        </div>
+                        <input id="mem-max-log" type="number" value="500" min="100" max="5000" style="width:100px;">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">串口缓冲区大小 (KB)</span>
+                            <span class="setting-desc">串口接收缓冲区最大大小</span>
+                        </div>
+                        <input id="mem-serial-buffer" type="number" value="64" min="16" max="1024" style="width:100px;">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">测试结果最大条数</span>
+                            <span class="setting-desc">内存中保留的测试结果数</span>
+                        </div>
+                        <input id="mem-max-results" type="number" value="5000" min="500" max="50000" style="width:100px;">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">垃圾回收间隔 (秒)</span>
+                            <span class="setting-desc">自动清理内存的间隔时间</span>
+                        </div>
+                        <input id="mem-gc-interval" type="number" value="300" min="60" max="3600" style="width:100px;">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-label">内存警告阈值 (MB)</span>
+                            <span class="setting-desc">超过此值时显示警告</span>
+                        </div>
+                        <input id="mem-warning-mb" type="number" value="500" min="100" max="2000" style="width:100px;">
+                    </div>
+                    <div class="setting-row" style="border-bottom: none;">
+                        <div class="setting-info">
+                            <span class="setting-label">保存配置</span>
+                            <span class="setting-desc">应用内存优化配置</span>
+                        </div>
+                        <button class="btn" onclick="SettingsPage.saveMemoryConfig()">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 用户管理对话框 -->
+<div class="dialog-overlay" id="user-dialog" style="display:none">
+    <div class="dialog" style="width:500px">
+        <div class="dialog-header">
+            <h3 id="user-dialog-title">添加用户</h3>
+            <button class="close-btn" onclick="SettingsPage.hideUserDialog()">×</button>
+        </div>
+        <div class="dialog-body">
+            <div class="form-group">
+                <label>用户ID *</label>
+                <input type="text" id="user-id-input" placeholder="如: test03">
+            </div>
+            <div class="form-group">
+                <label>用户名 *</label>
+                <input type="text" id="user-name-input" placeholder="如: 测试工程师-03">
+            </div>
+            <div class="form-group">
+                <label>角色 *</label>
+                <select id="user-role-select">
+                    <option value="developer">开发人员</option>
+                    <option value="tester">测试人员</option>
+                    <option value="manager">管理人员</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="user-email-input" placeholder="如: test03@company.com">
+            </div>
+            <div class="form-group">
+                <label>部门</label>
+                <input type="text" id="user-dept-input" placeholder="如: 测试部">
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn secondary" onclick="SettingsPage.hideUserDialog()">取消</button>
+            <button class="btn primary" onclick="SettingsPage.saveUser()">保存</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-page { padding: var(--page-pad, 16px); }
+.settings-page .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.settings-page h1 { margin: 0; font-size: var(--font-size-xl); }
+.save-status { font-size: var(--font-size-sm); color: var(--text-muted); }
+.save-status.saving { color: var(--accent); }
+.save-status.saved { color: #22c55e; }
+
+.settings-tabs {
+    display: flex; gap: 8px; margin-bottom: 20px;
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 8px); padding: 8px;
+}
+.settings-tabs .tab {
+    flex: 1; padding: 10px 16px; background: transparent;
+    border: 1px solid transparent; border-radius: 6px;
+    color: var(--text-muted); font-size: var(--font-size-base); cursor: pointer;
+}
+.settings-tabs .tab:hover { background: var(--input-bg); }
+.settings-tabs .tab.active { background: var(--accent); color: var(--text-on-accent); font-weight: 500; }
+
+.settings-content { display: block; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid var(--border-color);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-info { flex: 1; }
+.setting-label { display: block; font-size: var(--font-size-lg); font-weight: 500; }
+.setting-desc { display: block; font-size: var(--font-size-sm); color: var(--text-muted); margin-top: 2px; }
+
+.info-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border-color);
+    font-size: var(--font-size-base);
+}
+.info-row:last-child { border-bottom: none; }
+.info-row .info-label { color: var(--text-muted); }
+.info-row .info-value { font-family: monospace; }
+
+.danger-panel { border-color: rgba(239,68,68,0.3); }
+.danger-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid var(--border-color);
+}
+.danger-item:last-child { border-bottom: none; }
+.danger-title { display: block; font-size: 14px; font-weight: 500; }
+.danger-desc { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* 开关样式 */
+.switch { position: relative; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; inset: 0; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 24px;
+    cursor: pointer; transition: 0.2s;
+}
+.slider:before {
+    content: ""; position: absolute; height: 18px; width: 18px;
+    left: 3px; bottom: 2px; background: var(--bg-primary);
+    border-radius: 50%; transition: 0.2s;
+}
+input:checked + .slider { background: var(--accent); border-color: var(--accent); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* 用户管理样式 */
+.user-list {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.user-item {
+    display: flex; align-items: center; padding: 12px;
+    background: var(--input-bg); border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.user-item:hover {
+    border-color: var(--primary-color);
+}
+.user-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--accent); color: var(--text-on-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; margin-right: 12px;
+}
+.user-info {
+    flex: 1;
+}
+.user-name {
+    font-size: 14px; font-weight: 500; margin-bottom: 2px;
+}
+.user-role {
+    font-size: 12px; color: var(--text-muted);
+}
+.user-actions {
+    display: flex; gap: 8px;
+}
+.user-actions button {
+    padding: 4px 12px; font-size: 12px;
+    border-radius: 4px; border: 1px solid var(--border-color);
+    background: var(--card-bg); color: var(--text-color);
+    cursor: pointer;
+}
+.user-actions button:hover {
+    border-color: var(--primary-color);
+}
+.user-actions button.danger:hover {
+    border-color: #ef4444; color: #ef4444;
+}
+
+/* 对话框样式 */
+.dialog-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.84); display: flex;
+    align-items: center; justify-content: center; z-index: 1000;
+    backdrop-filter: blur(6px);
+}
+.dialog {
+    background: linear-gradient(180deg, rgba(10, 18, 30, 0.98), rgba(6, 12, 22, 0.985));
+    border: 1px solid rgba(0,255,136,0.18);
+    border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    max-height: 90vh; overflow-y: auto;
+}
+.dialog-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px; border-bottom: 1px solid var(--border-color);
+}
+.dialog-header h3 {
+    margin: 0; font-size: 16px; font-weight: 600;
+}
+.close-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: transparent; border: none;
+    color: var(--text-muted); font-size: 20px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.close-btn:hover {
+    background: var(--input-bg); color: var(--text-color);
+}
+.dialog-body {
+    padding: 20px;
+    background: rgba(4, 10, 18, 0.72);
+}
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--text-color); margin-bottom: 6px;
+}
+.form-group input,
+.form-group select {
+    width: 100%; padding: 8px 12px;
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    border-radius: 6px; color: var(--text-color);
+    font-size: 14px;
+}
+.form-group input:focus,
+.form-group select:focus {
+    outline: none; border-color: var(--primary-color);
+}
+.dialog-footer {
+    display: flex; justify-content: flex-end; gap: 12px;
+    padding: 20px; border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(0,0,0,0.18);
+}
+</style>

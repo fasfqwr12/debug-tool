@@ -1,0 +1,732 @@
+<div class="page-container" style="padding:15px; height:100%; display:flex; flex-direction:column;">
+    <div class="page-header" style="margin-bottom:10px;">
+        <h1 style="font-size:18px; margin:0;">🔗 HEX合并工具</h1>
+    </div>
+
+    <!-- 可用HEX文件列表（隐藏，仅用于下拉选择） -->
+    <div id="hex-file-list" style="display:none;"></div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <!-- Boot文件 -->
+        <div class="hex-panel">
+            <div class="hex-panel-header">
+                <span>🔧 Boot（可选）</span>
+                <div>
+                    <button class="hex-mini-btn" onclick="HexMergePage.browseBoot()">📁</button>
+                    <button class="hex-mini-btn" onclick="HexMergePage.clearBoot()">✕</button>
+                </div>
+            </div>
+            <div style="padding:10px;">
+                <select id="boot-select" class="hex-select">
+                    <option value="">-- 不使用Boot --</option>
+                </select>
+                <div id="boot-info" class="hex-file-info">未选择</div>
+            </div>
+        </div>
+
+        <!-- App文件 -->
+        <div class="hex-panel">
+            <div class="hex-panel-header">
+                <span>📱 App（可选）</span>
+                <div>
+                    <button class="hex-mini-btn" onclick="HexMergePage.browseApp()">📁</button>
+                    <button class="hex-mini-btn" onclick="HexMergePage.clearApp()">✕</button>
+                </div>
+            </div>
+            <div style="padding:10px;">
+                <select id="app-select" class="hex-select">
+                    <option value="">-- 请选择App --</option>
+                </select>
+                <div id="app-info" class="hex-file-info">未选择</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 烧录操作 -->
+    <div class="hex-panel" style="margin-top:12px;">
+        <div class="hex-panel-header">
+            <span>⚙️ 烧录操作</span>
+            <div>
+                <button class="hex-mini-btn" onclick="HexMergePage.checkTools()">🔍 检测</button>
+                <button class="hex-mini-btn" onclick="HexMergePage.browseJLink()">J-Link</button>
+                <button class="hex-mini-btn" onclick="HexMergePage.browseSTLink()">ST-Link</button>
+            </div>
+        </div>
+        <div style="padding:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div id="tools-status" style="font-size:12px; min-width:200px;">检测中...</div>
+            <div style="flex:1;"></div>
+            <button class="hex-btn hex-btn-success" id="merge-btn" onclick="HexMergePage.merge()" disabled>🔗 合并</button>
+            <select id="flash-device-select" class="hex-device-select">
+                <option value="stlink" selected>ST-Link</option>
+                <option value="jlink">J-Link</option>
+            </select>
+            <button class="hex-btn hex-btn-primary" id="flash-btn" onclick="HexMergePage.flash()" disabled>⚡ 烧录 (F8)</button>
+        </div>
+        <!-- 进度条 -->
+        <div id="flash-progress-container" style="padding:0 10px 8px; display:none;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                <span id="flash-progress-text">准备烧录...</span>
+                <span id="flash-progress-percent">0%</span>
+            </div>
+            <div class="flash-progress-bar">
+                <div id="flash-progress-fill" class="flash-progress-fill" style="width:0%"></div>
+            </div>
+        </div>
+        <div id="flash-mode-hint" style="padding:0 10px 8px; font-size:11px; color:var(--text-muted);">
+            提示：选择Boot+App会合并后烧录，只选一个则单独烧录 | <span style="color:#00ff88;">F8 快捷键烧录</span>
+        </div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="hex-panel" style="margin-top:12px; flex:1; display:flex; flex-direction:column; min-height:0;">
+        <div class="hex-panel-header" style="padding:8px 12px;">
+            <span>📊 日志</span>
+            <button class="hex-mini-btn" onclick="HexMergePage.clearLog()">🗑️</button>
+        </div>
+        <div id="hex-log" class="hex-log" style="flex:1; margin:8px; min-height:80px;"></div>
+    </div>
+</div>
+
+<style>
+.hex-panel { background: var(--card-bg, rgba(30,30,40,0.8)); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius: 8px; }
+.hex-panel-header { padding: 8px 12px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size:13px; display: flex; justify-content: space-between; align-items: center; }
+.hex-select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.3); color: var(--text-primary, #fff); font-size: 12px; }
+.hex-file-info { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px; font-family: monospace; font-size: 11px; line-height: 1.6; min-height: 50px; margin-top: 8px; }
+.hex-file-info .label { color: var(--text-muted, #888); }
+.hex-file-info .value { color: var(--accent, #00ff88); }
+.hex-btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
+.hex-btn-success { background: linear-gradient(135deg, #00c853, #00e676); color: #000; }
+.hex-btn-flash { background: linear-gradient(135deg, #2196f3, #42a5f5); color: #fff; }
+.hex-btn-primary { background: linear-gradient(135deg, #00c853, #00e676) !important; color: #000 !important; box-shadow: 0 0 10px rgba(0,200,83,0.5); }
+.hex-btn:disabled { background: rgba(100,100,100,0.3) !important; color: rgba(255,255,255,0.4) !important; cursor: not-allowed; box-shadow: none !important; }
+.hex-device-select { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.3); color: var(--text-primary, #fff); font-size: 12px; cursor: pointer; }
+.flash-progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.flash-progress-fill { height: 100%; background: linear-gradient(90deg, #00c853, #00e676); border-radius: 3px; transition: width 0.3s ease; }
+.flash-progress-fill.flashing { animation: flash-pulse 1s ease-in-out infinite; }
+@keyframes flash-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+.hex-mini-btn { background: rgba(255,255,255,0.1); border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+.hex-mini-btn:hover { background: rgba(255,255,255,0.2); }
+.hex-log { padding: 8px; overflow-y: auto; font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+.hex-log .log-entry { padding: 1px 0; }
+.hex-log .log-entry.info { color: #64b5f6; }
+.hex-log .log-entry.success { color: #69f0ae; }
+.hex-log .log-entry.error { color: #ff5252; }
+</style>
+
+<script>
+window.HexMergePage = {
+    hexFiles: [],
+    bootFile: null,
+    bootInfo: null,
+    appFile: null,
+    appInfo: null,
+    mergedFile: null,
+    isFlashing: false,
+
+    init: function() {
+        this.log('info', 'HEX合并工具已加载');
+        Utils.toast('HEX合并工具已加载', 'info');
+        this.scan();
+        this.checkTools();
+        // 绑定 F8 快捷键
+        this.bindHotkey();
+    },
+    destroy: function() {
+        // 移除快捷键监听
+        document.removeEventListener('keydown', this._hotkeyHandler);
+    },
+
+    bindHotkey: function() {
+        var self = this;
+        this._hotkeyHandler = function(e) {
+            if (e.key === 'F8') {
+                e.preventDefault();
+                if (!self.isFlashing) {
+                    self.flash();
+                }
+            }
+        };
+        document.addEventListener('keydown', this._hotkeyHandler);
+        this.log('info', '快捷键 F8 已绑定');
+    },
+
+    // 统一烧录方法，根据选择的设备烧录
+    flash: function() {
+        var device = document.getElementById('flash-device-select').value;
+        if (device === 'jlink') {
+            this.flashJLink();
+        } else {
+            this.flashSTLink();
+        }
+    },
+
+    showProgress: function(show, text, percent) {
+        var container = document.getElementById('flash-progress-container');
+        var textEl = document.getElementById('flash-progress-text');
+        var percentEl = document.getElementById('flash-progress-percent');
+        var fillEl = document.getElementById('flash-progress-fill');
+        
+        if (container) container.style.display = show ? 'block' : 'none';
+        if (textEl && text !== undefined) textEl.textContent = text;
+        if (percentEl && percent !== undefined) percentEl.textContent = percent + '%';
+        if (fillEl && percent !== undefined) {
+            fillEl.style.width = percent + '%';
+            if (percent > 0 && percent < 100) {
+                fillEl.classList.add('flashing');
+            } else {
+                fillEl.classList.remove('flashing');
+            }
+        }
+    },
+
+    checkTools: function() {
+        var self = this;
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+        
+        var statusEl = document.getElementById('tools-status');
+        if (statusEl) statusEl.innerHTML = '检测中...';
+        Utils.toast('正在检测烧录工具...', 'info');
+        
+        api.hex_check_tools().then(function(r) {
+            if (r && r.success) {
+                var html = '';
+                var toolsFound = [];
+                if (r.jlink && r.jlink.available) {
+                    html += '<span style="color:#00ff88;">✅ J-Link</span> ';
+                    toolsFound.push('J-Link');
+                    self.log('info', 'J-Link: ' + r.jlink.path);
+                } else {
+                    html += '<span style="color:#ff5252;">❌ J-Link</span> ';
+                }
+                if (r.stlink && r.stlink.available) {
+                    html += '<span style="color:#00ff88;">✅ ST-Link</span> ';
+                    toolsFound.push('ST-Link');
+                    self.log('info', 'ST-Link: ' + r.stlink.path);
+                } else {
+                    html += '<span style="color:#ff5252;">❌ ST-Link</span> ';
+                }
+                if (r.openocd && r.openocd.available) {
+                    html += '<span style="color:#00ff88;">✅ OpenOCD</span>';
+                    toolsFound.push('OpenOCD');
+                    self.log('info', 'OpenOCD: ' + r.openocd.path);
+                }
+                if (statusEl) statusEl.innerHTML = html;
+                self.log('success', '工具检测完成');
+                if (toolsFound.length > 0) {
+                    Utils.toast('检测到: ' + toolsFound.join(', '), 'success');
+                } else {
+                    Utils.toast('未检测到烧录工具，请手动设置', 'warning');
+                }
+            }
+        }).catch(function(e) {
+            if (statusEl) statusEl.innerHTML = '<span style="color:#ff5252;">检测失败</span>';
+            self.log('error', '检测工具失败: ' + e);
+            Utils.toast('检测工具失败', 'error');
+        });
+    },
+
+    browseJLink: function() {
+        var self = this;
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+        
+        self.log('info', '选择 J-Link 工具...');
+        Utils.toast('请选择 J-Link 可执行文件...', 'info');
+        api.hex_browse_tool('jlink').then(function(r) {
+            if (r && r.success) {
+                self.log('success', '已设置 J-Link: ' + r.path);
+                Utils.toast('J-Link 设置成功', 'success');
+                self.checkTools();
+            } else if (r && !r.cancelled) {
+                self.log('error', '设置失败: ' + (r.error || ''));
+                Utils.toast('J-Link 设置失败', 'error');
+            }
+        }).catch(function(e) { self.log('error', '设置异常: ' + e); Utils.toast('设置异常', 'error'); });
+    },
+
+    browseSTLink: function() {
+        var self = this;
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+        
+        self.log('info', '选择 ST-Link 工具...');
+        Utils.toast('请选择 ST-Link 可执行文件...', 'info');
+        api.hex_browse_tool('stlink').then(function(r) {
+            if (r && r.success) {
+                self.log('success', '已设置 ST-Link: ' + r.path);
+                Utils.toast('ST-Link 设置成功', 'success');
+                self.checkTools();
+            } else if (r && !r.cancelled) {
+                self.log('error', '设置失败: ' + (r.error || ''));
+                Utils.toast('ST-Link 设置失败', 'error');
+            }
+        }).catch(function(e) { self.log('error', '设置异常: ' + e); Utils.toast('设置异常', 'error'); });
+    },
+
+    browseBoot: function() {
+        var self = this;
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+        
+        self.log('info', '选择Boot文件...');
+        Utils.toast('请选择 Boot HEX 文件...', 'info');
+        api.hex_browse_file('boot').then(function(r) {
+            if (r && r.success) {
+                self.bootFile = r.path;
+                self.bootInfo = r.info;
+                var fileName = r.path.split(/[/\\]/).pop();
+                self.log('success', '选择Boot: ' + fileName);
+                Utils.toast('Boot 文件已选择: ' + fileName, 'success');
+                self.renderFileInfo('boot', r.info);
+                self.updateButtons();
+                document.getElementById('boot-select').value = '';
+            } else if (r && !r.cancelled) {
+                self.log('error', '选择失败: ' + (r.error || ''));
+                Utils.toast('选择 Boot 文件失败', 'error');
+            }
+        }).catch(function(e) { self.log('error', '选择异常: ' + e); Utils.toast('选择异常', 'error'); });
+    },
+
+    browseApp: function() {
+        var self = this;
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+        
+        self.log('info', '选择App文件...');
+        Utils.toast('请选择 App HEX 文件...', 'info');
+        api.hex_browse_file('app').then(function(r) {
+            if (r && r.success) {
+                self.appFile = r.path;
+                self.appInfo = r.info;
+                self.mergedFile = null;
+                var fileName = r.path.split(/[/\\]/).pop();
+                self.log('success', '选择App: ' + fileName);
+                Utils.toast('App 文件已选择: ' + fileName, 'success');
+                self.renderFileInfo('app', r.info);
+                self.updateButtons();
+                document.getElementById('app-select').value = '';
+            } else if (r && !r.cancelled) {
+                self.log('error', '选择失败: ' + (r.error || ''));
+                Utils.toast('选择 App 文件失败', 'error');
+            }
+        }).catch(function(e) { self.log('error', '选择异常: ' + e); Utils.toast('选择异常', 'error'); });
+    },
+
+    renderFileInfo: function(type, info) {
+        var el = document.getElementById(type + '-info');
+        if (!el) return;
+        if (info && info.success) {
+            el.innerHTML = '<div><span class="label">文件:</span> <span class="value">' + info.file + '</span></div>' +
+                '<div><span class="label">地址:</span> <span class="value">' + info.min_addr_hex + ' - ' + info.max_addr_hex + '</span></div>' +
+                '<div><span class="label">大小:</span> <span class="value">' + info.size_kb + ' KB</span></div>';
+        } else {
+            el.innerHTML = '<span style="color:#ff5252;">解析失败</span>';
+        }
+    },
+
+    scan: function() {
+        var self = this;
+        self.log('info', '正在扫描...');
+        Utils.toast('正在扫描 HEX 文件...', 'info');
+        var listEl = document.getElementById('hex-file-list');
+        if (listEl) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">扫描中...</div>';
+        
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+        
+        api.hex_scan_projects().then(function(result) {
+            if (result && result.success) {
+                self.hexFiles = result.projects || [];
+                self.log('success', '发现 ' + self.hexFiles.length + ' 个HEX文件');
+                if (self.hexFiles.length > 0) {
+                    Utils.toast('发现 ' + self.hexFiles.length + ' 个 HEX 文件', 'success');
+                } else {
+                    Utils.toast('未发现 HEX 文件，请手动选择', 'warning');
+                }
+                self.renderFileList();
+                self.updateSelects();
+            } else {
+                self.log('error', '扫描失败: ' + (result && result.error || ''));
+                Utils.toast('扫描失败，请手动选择文件', 'warning');
+                if (listEl) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">扫描失败，请使用浏览按钮选择文件</div>';
+            }
+        }).catch(function(e) { 
+            self.log('error', '扫描异常: ' + e); 
+            Utils.toast('扫描异常', 'error');
+            if (listEl) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">扫描异常，请使用浏览按钮选择文件</div>';
+        });
+    },
+
+    renderFileList: function() {
+        var listEl = document.getElementById('hex-file-list');
+        if (!listEl) return;
+        if (this.hexFiles.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">未发现HEX文件，请使用浏览按钮选择</div>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < this.hexFiles.length; i++) {
+            var f = this.hexFiles[i];
+            var name = f.name || '未命名';
+            var path = (f.hex_path || f.app_hex || '').split(/[/\\]/).pop();
+            var size = f.app_size ? (f.app_size / 1024).toFixed(1) + ' KB' : '--';
+            html += '<div class="hex-file-item"><div><span class="name">' + name + '</span><br><span class="path">' + path + '</span></div><span>' + size + '</span></div>';
+        }
+        listEl.innerHTML = html;
+    },
+
+    updateSelects: function() {
+        var self = this;
+        var bootSel = document.getElementById('boot-select');
+        var appSel = document.getElementById('app-select');
+        var opts = '';
+        for (var i = 0; i < this.hexFiles.length; i++) {
+            var f = this.hexFiles[i];
+            var name = f.name || '未命名';
+            var path = (f.hex_path || f.app_hex || '').split(/[/\\]/).pop();
+            opts += '<option value="' + i + '">' + name + ' (' + path + ')</option>';
+        }
+        if (bootSel) {
+            bootSel.innerHTML = '<option value="">-- 不使用Boot --</option>' + opts;
+            bootSel.onchange = function() { self.onBootSelect(); };
+        }
+        if (appSel) {
+            appSel.innerHTML = '<option value="">-- 请选择App --</option>' + opts;
+            appSel.onchange = function() { self.onAppSelect(); };
+        }
+    },
+
+    onBootSelect: function() {
+        var self = this;
+        var sel = document.getElementById('boot-select');
+        var idx = sel ? sel.value : '';
+        if (idx === '') { 
+            self.bootFile = null; 
+            self.bootInfo = null; 
+            document.getElementById('boot-info').innerHTML = '未选择'; 
+            self.updateButtons();
+        } else {
+            var f = self.hexFiles[parseInt(idx)];
+            self.bootFile = f.hex_path || f.app_hex;
+            var fileName = self.bootFile.split(/[/\\]/).pop();
+            self.log('info', '选择Boot: ' + fileName);
+            Utils.toast('选择 Boot: ' + (f.name || fileName), 'info');
+            self.loadInfo('boot', self.bootFile);
+        }
+    },
+
+    onAppSelect: function() {
+        var self = this;
+        var sel = document.getElementById('app-select');
+        var idx = sel ? sel.value : '';
+        self.mergedFile = null;
+        if (idx === '') { 
+            self.appFile = null; 
+            self.appInfo = null; 
+            document.getElementById('app-info').innerHTML = '未选择'; 
+            self.updateButtons();
+        } else {
+            var f = self.hexFiles[parseInt(idx)];
+            self.appFile = f.hex_path || f.app_hex;
+            var fileName = self.appFile.split(/[/\\]/).pop();
+            self.log('info', '选择App: ' + fileName);
+            Utils.toast('选择 App: ' + (f.name || fileName), 'info');
+            self.loadInfo('app', self.appFile);
+        }
+    },
+
+    loadInfo: function(type, filePath) {
+        var self = this;
+        var el = document.getElementById(type + '-info');
+        if (!filePath) { if (el) el.innerHTML = '未选择'; return; }
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) return;
+        api.hex_get_info(filePath).then(function(info) {
+            if (info && info.success) {
+                if (type === 'boot') self.bootInfo = info; else self.appInfo = info;
+                self.renderFileInfo(type, info);
+                self.log('success', type.toUpperCase() + ': ' + info.min_addr_hex + ' - ' + info.max_addr_hex);
+                self.updateButtons();
+            } else { 
+                if (el) el.innerHTML = '<span style="color:#ff5252;">解析失败</span>'; 
+                if (type === 'boot') self.bootInfo = null; else self.appInfo = null;
+                self.updateButtons();
+            }
+        }).catch(function(e) { 
+            if (el) el.innerHTML = '<span style="color:#ff5252;">解析异常</span>'; 
+            if (type === 'boot') self.bootInfo = null; else self.appInfo = null;
+            self.updateButtons();
+            self.log('error', '加载' + type + '信息失败: ' + e);
+        });
+    },
+
+    clearBoot: function() { 
+        this.bootFile = null; 
+        this.bootInfo = null; 
+        document.getElementById('boot-select').value = ''; 
+        document.getElementById('boot-info').innerHTML = '未选择'; 
+        this.updateButtons(); 
+        this.log('info', '已清除Boot');
+        Utils.toast('已清除 Boot 文件', 'info');
+    },
+    
+    clearApp: function() { 
+        this.appFile = null; 
+        this.appInfo = null; 
+        this.mergedFile = null; 
+        document.getElementById('app-select').value = ''; 
+        document.getElementById('app-info').innerHTML = '未选择'; 
+        this.updateButtons(); 
+        this.log('info', '已清除App');
+        Utils.toast('已清除 App 文件', 'info');
+    },
+
+    updateButtons: function() {
+        var hasBoot = !!(this.bootFile && this.bootInfo);
+        var hasApp = !!(this.appFile && this.appInfo);
+        var hasAny = hasBoot || hasApp;
+        var hasBoth = hasBoot && hasApp;
+        
+        var m = document.getElementById('merge-btn'); 
+        if (m) m.disabled = !hasBoth;
+        
+        var f = document.getElementById('flash-btn'); 
+        if (f) f.disabled = !hasAny;
+        
+        var hint = document.getElementById('flash-mode-hint');
+        if (hint) {
+            if (hasBoth) {
+                hint.innerHTML = '📦 <span style="color:#00ff88;">合并模式</span>：将Boot和App合并后烧录 | <span style="color:#00ff88;">F8 快捷键烧录</span>';
+            } else if (hasBoot) {
+                hint.innerHTML = '🔧 <span style="color:#ffc107;">单独烧录Boot</span>：' + (this.bootInfo ? this.bootInfo.file : '') + ' | <span style="color:#00ff88;">F8 快捷键烧录</span>';
+            } else if (hasApp) {
+                hint.innerHTML = '📱 <span style="color:#2196f3;">单独烧录App</span>：' + (this.appInfo ? this.appInfo.file : '') + ' | <span style="color:#00ff88;">F8 快捷键烧录</span>';
+            } else {
+                hint.innerHTML = '提示：选择Boot+App会合并后烧录，只选一个则单独烧录 | <span style="color:#00ff88;">F8 快捷键烧录</span>';
+            }
+        }
+    },
+
+    merge: function() {
+        var self = this;
+        if (!self.bootFile || !self.appFile) { 
+            self.log('error', '请同时选择Boot和App'); 
+            Utils.toast('请同时选择 Boot 和 App 文件', 'warning');
+            return; 
+        }
+        self.log('info', '开始合并...');
+        Utils.toast('正在合并固件...', 'info');
+        var api = window.pywebview && window.pywebview.api;
+        if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+        api.hex_merge(self.bootFile, self.appFile).then(function(r) {
+            if (r && r.success) {
+                self.mergedFile = r.output;
+                self.log('success', '合并成功: ' + r.output);
+                if (r.merged) self.log('info', '大小: ' + r.merged.size_kb + ' KB');
+                var re = document.getElementById('merge-result');
+                if (re) re.innerHTML = '<span style="color:#00ff88;">✓ ' + (r.merged && r.merged.file || '已生成') + '</span>';
+                Utils.toast('固件合并成功！大小: ' + (r.merged ? r.merged.size_kb + ' KB' : '--'), 'success');
+            } else { 
+                self.log('error', '合并失败: ' + (r && r.error || '')); 
+                Utils.toast('合并失败: ' + (r && r.error || '未知错误'), 'error');
+            }
+        }).catch(function(e) { self.log('error', '合并异常: ' + e); Utils.toast('合并异常', 'error'); });
+    },
+
+    getFlashFile: function(callback) {
+        var self = this;
+        var hasBoot = !!(self.bootFile && self.bootInfo);
+        var hasApp = !!(self.appFile && self.appInfo);
+        
+        if (hasBoot && hasApp) {
+            if (self.mergedFile) {
+                callback(self.mergedFile);
+            } else {
+                self.log('info', '合并Boot和App...');
+                Utils.toast('正在合并 Boot 和 App...', 'info');
+                var api = window.pywebview && window.pywebview.api;
+                if (!api) { self.log('error', 'API不可用'); Utils.toast('API不可用', 'error'); return; }
+                api.hex_merge(self.bootFile, self.appFile).then(function(r) {
+                    if (r && r.success) {
+                        self.mergedFile = r.output;
+                        self.log('success', '合并成功');
+                        Utils.toast('合并成功，准备烧录', 'success');
+                        callback(self.mergedFile);
+                    } else { 
+                        self.log('error', '合并失败: ' + (r && r.error || '')); 
+                        Utils.toast('合并失败', 'error');
+                    }
+                }).catch(function(e) { self.log('error', '合并异常: ' + e); Utils.toast('合并异常', 'error'); });
+            }
+        } else if (hasBoot) {
+            callback(self.bootFile);
+        } else if (hasApp) {
+            callback(self.appFile);
+        } else {
+            self.log('error', '请先选择要烧录的文件');
+            Utils.toast('请先选择要烧录的文件', 'warning');
+        }
+    },
+
+    flashJLink: function() {
+        var self = this;
+        if (self.isFlashing) {
+            Utils.toast('正在烧录中，请稍候...', 'warning');
+            return;
+        }
+        
+        var hasBoot = !!(self.bootFile && self.bootInfo);
+        var hasApp = !!(self.appFile && self.appInfo);
+        if (!hasBoot && !hasApp) {
+            Utils.toast('请先选择要烧录的文件', 'warning');
+            return;
+        }
+        
+        self.isFlashing = true;
+        self.log('info', '准备J-Link烧录...');
+        self.showProgress(true, '准备烧录...', 0);
+        
+        self.getFlashFile(function(hexFile) {
+            if (!hexFile) {
+                self.isFlashing = false;
+                self.showProgress(false);
+                return;
+            }
+            var fileName = hexFile.split(/[/\\]/).pop();
+            self.log('info', 'J-Link烧录: ' + fileName);
+            self.showProgress(true, '正在烧录: ' + fileName, 30);
+            Utils.toast('正在烧录: ' + fileName, 'info');
+            
+            var api = window.pywebview && window.pywebview.api;
+            if (!api) { 
+                self.log('error', 'API不可用'); 
+                Utils.toast('API不可用', 'error'); 
+                self.isFlashing = false;
+                self.showProgress(false);
+                return; 
+            }
+            
+            // 模拟进度
+            var progress = 30;
+            var progressTimer = setInterval(function() {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    self.showProgress(true, '正在烧录...', Math.min(90, Math.round(progress)));
+                }
+            }, 300);
+            
+            api.hex_flash_jlink(hexFile).then(function(r) {
+                clearInterval(progressTimer);
+                self.isFlashing = false;
+                
+                if (r && r.success) {
+                    self.showProgress(true, '烧录成功！', 100);
+                    self.log('success', 'J-Link烧录成功!');
+                    Utils.toast('J-Link 烧录成功！', 'success');
+                    setTimeout(function() { self.showProgress(false); }, 2000);
+                } else {
+                    self.showProgress(true, '烧录失败', 0);
+                    self.log('error', '烧录失败: ' + (r && r.error || '未知错误'));
+                    Utils.toast('烧录失败: ' + (r && r.error || '未知错误'), 'error');
+                    setTimeout(function() { self.showProgress(false); }, 3000);
+                }
+            }).catch(function(e) { 
+                clearInterval(progressTimer);
+                self.isFlashing = false;
+                self.showProgress(true, '烧录异常', 0);
+                self.log('error', '烧录异常: ' + e); 
+                Utils.toast('烧录异常', 'error'); 
+                setTimeout(function() { self.showProgress(false); }, 3000);
+            });
+        });
+    },
+
+    flashSTLink: function() {
+        var self = this;
+        if (self.isFlashing) {
+            Utils.toast('正在烧录中，请稍候...', 'warning');
+            return;
+        }
+        
+        var hasBoot = !!(self.bootFile && self.bootInfo);
+        var hasApp = !!(self.appFile && self.appInfo);
+        if (!hasBoot && !hasApp) {
+            Utils.toast('请先选择要烧录的文件', 'warning');
+            return;
+        }
+        
+        self.isFlashing = true;
+        self.log('info', '准备ST-Link烧录...');
+        self.showProgress(true, '准备烧录...', 0);
+        
+        self.getFlashFile(function(hexFile) {
+            if (!hexFile) {
+                self.isFlashing = false;
+                self.showProgress(false);
+                return;
+            }
+            var fileName = hexFile.split(/[/\\]/).pop();
+            self.log('info', 'ST-Link烧录: ' + fileName);
+            self.showProgress(true, '正在烧录: ' + fileName, 30);
+            Utils.toast('正在烧录: ' + fileName, 'info');
+            
+            var api = window.pywebview && window.pywebview.api;
+            if (!api) { 
+                self.log('error', 'API不可用'); 
+                Utils.toast('API不可用', 'error'); 
+                self.isFlashing = false;
+                self.showProgress(false);
+                return; 
+            }
+            
+            // 模拟进度
+            var progress = 30;
+            var progressTimer = setInterval(function() {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    self.showProgress(true, '正在烧录...', Math.min(90, Math.round(progress)));
+                }
+            }, 300);
+            
+            api.hex_flash_stlink(hexFile).then(function(r) {
+                clearInterval(progressTimer);
+                self.isFlashing = false;
+                
+                if (r && r.success) {
+                    self.showProgress(true, '烧录成功！', 100);
+                    self.log('success', 'ST-Link烧录成功!');
+                    Utils.toast('ST-Link 烧录成功！', 'success');
+                    setTimeout(function() { self.showProgress(false); }, 2000);
+                } else {
+                    self.showProgress(true, '烧录失败', 0);
+                    self.log('error', '烧录失败: ' + (r && r.error || '未知错误'));
+                    Utils.toast('烧录失败: ' + (r && r.error || '未知错误'), 'error');
+                    setTimeout(function() { self.showProgress(false); }, 3000);
+                }
+            }).catch(function(e) { 
+                clearInterval(progressTimer);
+                self.isFlashing = false;
+                self.showProgress(true, '烧录异常', 0);
+                self.log('error', '烧录异常: ' + e); 
+                Utils.toast('烧录异常', 'error'); 
+                setTimeout(function() { self.showProgress(false); }, 3000);
+            });
+        });
+    },
+
+    log: function(type, msg) {
+        var el = document.getElementById('hex-log');
+        if (!el) return;
+        var t = new Date().toLocaleTimeString();
+        var d = document.createElement('div');
+        d.className = 'log-entry ' + type;
+        d.textContent = '[' + t + '] ' + msg;
+        el.appendChild(d);
+        el.scrollTop = el.scrollHeight;
+        console.log('[HexMerge]', type, msg);
+    },
+
+    clearLog: function() { var el = document.getElementById('hex-log'); if (el) el.innerHTML = ''; }
+};
+</script>

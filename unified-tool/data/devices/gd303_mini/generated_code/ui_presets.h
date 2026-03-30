@@ -1,0 +1,46 @@
+/**
+ * @file    ui_presets.h
+ * @brief   界面预设定义 (自动生成)
+ * @date    2025-12-31
+ */
+
+#ifndef UI_PRESETS_H
+#define UI_PRESETS_H
+
+#include <stdint.h>
+
+/* 预设ID枚举 */
+typedef enum {
+    PRESET_BOOT_INIT = 0,
+    PRESET_UNIT_SELECT = 1,
+    PRESET_BOOT_COMPLETE = 2,
+    PRESET_SINGLE_IDLE = 3,
+    PRESET_SINGLE_LASER_ON = 4,
+    PRESET_SINGLE_RESULT = 5,
+    PRESET_CONTINUOUS_IDLE = 6,
+    PRESET_CONTINUOUS_MEASURING = 7,
+    PRESET_AREA_IDLE = 8,
+    PRESET_AREA_STEP1 = 9,
+    PRESET_AREA_STEP1_DONE = 10,
+    PRESET_AREA_STEP2 = 11,
+    PRESET_AREA_RESULT = 12,
+    PRESET_VOLUME_IDLE = 13,
+    PRESET_VOLUME_STEP1 = 14,
+    PRESET_VOLUME_STEP2 = 15,
+    PRESET_VOLUME_STEP3 = 16,
+    PRESET_VOLUME_RESULT = 17,
+    PRESET_PYTH_IDLE = 18,
+    PRESET_ERROR_DISPLAY = 19,
+    PRESET_CHARGING = 20,
+    PRESET_LOW_BATTERY = 21,
+    PRESET_BLUETOOTH_PAIRING = 22,
+    PRESET_WIFI_CONNECTING = 23,
+    PRESET_FULL_DISPLAY = 24,
+    PRESET_CLEAR_DISPLAY = 25,
+    PRESET_COUNT
+} ui_preset_id_t;
+
+/* API函数 */
+void ui_apply_preset(ui_preset_id_t preset_id);
+
+#endif /* UI_PRESETS_H */

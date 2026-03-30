@@ -1,0 +1,310 @@
+<div class="page-header">
+    <h1>📋 协议管理</h1>
+    <p class="page-desc">管理设备通信协议、命令和测试流程</p>
+</div>
+
+<div class="pm-container">
+    <!-- 机器类型选择 -->
+    <div class="pm-toolbar">
+        <label>当前机器类型:</label>
+        <select id="pm-machine-type" class="cyber-select" onchange="ProtocolPage.switchMachine(this.value)">
+            <!-- 设备列表从后端动态加载 -->
+        </select>
+        <button class="cyber-btn sm" onclick="ProtocolPage.addMachine()">➕ 新建机器</button>
+        <button class="cyber-btn sm danger" onclick="ProtocolPage.deleteMachine()">🗑️ 删除机器</button>
+        <div class="pm-toolbar-right">
+            <button class="cyber-btn sm" onclick="ProtocolPage.exportConfig()">📤 导出</button>
+            <button class="cyber-btn sm" onclick="ProtocolPage.importConfig()">📥 导入</button>
+            <button class="cyber-btn sm primary" onclick="ProtocolPage.saveAllConfig()">💾 保存</button>
+        </div>
+    </div>
+
+    <!-- 选项卡 -->
+    <div class="pm-tabs">
+        <button class="pm-tab active" data-tab="commands" onclick="ProtocolPage.switchTab('commands')">📝 命令管理</button>
+        <button class="pm-tab" data-tab="workflows" onclick="ProtocolPage.switchTab('workflows')">📋 流程管理</button>
+        <button class="pm-tab" data-tab="uitest" onclick="ProtocolPage.switchTab('uitest')">🤖 UI测试命令</button>
+        <button class="pm-tab" data-tab="params" onclick="ProtocolPage.switchTab('params')">⚡ 快捷参数</button>
+        <button class="pm-tab" data-tab="competitor" onclick="ProtocolPage.switchTab('competitor')">🧪 竞品协议</button>
+    </div>
+
+    <!-- 命令管理 -->
+    <div class="pm-content active" id="pm-tab-commands">
+        <div class="pm-action-bar">
+            <button class="cyber-btn sm primary" onclick="ProtocolPage.addCommand()">➕ 新增命令</button>
+            <span id="pm-cmd-status" style="margin-left:12px;color:var(--text-muted);font-size:12px;">加载中...</span>
+        </div>
+        <div class="pm-list" id="pm-cmd-list"></div>
+    </div>
+
+    <!-- 流程管理 -->
+    <div class="pm-content" id="pm-tab-workflows">
+        <div class="pm-action-bar">
+            <button class="cyber-btn sm primary" onclick="ProtocolPage.addWorkflow()">➕ 新增流程</button>
+            <button class="cyber-btn sm" onclick="ProtocolPage.applyTemplates()">🧩 应用模板</button>
+        </div>
+        <div class="pm-list" id="pm-wf-list"></div>
+    </div>
+
+    <!-- UI测试命令 -->
+    <div class="pm-content" id="pm-tab-uitest">
+        <div class="pm-action-bar">
+            <button class="cyber-btn sm primary" onclick="ProtocolPage.addUITestCommand()">➕ 新增命令</button>
+            <span id="pm-uitest-status" style="margin-left:12px;color:var(--text-muted);font-size:12px;">加载中...</span>
+            <button class="cyber-btn sm" onclick="ProtocolPage.refreshUITestCmds()" style="margin-left:auto">🔄 刷新</button>
+        </div>
+        <div class="pm-list" id="pm-uitest-cmd-list"></div>
+    </div>
+
+    <!-- 快捷参数 -->
+    <div class="pm-content" id="pm-tab-params">
+        <div class="pm-params-grid">
+            <div class="pm-param-group">
+                <h4>🟢 开启激光默认参数</h4>
+                <div class="pm-param-row"><label>型号</label>
+                    <select id="pm-laser-model" class="cyber-select">
+                        <option value="0">mini-30h</option><option value="1">低价两键</option><option value="2">双头</option>
+                    </select>
+                </div>
+                <div class="pm-param-row"><label>方向</label>
+                    <select id="pm-laser-dir" class="cyber-select">
+                        <option value="0">前头激光</option><option value="1">后头激光</option>
+                    </select>
+                </div>
+            </div>
+            <div class="pm-param-group">
+                <h4>🎯 标定距离默认值</h4>
+                <div class="pm-param-row"><label>位置1</label><input type="number" id="pm-cal-p1" class="cyber-input" value="5000" oninput="ProtocolPage.syncParamToSteps(1, this.value)"> mm</div>
+                <div class="pm-param-row"><label>位置2</label><input type="number" id="pm-cal-p2" class="cyber-input" value="20000" oninput="ProtocolPage.syncParamToSteps(2, this.value)"> mm</div>
+                <div class="pm-param-row"><label>位置3</label><input type="number" id="pm-cal-p3" class="cyber-input" value="25000" oninput="ProtocolPage.syncParamToSteps(3, this.value)"> mm</div>
+            </div>
+            <div class="pm-param-group">
+                <h4>🛞 滑台位置默认值</h4>
+                <div class="pm-param-row"><label>位置1</label><input type="number" id="pm-slipway-p1" class="cyber-input" value="5000" oninput="ProtocolPage.syncSlipwayParamToSteps(1, this.value)"> mm</div>
+                <div class="pm-param-row"><label>位置2</label><input type="number" id="pm-slipway-p2" class="cyber-input" value="20000" oninput="ProtocolPage.syncSlipwayParamToSteps(2, this.value)"> mm</div>
+                <div class="pm-param-row"><label>位置3</label><input type="number" id="pm-slipway-p3" class="cyber-input" value="25000" oninput="ProtocolPage.syncSlipwayParamToSteps(3, this.value)"> mm</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 竞品协议库（Profile） -->
+    <div class="pm-content" id="pm-tab-competitor">
+        <div class="pm-action-bar" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button class="cyber-btn sm primary" onclick="ProtocolPage.compCreate()">➕ 新建Profile</button>
+            <button class="cyber-btn sm danger" onclick="ProtocolPage.compDelete()">🗑️ 删除</button>
+            <button class="cyber-btn sm" onclick="ProtocolPage.compReload()">🔄 刷新</button>
+            <button class="cyber-btn sm primary" onclick="ProtocolPage.compSave()">💾 保存</button>
+            <button class="cyber-btn sm" onclick="ProtocolPage.compApplyToStation()" title="写入当前工位 tool_profile.measure = competitor_profile">📌 绑定到当前工位测距</button>
+            <button class="cyber-btn sm" onclick="ProtocolPage.compMeasureOnce()">📏 测距一次</button>
+            <span id="pm-comp-status" style="margin-left:auto;color:var(--text-muted);font-size:12px;">加载中...</span>
+        </div>
+        <div class="pm-comp-grid">
+            <div class="pm-comp-left">
+                <div class="pm-form-group">
+                    <label>选择Profile</label>
+                    <select id="pm-comp-select" class="cyber-select" onchange="ProtocolPage.compSwitch(this.value)"></select>
+                </div>
+                <div class="pm-preview-box" style="margin-top:10px;">
+                    <div style="font-size:12px; color: var(--text-muted); line-height:1.6;">
+                        说明：这里是“竞品协议库”，用于配置化管理不同竞品的测距协议与控制命令。滑台测试/工具栏会引用 Profile 实现共用。
+                    </div>
+                </div>
+                <div class="pm-preview-box" style="margin-top:10px;">
+                    <div class="pm-form-group">
+                        <label>控制命令（发送ASCII，自动加\\r\\n）</label>
+                        <div style="display:flex; gap:8px;">
+                            <input id="pm-comp-send" class="cyber-input" type="text" placeholder="例如: iLD:1 / iGET:4 / 其他竞品命令">
+                            <button class="cyber-btn sm" onclick="ProtocolPage.compSend()">发送</button>
+                        </div>
+                    </div>
+                    <div id="pm-comp-controls" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
+                </div>
+            </div>
+            <div class="pm-comp-right">
+                <div class="pm-form-group">
+                    <label>Profile JSON（kind: l1_ascii / custom_ascii / custom_fixed_frame / modbus_rtu）</label>
+                    <textarea id="pm-comp-json" class="pm-comp-json" spellcheck="false"></textarea>
+                </div>
+                <div class="pm-preview-box" style="margin-top:10px;">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <span class="pm-preview-row"><span class="label">测距结果</span></span>
+                        <span id="pm-comp-measure-result" style="font-family: monospace; font-size: 12px; opacity: .9;">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 命令编辑弹窗 -->
+<div class="pm-modal" id="pm-cmd-modal" style="display:none">
+    <div class="pm-modal-card">
+        <div class="pm-modal-header">
+            <span id="pm-cmd-title">编辑命令</span>
+            <button class="close-btn" onclick="ProtocolPage.closeCmdEdit()">×</button>
+        </div>
+        <div class="pm-modal-body">
+            <div class="pm-form-row">
+                <div class="pm-form-group"><label>命令名称</label><input type="text" id="pm-cmd-name" class="cyber-input"></div>
+                <div class="pm-form-group"><label>命令码</label><input type="text" id="pm-cmd-code" class="cyber-input" placeholder="F0"></div>
+                <div class="pm-form-group"><label>图标</label>
+                    <select id="pm-cmd-icon" class="cyber-select">
+                        <option value="🟢">🟢 开启</option><option value="🔴">🔴 关闭</option>
+                        <option value="🎯">🎯 标定</option><option value="📏">📏 测量</option>
+                        <option value="💡">💡 闪烁</option><option value="📌">📌 其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="pm-form-row">
+                <div class="pm-form-group"><label>超时(ms)</label><input type="number" id="pm-cmd-timeout" class="cyber-input" value="500"></div>
+                <div class="pm-form-group"><label>重试次数</label><input type="number" id="pm-cmd-retry" class="cyber-input" value="3"></div>
+            </div>
+            <h4>📤 发送参数</h4>
+            <div class="pm-param-table" id="pm-send-params"></div>
+            <button class="cyber-btn sm" onclick="ProtocolPage.addSendParam()">➕ 添加</button>
+            <h4>📥 接收解析</h4>
+            <div class="pm-param-table" id="pm-recv-params"></div>
+            <button class="cyber-btn sm" onclick="ProtocolPage.addRecvParam()">➕ 添加</button>
+            
+            <!-- 命令预览区 -->
+            <div class="pm-preview-section">
+                <h4>📡 命令预览 <button class="cyber-btn sm" onclick="ProtocolPage.refreshCmdPreview()">🔄 刷新</button></h4>
+                <div class="pm-preview-box">
+                    <div class="pm-preview-row">
+                        <span class="label">发送帧:</span>
+                        <code id="pm-preview-tx" class="hex-code">--</code>
+                    </div>
+                    <div class="pm-preview-row">
+                        <span class="label">帧长度:</span>
+                        <span id="pm-preview-len">--</span>
+                    </div>
+                </div>
+                <h4>📋 响应解析示例</h4>
+                <div class="pm-preview-box">
+                    <div class="pm-preview-row">
+                        <span class="label">示例响应:</span>
+                        <input type="text" id="pm-preview-rx-input" class="cyber-input" placeholder="粘贴响应HEX..." style="flex:1" onchange="ProtocolPage.parsePreviewResponse()">
+                    </div>
+                    <div id="pm-preview-rx-result" class="pm-parse-result"></div>
+                </div>
+            </div>
+        </div>
+        <div class="pm-modal-footer">
+            <button class="cyber-btn danger" id="pm-cmd-delete" onclick="ProtocolPage.deleteCommand()">🗑️ 删除</button>
+            <button class="cyber-btn" onclick="ProtocolPage.closeCmdEdit()">取消</button>
+            <button class="cyber-btn primary" onclick="ProtocolPage.saveCmdEdit()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 流程编辑弹窗 -->
+<div class="pm-modal" id="pm-wf-modal" style="display:none">
+    <div class="pm-modal-card">
+        <div class="pm-modal-header">
+            <span id="pm-wf-title">编辑流程</span>
+            <button class="close-btn" onclick="ProtocolPage.closeWfEdit()">×</button>
+        </div>
+        <div class="pm-modal-body">
+            <div class="pm-form-row">
+                <div class="pm-form-group"><label>流程名称</label><input type="text" id="pm-wf-name" class="cyber-input"></div>
+                <div class="pm-form-group"><label>图标</label><input type="text" id="pm-wf-icon" class="cyber-input" value="🎯"></div>
+            </div>
+            <div class="pm-form-group"><label>描述</label><input type="text" id="pm-wf-desc" class="cyber-input"></div>
+            <h4>流程步骤</h4>
+            <div class="pm-step-list" id="pm-wf-steps"></div>
+            <button class="cyber-btn sm" onclick="ProtocolPage.addWfStep()">➕ 添加步骤</button>
+        </div>
+        <div class="pm-modal-footer">
+            <button class="cyber-btn danger" id="pm-wf-delete" onclick="ProtocolPage.deleteWorkflow()">🗑️ 删除</button>
+            <button class="cyber-btn" onclick="ProtocolPage.closeWfEdit()">取消</button>
+            <button class="cyber-btn primary" onclick="ProtocolPage.saveWfEdit()">保存</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.pm-container { padding: 20px; }
+.pm-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px; background: var(--card-bg); border-radius: 8px; }
+.pm-toolbar label { color: var(--text-muted); font-size: 13px; }
+.pm-toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+.pm-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.pm-tab { padding: 10px 20px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px 6px 0 0; cursor: pointer; color: var(--text-muted); transition: all 0.2s; }
+.pm-tab:hover { color: var(--text-color); }
+.pm-tab.active { background: var(--input-bg); color: var(--accent); border-bottom-color: var(--input-bg); }
+.pm-content { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0 8px 8px 8px; padding: 16px; height: calc(100vh - 320px); overflow: hidden; }
+.pm-content.active { display: flex; flex-direction: column; }
+.pm-action-bar { margin-bottom: 12px; flex-shrink: 0; }
+.pm-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
+.pm-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--input-bg); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+.pm-item:hover { background: rgba(0,255,136,0.1); }
+.pm-item .icon { font-size: 20px; }
+.pm-item .info { flex: 1; }
+.pm-item .name { font-weight: 500; color: var(--text-color); }
+.pm-item .meta { font-size: 11px; color: var(--text-muted); }
+.pm-item .code { font-family: monospace; background: var(--card-bg); padding: 2px 8px; border-radius: 4px; color: var(--accent); }
+.pm-params-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.pm-param-group { background: var(--input-bg); padding: 16px; border-radius: 8px; }
+.pm-param-group h4 { margin: 0 0 12px; color: var(--accent); }
+.pm-param-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.pm-param-row label { width: 60px; color: var(--text-muted); font-size: 12px; }
+.pm-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.pm-modal-card { background: var(--sidebar-bg); border: 1px solid var(--border-color); border-radius: 12px; width: 600px; max-height: 80vh; overflow: hidden; }
+.pm-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-color); }
+.pm-modal-header span { font-size: 16px; font-weight: 600; }
+.pm-modal-body { padding: 16px; overflow-y: auto; max-height: 60vh; }
+.pm-modal-body h4 { margin: 16px 0 8px; color: var(--accent); font-size: 13px; }
+.pm-modal-footer { display: flex; gap: 8px; padding: 16px; border-top: 1px solid var(--border-color); justify-content: flex-end; }
+.pm-modal-footer .danger { margin-right: auto; }
+.pm-form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.pm-form-group { flex: 1; }
+.pm-form-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.pm-param-table { border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; }
+.pm-param-table .row { display: flex; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.pm-param-table .row:last-child { border-bottom: none; }
+.pm-param-table .row input, .pm-param-table .row select { flex: 1; }
+.pm-param-table .header { background: var(--input-bg); font-size: 11px; color: var(--text-muted); }
+.pm-step-list { border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; min-height: 100px; }
+.pm-step { display: flex; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.pm-step:last-child { border-bottom: none; }
+.close-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+.close-btn:hover { color: var(--text-color); }
+.cyber-btn { padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; color: var(--text-color); cursor: pointer; transition: all 0.2s; }
+.cyber-btn:hover { border-color: var(--accent); }
+.cyber-btn.sm { padding: 6px 12px; font-size: 12px; }
+.cyber-btn.primary { background: var(--accent); color: var(--text-on-accent); border-color: var(--accent); }
+.cyber-btn.danger { border-color: var(--color-danger, #ff6b6b); color: var(--color-danger, #ff6b6b); }
+.cyber-btn.danger:hover { background: color-mix(in srgb, var(--color-danger, #ff6b6b) 15%, transparent); }
+.cyber-input, .cyber-select { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--text-color); width: 100%; }
+/* 命令预览区样式 */
+.pm-preview-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+.pm-preview-section h4 { display: flex; align-items: center; gap: 8px; }
+.pm-preview-box { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.pm-preview-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.pm-preview-row:last-child { margin-bottom: 0; }
+.pm-preview-row .label { color: var(--text-muted); font-size: 12px; min-width: 70px; }
+.hex-code { font-family: 'Consolas', monospace; background: rgba(0,255,136,0.1); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 13px; word-break: break-all; }
+.pm-parse-result { margin-top: 8px; }
+.pm-parse-result .frame-info { font-size: 11px; color: var(--accent); padding: 4px 8px; margin-bottom: 6px; background: rgba(0,255,136,0.1); border-radius: 4px; }
+.pm-parse-result .field { display: grid; grid-template-columns: 35px 1fr 80px auto; gap: 8px; padding: 6px 8px; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 4px; font-size: 12px; align-items: center; }
+.pm-parse-result .field .byte-info { color: var(--accent); font-family: monospace; font-size: 11px; }
+.pm-parse-result .field .name { color: var(--text-muted); }
+.pm-parse-result .field .raw { color: #888; font-family: monospace; font-size: 11px; }
+.pm-parse-result .field .value { color: var(--accent); font-family: monospace; text-align: right; }
+.pm-parse-result .error { color: #ff6b6b; font-size: 12px; }
+/* 字节位置标识 */
+.byte-pos { font-family: monospace; font-size: 11px; color: var(--accent); min-width: 30px; }
+.pm-param-table .row { grid-template-columns: 35px 1fr 100px 1fr 60px 30px; }
+/* 默认流程样式 */
+.pm-item.is-default { border: 1px solid var(--accent); background: rgba(0,255,136,0.05); }
+.default-badge { font-size: 10px; background: var(--accent); color: var(--text-on-accent); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+
+/* 竞品协议 */
+.pm-comp-grid { display: grid; grid-template-columns: 360px 1fr; gap: 12px; height: 100%; overflow: hidden; }
+.pm-comp-left { overflow: auto; padding-right: 4px; }
+.pm-comp-right { overflow: hidden; display: flex; flex-direction: column; }
+.pm-comp-json { width: 100%; height: calc(100vh - 430px); min-height: 280px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; line-height: 1.55; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; resize: none; }
+@media (max-width: 1100px) {
+  .pm-comp-grid { grid-template-columns: 1fr; }
+  .pm-comp-json { height: 300px; }
+}
+</style>

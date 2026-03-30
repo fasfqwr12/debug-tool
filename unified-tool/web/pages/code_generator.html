@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码生成器 - GreenLaser Tool</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <style>
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success:hover { background: #1e7e34; }
+        .file-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin: 20px 0; }
+        .file-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; }
+        .file-card h4 { margin: 0 0 10px 0; color: #333; font-family: monospace; }
+        .file-card .stats { color: #666; font-size: 12px; margin-bottom: 10px; }
+        .file-card pre { background: #282c34; color: #abb2bf; padding: 10px; border-radius: 4px; 
+                         max-height: 200px; overflow: auto; font-size: 12px; margin: 0; }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #cce5ff; color: #004085; }
+        .actions { display: flex; gap: 10px; margin-top: 10px; }
+        .device-select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 C代码生成器</h1>
+            <div>
+                <select id="deviceSelect" class="device-select">
+                    <option value="gd303_mini">GD303-MINI</option>
+                </select>
+                <select id="versionSelect" class="device-select">
+                    <option value="v5" selected>V5 (配置驱动)</option>
+                    <option value="v4">V4 (依赖分析)</option>
+                    <option value="v2">V2 (基础版)</option>
+                </select>
+                <button class="btn btn-primary" onclick="generateCode()">生成代码</button>
+                <button class="btn btn-success" onclick="downloadZip()" id="downloadBtn" disabled>下载ZIP</button>
+            </div>
+        </div>
+        
+        <div id="status" class="status info">点击"生成代码"按钮开始</div>
+        
+        <div id="fileList" class="file-list"></div>
+    </div>
+
+    <script src="../js/code_generator.js"></script>
+    <script src="../js/code_generator_v2.js"></script>
+    <script src="../js/code_generator_v4.js"></script>
+    <script src="../js/formula_compiler.js"></script>
+    <script src="../js/builtin_functions.js"></script>
+    <script src="../js/function_engine.js"></script>
+    <script src="../js/code_generator_v5.js"></script>
+    <script>
+        let generatedFiles = {};
+        let currentVersion = 'v5'; // 默认使用V5
+        
+        async function loadConfig(deviceId, filename) {
+            try {
+                const resp = await fetch(`/api/dm/config/load?device_id=${deviceId}&type=${filename}`);
+                const data = await resp.json();
+                return data.success ? data.data : null;
+            } catch (e) {
+                console.error(`加载 ${filename} 失败:`, e);
+                return null;
+            }
+        }
+        
+        async function generateCode() {
+            const deviceId = document.getElementById('deviceSelect').value;
+            const version = document.getElementById('versionSelect')?.value || 'v5';
+            const statusEl = document.getElementById('status');
+            const fileListEl = document.getElementById('fileList');
+            
+            statusEl.className = 'status info';
+            statusEl.textContent = `正在加载配置... (使用 ${version.toUpperCase()})`;
+            fileListEl.innerHTML = '';
+            
+            try {
+                // 加载所有配置 (V5需要额外加载 macros, modes, functions)
+                const configs = await Promise.all([
+                    loadConfig(deviceId, 'lcd'),
+                    loadConfig(deviceId, 'components'),
+                    loadConfig(deviceId, 'presets'),
+                    loadConfig(deviceId, 'animations'),
+                    loadConfig(deviceId, 'ui'),
+                    loadConfig(deviceId, 'variables'),
+                    loadConfig(deviceId, 'macros'),
+                    loadConfig(deviceId, 'flow'),
+                    loadConfig(deviceId, 'functions')
+                ]);
+                
+                const [lcdProject, components, presets, animations, stateMachine, variables, macros, modes, functions] = configs;
+                
+                statusEl.textContent = '正在生成代码...';
+                
+                // 调用代码生成器
+                const projectData = { 
+                    lcdProject, components, presets, animations, stateMachine, 
+                    variables, macros, modes, functions 
+                };
+                
+                // 根据版本选择生成器
+                let generator;
+                switch (version) {
+                    case 'v2':
+                        generator = window.CodeGeneratorV2;
+                        break;
+                    case 'v4':
+                        generator = window.CodeGeneratorV4;
+                        break;
+                    case 'v5':
+                    default:
+                        generator = window.CodeGeneratorV5;
+                        break;
+                }
+                
+                generatedFiles = await generator.generateAll(projectData);
+                
+                // 显示文件列表
+                let totalLines = 0;
+                let totalBytes = 0;
+                
+                for (const [filename, content] of Object.entries(generatedFiles)) {
+                    if (!content) continue;
+                    
+                    const lines = content.split('\n').length;
+                    const bytes = new Blob([content]).size;
+                    totalLines += lines;
+                    totalBytes += bytes;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    card.innerHTML = `
+                        <h4>${filename}</h4>
+                        <div class="stats">${lines} 行 | ${bytes} 字节</div>
+                        <pre>${escapeHtml(content.substring(0, 500))}${content.length > 500 ? '\n...' : ''}</pre>
+                        <div class="actions">
+                            <button class="btn btn-primary" onclick="copyFile('${filename}')">复制</button>
+                            <button class="btn btn-success" onclick="downloadFile('${filename}')">下载</button>
+                        </div>
+                    `;
+                    fileListEl.appendChild(card);
+                }
+                
+                statusEl.className = 'status success';
+                statusEl.textContent = `生成完成！共 ${Object.keys(generatedFiles).length} 个文件，${totalLines} 行，${(totalBytes/1024).toFixed(1)} KB，正在下载...`;
+                document.getElementById('downloadBtn').disabled = false;
+                
+                // 自动下载ZIP
+                await downloadZip();
+                
+            } catch (e) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '生成失败: ' + e.message;
+                console.error(e);
+            }
+        }
+        
+        function escapeHtml(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        
+        function copyFile(filename) {
+            navigator.clipboard.writeText(generatedFiles[filename]);
+            alert(`已复制 ${filename} 到剪贴板`);
+        }
+        
+        function downloadFile(filename) {
+            const content = generatedFiles[filename];
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        async function downloadZip() {
+            const deviceId = document.getElementById('deviceSelect').value;
+            const zip = new JSZip();
+            
+            for (const [filename, content] of Object.entries(generatedFiles)) {
+                if (content) {
+                    zip.file(filename, content);
+                }
+            }
+            
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${deviceId}_generated_code.zip`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

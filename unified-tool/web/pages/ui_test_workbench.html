@@ -1,0 +1,463 @@
+<!-- UI自动化测试工作台 - 整合全部工具：段码映射/LCD模拟/动作库/用例编辑/执行测试/报告 -->
+<div class="workbench-container">
+    <!-- 顶部工具栏 -->
+    <div class="wb-toolbar">
+        <div class="wb-toolbar-left">
+            <h1>🔬 UI自动化测试工作台</h1>
+            <div id="wb-device-selector" class="device-selector-container"></div>
+            <span class="wb-status" id="wb-serial-status">⚪ 未连接</span>
+        </div>
+        <div class="wb-toolbar-right">
+            <button class="wb-btn" onclick="UITestWorkbench.save()">💾 保存</button>
+            <button class="wb-btn" onclick="UITestWorkbench.showHelp()">❓ 帮助</button>
+        </div>
+    </div>
+
+    <!-- Tab 导航 - 6个完整Tab -->
+    <div class="wb-tabs">
+        <button class="wb-tab" data-tab="segment" onclick="UITestWorkbench.switchTab('segment')">
+            <span class="tab-icon">🎨</span><span class="tab-text">段码映射</span>
+        </button>
+        <button class="wb-tab" data-tab="lcd" onclick="UITestWorkbench.switchTab('lcd')">
+            <span class="tab-icon">📺</span><span class="tab-text">LCD模拟</span>
+        </button>
+        <button class="wb-tab" data-tab="actions" onclick="UITestWorkbench.switchTab('actions')">
+            <span class="tab-icon">⚡</span><span class="tab-text">动作库</span>
+            <span class="tab-badge" id="badge-actions">0</span>
+        </button>
+        <button class="wb-tab active" data-tab="cases" onclick="UITestWorkbench.switchTab('cases')">
+            <span class="tab-icon">📝</span><span class="tab-text">用例编辑</span>
+            <span class="tab-badge" id="badge-cases">0</span>
+        </button>
+        <button class="wb-tab" data-tab="execute" onclick="UITestWorkbench.switchTab('execute')">
+            <span class="tab-icon">▶️</span><span class="tab-text">执行测试</span>
+        </button>
+        <button class="wb-tab" data-tab="report" onclick="UITestWorkbench.switchTab('report')">
+            <span class="tab-icon">📊</span><span class="tab-text">测试报告</span>
+        </button>
+    </div>
+
+    <!-- Tab 内容区 -->
+    <div class="wb-content">
+        <!-- Tab 1: 段码映射 (嵌入段码编辑器) -->
+        <div class="wb-panel" id="panel-segment" style="display:none;">
+            <div class="embed-container" id="embed-segment">
+                <div class="embed-loading">加载段码编辑器...</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: LCD模拟 (嵌入LCD模拟器) -->
+        <div class="wb-panel" id="panel-lcd" style="display:none;">
+            <div class="embed-container" id="embed-lcd">
+                <div class="embed-loading">加载LCD模拟器...</div>
+            </div>
+        </div>
+
+        <!-- Tab 3: 动作库 -->
+        <div class="wb-panel" id="panel-actions" style="display:none;">
+            <div class="panel-split-3">
+                <div class="panel-col">
+                    <div class="panel-header">
+                        <span>动作分类</span>
+                        <button class="mini-btn" onclick="UITestWorkbench.addActionCategory()">➕</button>
+                    </div>
+                    <div class="scroll-list" id="action-categories"></div>
+                </div>
+                <div class="panel-col">
+                    <div class="panel-header">
+                        <span id="action-list-title">动作列表</span>
+                        <button class="mini-btn" onclick="UITestWorkbench.addAction()">➕</button>
+                    </div>
+                    <div class="scroll-list" id="action-list"></div>
+                </div>
+                <div class="panel-col" style="flex:1.5;">
+                    <div class="panel-header"><span>动作编辑</span></div>
+                    <div class="scroll-content" id="action-editor">
+                        <div class="empty-hint">👈 选择动作编辑</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: 用例编辑 -->
+        <div class="wb-panel" id="panel-cases">
+            <div class="panel-split-3">
+                <div class="panel-col">
+                    <div class="panel-header">
+                        <span>测试用例</span>
+                        <button class="mini-btn" onclick="UITestWorkbench.addCategory()">➕</button>
+                    </div>
+                    <div class="scroll-list" id="case-tree"></div>
+                </div>
+                <div class="panel-col" style="flex:2;">
+                    <div class="panel-header">
+                        <span id="case-editor-title">选择用例</span>
+                        <div class="view-toggle">
+                            <button class="toggle-btn active" onclick="UITestWorkbench.switchCaseView('visual')">可视化</button>
+                            <button class="toggle-btn" onclick="UITestWorkbench.switchCaseView('code')">代码</button>
+                        </div>
+                    </div>
+                    <div class="scroll-content" id="case-editor">
+                        <div class="empty-hint">👈 选择或创建测试用例</div>
+                    </div>
+                </div>
+                <div class="panel-col">
+                    <div class="panel-header"><span>快速参考</span></div>
+                    <div class="scroll-content" id="quick-ref"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: 执行测试 -->
+        <div class="wb-panel" id="panel-execute" style="display:none;">
+            <div class="execute-layout">
+                <div class="exec-col exec-left">
+                    <div class="panel-header">
+                        <span>测试分组</span>
+                        <label class="check-all"><input type="checkbox" id="wb-check-all" onchange="UITestWorkbench.toggleAll()"> 全选</label>
+                    </div>
+                    <div class="scroll-list" id="exec-group-list"></div>
+                    <div class="panel-header"><span>测试项</span></div>
+                    <div class="scroll-list" id="exec-item-list"></div>
+                </div>
+                <div class="exec-col exec-center">
+                    <div class="panel-header">
+                        <span>LCD 显示</span>
+                        <div class="zoom-btns">
+                            <button class="mini-btn" onclick="UITestWorkbench.zoomLcd(-0.1)">➖</button>
+                            <button class="mini-btn" onclick="UITestWorkbench.zoomLcd(0.1)">➕</button>
+                        </div>
+                    </div>
+                    <div class="lcd-box"><canvas id="wb-lcd-canvas"></canvas></div>
+                    <div class="panel-header"><span>设备状态</span></div>
+                    <div class="status-grid" id="wb-device-status"></div>
+                    <div class="panel-header"><span>手动控制</span></div>
+                    <div class="ctrl-grid" id="wb-manual-ctrl"></div>
+                </div>
+                <div class="exec-col exec-right">
+                    <div class="panel-header"><span>执行控制</span></div>
+                    <div class="exec-btns">
+                        <button class="wb-btn primary" onclick="UITestWorkbench.runSelected()">▶ 运行选中</button>
+                        <button class="wb-btn primary" onclick="UITestWorkbench.runAll()">▶▶ 全部</button>
+                        <button class="wb-btn danger" onclick="UITestWorkbench.stop()" id="wb-btn-stop" disabled>⏹ 停止</button>
+                    </div>
+                    <div class="exec-progress" id="wb-exec-progress"></div>
+                    <div class="panel-header"><span>执行日志</span></div>
+                    <div class="exec-log" id="wb-exec-log"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 6: 测试报告 -->
+        <div class="wb-panel" id="panel-report" style="display:none;">
+            <div class="report-layout">
+                <div class="report-col report-left">
+                    <div class="panel-header">
+                        <span>历史报告</span>
+                        <button class="mini-btn" onclick="UITestWorkbench.refreshReports()">🔄</button>
+                    </div>
+                    <div class="scroll-list" id="report-list"></div>
+                </div>
+                <div class="report-col report-main">
+                    <div class="panel-header">
+                        <span id="report-title">当前测试结果</span>
+                        <button class="wb-btn" onclick="UITestWorkbench.exportReport()">📄 导出HTML</button>
+                    </div>
+                    <div class="report-summary" id="report-summary">
+                        <div class="empty-hint">运行测试后显示结果</div>
+                    </div>
+                    <div class="report-detail" id="report-detail"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部状态栏 -->
+    <div class="wb-statusbar">
+        <span id="wb-status">就绪</span>
+        <span class="wb-statusbar-right">
+            <span id="wb-device-name">设备: -</span>
+            <span id="wb-modified"></span>
+        </span>
+    </div>
+</div>
+
+<style>
+/* 基础布局 */
+.workbench-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--topbar-h, 32px) - 40px);
+    background: var(--bg-primary);
+}
+
+/* 工具栏 */
+.wb-toolbar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.wb-toolbar-left, .wb-toolbar-right { display: flex; align-items: center; gap: 12px; }
+.wb-toolbar h1 { font-size: 14px; font-weight: 600; margin: 0; }
+.wb-status { font-size: 11px; color: var(--text-muted); padding: 3px 8px; background: var(--bg-tertiary); border-radius: 4px; }
+.wb-status.connected { color: var(--accent-color); }
+
+/* Tab 导航 */
+.wb-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 6px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.wb-tab {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px 6px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.wb-tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.wb-tab.active {
+    background: var(--bg-primary);
+    color: var(--accent-color);
+    border-color: var(--border-color);
+    border-bottom-color: var(--bg-primary);
+    font-weight: 600;
+}
+.wb-tab .tab-icon { font-size: 14px; }
+.wb-tab .tab-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    color: var(--text-muted);
+}
+.wb-tab.active .tab-badge { background: var(--accent-color); color: #000; }
+
+/* 内容区 */
+.wb-content { flex: 1; overflow: hidden; padding: 10px; }
+.wb-panel { height: 100%; }
+
+/* 嵌入容器 */
+.embed-container { height: 100%; overflow: hidden; border-radius: 8px; background: var(--bg-secondary); display: flex; flex-direction: column; }
+.embed-container iframe { flex: 1; }
+.embed-loading { padding: 60px; text-align: center; color: var(--text-muted); }
+.embed-hint { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 6px 12px; background: var(--bg-tertiary); border-top: 1px solid var(--border-color);
+    font-size: 10px; color: var(--text-muted); flex-shrink: 0;
+}
+.embed-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 40px;
+}
+.embed-placeholder .placeholder-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+.embed-placeholder h3 {
+    font-size: 20px;
+    margin: 0 0 8px;
+    color: var(--text-primary);
+}
+.embed-placeholder p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+}
+.embed-placeholder .wb-btn {
+    margin-top: 8px;
+}
+
+/* 三栏布局 */
+.panel-split-3 {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+}
+.panel-col {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 180px;
+}
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+.scroll-list, .scroll-content { flex: 1; overflow-y: auto; padding: 8px; }
+.mini-btn {
+    padding: 3px 6px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-size: 10px;
+    cursor: pointer;
+}
+.mini-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+.empty-hint { padding: 30px 15px; text-align: center; color: var(--text-muted); font-size: 11px; }
+
+/* 按钮 */
+.wb-btn {
+    padding: 5px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    color: var(--text-primary);
+    font-size: 11px;
+    cursor: pointer;
+}
+.wb-btn:hover { border-color: var(--accent-color); }
+.wb-btn.primary { background: var(--accent-color); border-color: var(--accent-color); color: #000; }
+.wb-btn.danger { border-color: #ff6b6b; color: #ff6b6b; }
+.wb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 视图切换 */
+.view-toggle { display: flex; background: var(--bg-primary); border-radius: 4px; padding: 2px; }
+.toggle-btn {
+    padding: 3px 8px;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    color: var(--text-muted);
+    font-size: 10px;
+    cursor: pointer;
+}
+.toggle-btn.active { background: var(--accent-color); color: #000; }
+
+/* 列表项 */
+.list-item {
+    padding: 7px 9px;
+    margin-bottom: 3px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+}
+.list-item:hover { border-color: var(--accent-color); }
+.list-item.active { border-color: var(--accent-color); background: rgba(34,197,94,0.1); }
+.list-item .item-name { font-weight: 500; }
+.list-item .item-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+</style>
+
+<style>
+/* 执行测试布局 */
+.execute-layout {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+}
+.exec-col {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.exec-left { width: 200px; flex-shrink: 0; }
+.exec-center { flex: 1; min-width: 300px; }
+.exec-right { width: 280px; flex-shrink: 0; }
+.check-all { font-size: 10px; color: var(--text-muted); }
+.zoom-btns { display: flex; gap: 3px; }
+.lcd-box {
+    padding: 12px;
+    background: linear-gradient(145deg, #0d1117, #161b22);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 160px;
+}
+.lcd-box canvas { border: 2px solid #2a3a4a; border-radius: 5px; }
+.status-grid, .ctrl-grid { padding: 8px; font-size: 10px; }
+.status-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid var(--border-color); }
+.status-row:last-child { border-bottom: none; }
+.exec-btns { display: flex; gap: 6px; padding: 8px; flex-wrap: wrap; }
+.exec-progress { padding: 6px 10px; font-size: 11px; color: var(--text-muted); }
+.exec-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+    font-family: monospace;
+    font-size: 10px;
+    background: var(--bg-tertiary);
+    margin: 6px;
+    border-radius: 5px;
+}
+
+/* 报告布局 */
+.report-layout {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+}
+.report-col {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.report-left { width: 220px; flex-shrink: 0; }
+.report-main { flex: 1; }
+.report-summary { padding: 12px; }
+.report-detail { flex: 1; overflow-y: auto; padding: 10px; }
+
+/* 状态栏 */
+.wb-statusbar {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.wb-statusbar-right { margin-left: auto; display: flex; gap: 14px; }
+
+/* 表单 */
+.form-group { margin-bottom: 10px; }
+.form-group label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px; }
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 5px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 11px;
+}
+</style>

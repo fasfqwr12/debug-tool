@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI 风格工坊 - 高密度布局变体</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ================= CSS 变量定义 (核心架构) ================= */
+        :root {
+            /* 默认 H1: 泰坦黑 (Titan Black) - 专业、深沉、高对比度 */
+            --bg-body: #000000;
+            --bg-app: #0f0f0f;
+            --bg-panel: #181818;
+            --bg-header: #141414;
+            --bg-input: #252525;
+            
+            --border-color: #333333;
+            --border-highlight: #444444;
+            
+            --text-main: #e0e0e0;
+            --text-dim: #888888;
+            --text-bright: #ffffff;
+            
+            --accent-primary: #00bcd4;  /* 科技蓝 */
+            --accent-hover: #26c6da;
+            --accent-active: #00acc1;
+            --accent-text: #000000;
+            
+            --status-ok: #00e676;
+            --status-warn: #ff9800;
+            --status-err: #ff1744;
+            --status-info: #2979ff;
+            
+            --font-family: 'Segoe UI', 'Roboto Mono', Consolas, monospace;
+            --radius-sm: 2px;
+            --radius-md: 4px;
+            
+            --shadow-panel: 0 1px 3px rgba(0,0,0,0.5);
+            --glow-text: none;
+            --glow-box: none;
+        }
+
+        /* H2: 深海蓝 (Deep Sea) - 工业、稳重、蓝色系 */
+        [data-theme="h2"] {
+            --bg-body: #000c17;
+            --bg-app: #001529;
+            --bg-panel: #002140;
+            --bg-header: #001529;
+            --bg-input: #003a70;
+            
+            --border-color: #004d99;
+            --border-highlight: #1890ff;
+            
+            --text-main: #d6e4ff;
+            --text-dim: #69c0ff;
+            --text-bright: #ffffff;
+            
+            --accent-primary: #1890ff;
+            --accent-hover: #40a9ff;
+            --accent-active: #096dd9;
+            --accent-text: #ffffff;
+            
+            --status-ok: #52c41a;
+            --status-warn: #faad14;
+            --status-err: #f5222d;
+            
+            --shadow-panel: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* H3: 赛博霓虹 (Cyber Neon) - 激进、高对比、发光、透明感 */
+        [data-theme="h3"] {
+            --bg-body: #050510;
+            --bg-app: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #050510 100%);
+            --bg-panel: rgba(20, 20, 40, 0.7);
+            --bg-header: rgba(10, 10, 20, 0.9);
+            --bg-input: rgba(0, 255, 255, 0.05);
+            
+            --border-color: rgba(0, 255, 255, 0.3);
+            --border-highlight: #00ffff;
+            
+            --text-main: #e0f7fa;
+            --text-dim: #5c7c8a;
+            --text-bright: #00ffff;
+            
+            --accent-primary: #ff00ff;
+            --accent-hover: #ff40ff;
+            --accent-active: #d500d5;
+            --accent-text: #ffffff;
+            
+            --status-ok: #00ff00;
+            --status-warn: #ffff00;
+            --status-err: #ff0055;
+            
+            --font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            --radius-sm: 0px;
+            --radius-md: 0px;
+            
+            --glow-text: 0 0 5px currentColor;
+            --glow-box: 0 0 10px rgba(0, 255, 255, 0.1), inset 0 0 20px rgba(0, 255, 255, 0.05);
+        }
+
+        /* H4: 虚幻紫 (Unreal Purple) - 梦幻、现代、渐变 */
+        [data-theme="h4"] {
+            --bg-body: #130f24;
+            --bg-app: #19152e;
+            --bg-panel: #231e3d;
+            --bg-header: #130f24;
+            --bg-input: #2d264f;
+            
+            --border-color: #3d346b;
+            --border-highlight: #7c4dff;
+            
+            --text-main: #e2d9ff;
+            --text-dim: #8b80b6;
+            --text-bright: #ffffff;
+            
+            --accent-primary: #7c4dff;
+            --accent-hover: #9e75ff;
+            --accent-active: #651fff;
+            --accent-text: #ffffff;
+            
+            --status-ok: #00e5ff;
+            --status-warn: #ff9100;
+            --status-err: #ff4081;
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --shadow-panel: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        /* H5: 机械白 (Mech White) - 实验室、高亮、清爽 */
+        [data-theme="h5"] {
+            --bg-body: #e0e5ec;
+            --bg-app: #f0f2f5;
+            --bg-panel: #ffffff;
+            --bg-header: #ffffff;
+            --bg-input: #f5f7fa;
+            
+            --border-color: #d9d9d9;
+            --border-highlight: #b0b0b0;
+            
+            --text-main: #333333;
+            --text-dim: #888888;
+            --text-bright: #000000;
+            
+            --accent-primary: #546e7a;
+            --accent-hover: #78909c;
+            --accent-active: #455a64;
+            --accent-text: #ffffff;
+            
+            --status-ok: #4caf50;
+            --status-warn: #ff9800;
+            --status-err: #f44336;
+            
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --shadow-panel: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* ================= 基础重置 ================= */
+        body { margin: 0; padding: 0; background: var(--bg-body); color: var(--text-main); font-family: var(--font-family); font-size: 12px; overflow: hidden; transition: background 0.3s; }
+        * { box-sizing: border-box; }
+        
+        /* ================= 预览切换器样式 ================= */
+        #preview-toolbar {
+            height: 50px; background: #1a1a1a; display: flex; align-items: center; justify-content: center;
+            border-bottom: 1px solid #333; gap: 15px; position: fixed; top: 0; width: 100%; z-index: 9999;
+        }
+        .style-btn {
+            padding: 6px 16px; border: 1px solid #444; background: #2a2a2a; color: #aaa; border-radius: 4px; cursor: pointer; transition: 0.2s;
+        }
+        .style-btn:hover { background: #3a3a3a; color: var(--text-on-accent); }
+        .style-btn.active { background: var(--accent-primary); color: var(--accent-text); border-color: var(--accent-primary); font-weight: bold; }
+
+        /* ================= 主应用布局 (高密度) ================= */
+        #app-container {
+            margin-top: 50px; height: calc(100vh - 50px); width: 100%;
+            background: var(--bg-app);
+            display: grid;
+            grid-template-rows: 36px 1fr 24px; /* Header, Main, Footer */
+            grid-template-columns: 260px 1fr;  /* Sidebar, Content */
+        }
+
+        /* 1. Header */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px;
+            color: var(--text-bright);
+        }
+        .brand { font-size: 14px; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; text-shadow: var(--glow-text); }
+        .header-info { display: flex; gap: 20px; color: var(--text-dim); }
+
+        /* 2. Sidebar (Control Panel) */
+        .sidebar {
+            grid-row: 2; grid-column: 1;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+            padding: 10px; gap: 10px;
+            box-shadow: var(--shadow-panel);
+        }
+
+        /* 3. Main Content */
+        .main-content {
+            grid-row: 2; grid-column: 2;
+            background: var(--bg-app);
+            padding: 10px;
+            display: grid;
+            grid-template-rows: 100px 1fr 150px; /* Dashboard, Table, Log */
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        /* 4. Footer */
+        .footer {
+            grid-column: 1 / -1; grid-row: 3;
+            background: var(--bg-header);
+            border-top: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px; color: var(--text-dim);
+        }
+
+        /* ================= 组件样式 ================= */
+        .card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px;
+            display: flex; flex-direction: column;
+            box-shadow: var(--shadow-panel);
+            box-shadow: var(--glow-box);
+        }
+        
+        .section-title {
+            font-size: 11px; font-weight: bold; color: var(--text-dim); text-transform: uppercase;
+            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+            border-left: 3px solid var(--accent-primary); padding-left: 6px;
+        }
+
+        .row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
+        .col { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        
+        label { font-size: 10px; color: var(--text-dim); }
+        
+        input, select {
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 5px; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 12px; width: 100%; outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus { border-color: var(--accent-primary); }
+
+        .btn {
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 5px 10px; border-radius: var(--radius-sm);
+            cursor: pointer; font-size: 11px; text-align: center; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .btn:hover { border-color: var(--border-highlight); color: var(--text-bright); background: rgba(255,255,255,0.05); }
+        .btn:active { transform: translateY(1px); }
+        
+        .btn.primary { background: var(--accent-primary); color: var(--accent-text); border-color: var(--accent-primary); font-weight: bold; }
+        .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        
+        .btn.danger { background: rgba(255, 23, 68, 0.1); border-color: var(--status-err); color: var(--status-err); }
+        .btn.danger:hover { background: var(--status-err); color: var(--text-on-danger); }
+
+        .btn-group { display: flex; gap: 1px; background: var(--border-color); padding: 1px; border-radius: var(--radius-sm); }
+        .btn-group .btn { flex: 1; border: none; border-radius: 0; background: var(--bg-input); }
+        .btn-group .btn.active { background: var(--accent-primary); color: var(--accent-text); }
+
+        /* Dashboard */
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+            background: var(--border-color); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); overflow: hidden;
+        }
+        .dash-item {
+            background: var(--bg-panel); padding: 10px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .dash-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
+        .dash-value { font-size: 24px; color: var(--text-bright); font-weight: 300; text-shadow: var(--glow-text); }
+        
+        /* Table */
+        .table-container { flex: 1; overflow: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-panel); }
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            background: var(--bg-header); color: var(--text-dim); 
+            font-weight: normal; text-align: left; padding: 6px 10px; 
+            position: sticky; top: 0; border-bottom: 1px solid var(--border-color); font-size: 11px;
+        }
+        td { padding: 5px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-family: 'Roboto Mono', monospace; }
+        tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+        tr:hover { background: rgba(255,255,255,0.05); }
+
+        /* Log */
+        .log-panel {
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); padding: 5px;
+            font-family: 'Consolas', monospace; font-size: 11px;
+            overflow-y: auto; color: var(--text-dim);
+        }
+        .log-line { margin-bottom: 2px; display: flex; gap: 10px; }
+        .log-time { color: var(--text-dim); opacity: 0.7; min-width: 60px; }
+        .log-tx { color: var(--status-ok); }
+        .log-rx { color: var(--accent-primary); }
+        .log-err { color: var(--status-err); }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+            z-index: 1000; display: none; align-items: center; justify-content: center;
+        }
+        .modal-backdrop.active { display: flex; }
+        .modal {
+            background: var(--bg-panel); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 500px; max-height: 80vh; display: flex; flex-direction: column;
+            box-shadow: var(--glow-box);
+        }
+        .modal-header {
+            padding: 10px 15px; border-bottom: 1px solid var(--border-color);
+            font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-header); color: var(--text-bright);
+        }
+        .modal-body { padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .modal-footer {
+            padding: 10px 15px; border-top: 1px solid var(--border-color);
+            background: var(--bg-header); display: flex; justify-content: flex-end; gap: 10px;
+        }
+        .close-btn { cursor: pointer; color: var(--text-dim); }
+        .close-btn:hover { color: var(--status-err); }
+        
+        .config-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .config-label { width: 80px; color: var(--text-dim); font-size: 11px; }
+
+        /* Sidebar Tabs */
+        .sidebar-tabs {
+            display: flex; background: var(--bg-header); border-bottom: 1px solid var(--border-color);
+        }
+        .sidebar-tab {
+            flex: 1; text-align: center; padding: 8px 0; cursor: pointer;
+            color: var(--text-dim); font-size: 11px; transition: all 0.3s;
+            border-bottom: 2px solid transparent; position: relative; overflow: hidden;
+        }
+        .sidebar-tab:hover { color: var(--text-main); background: rgba(255,255,255,0.03); }
+        .sidebar-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); background: rgba(255,255,255,0.05); }
+        .sidebar-tab.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top, rgba(var(--accent-primary-rgb), 0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .tab-pane { display: none; animation: fadeIn 0.3s ease; padding: 10px; flex-direction: column; gap: 10px; }
+        .tab-pane.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Effects */
+        .glow-effect { position: relative; overflow: hidden; }
+        .glow-effect::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: scale(0); transition: transform 0.5s; pointer-events: none;
+        }
+        .glow-effect:active::before { transform: scale(1); transition: 0s; }
+
+        input:focus, select:focus {
+            box-shadow: 0 0 0 1px var(--accent-primary), 0 0 8px rgba(0, 188, 212, 0.3);
+        }
+        
+        .btn { position: relative; overflow: hidden; }
+        .btn::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s; pointer-events: none;
+        }
+        .btn:hover::after { left: 100%; }
+
+    </style>
+</head>
+<body data-theme="h1">
+
+    <div id="preview-toolbar">
+        <div style="color: var(--text-on-accent); font-weight: bold; margin-right: 20px;">UI 风格工坊:</div>
+        <div class="style-btn active" onclick="setTheme('h1', this)">H1: 泰坦黑</div>
+        <div class="style-btn" onclick="setTheme('h2', this)">H2: 深海蓝</div>
+        <div class="style-btn" onclick="setTheme('h3', this)">H3: 赛博霓虹</div>
+        <div class="style-btn" onclick="setTheme('h4', this)">H4: 虚幻紫</div>
+        <div class="style-btn" onclick="setTheme('h5', this)">H5: 机械白</div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal-backdrop">
+        <div class="modal glow-effect">
+            <div class="modal-header">
+                <span><i class="fas fa-cog"></i> 系统配置</span>
+                <i class="fas fa-times close-btn" onclick="toggleSettings()"></i>
+            </div>
+            <div class="modal-body">
+                <div class="card" style="border:none; box-shadow:none; padding:0; background:transparent;">
+                    <div class="section-title">脉冲参数映射</div>
+                    <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px;">
+                        <div class="config-row"><span class="config-label">10% 反射率</span><input type="number" value="1250000"></div>
+                        <div class="config-row"><span class="config-label">20% 反射率</span><input type="number" value="1875000"></div>
+                        <div class="config-row"><span class="config-label">90% 反射率</span><input type="number" value="5625000"></div>
+                        <div class="config-row"><span class="config-label">Home 偏移</span><input type="number" value="0"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="toggleSettings()">取消</button>
+                <button class="btn primary" onclick="toggleSettings()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <!-- 顶部 Header -->
+        <div class="header">
+            <div class="brand"><i class="fas fa-cube"></i> UNIFIED TOOL <span style="font-size:10px; opacity:0.5; border:1px solid var(--text-dim); padding:0 4px; border-radius:2px;">PRO</span></div>
+            <div class="header-info">
+                <span><i class="fas fa-wifi"></i> 192.168.2.46</span>
+                <span style="cursor:pointer; color:var(--accent-primary);" onclick="toggleSettings()"><i class="fas fa-cog"></i> 设置</span>
+            </div>
+        </div>
+
+        <!-- 左侧控制面板 (Tab 布局) -->
+        <div class="sidebar" style="padding:0; gap:0;">
+            <!-- 固定连接区 -->
+            <div style="padding:10px; border-bottom:1px solid var(--border-color); background:var(--bg-panel);">
+                <div class="row" style="margin-bottom:5px;">
+                    <span style="font-size:11px; color:var(--text-dim);">设备连接</span>
+                    <span style="color:var(--status-ok); font-size:10px; margin-left:auto;">● 在线</span>
+                </div>
+                <div class="row">
+                    <input type="text" value="192.168.2.46:6000" style="flex:1;">
+                    <button class="btn danger">断开</button>
+                </div>
+            </div>
+
+            <!-- Tab 导航 -->
+            <div class="sidebar-tabs">
+                <div class="sidebar-tab active" onclick="switchSidebarTab('motion', this)">运动控制</div>
+                <div class="sidebar-tab" onclick="switchSidebarTab('rotary', this)">转靶控制</div>
+                <div class="sidebar-tab" onclick="switchSidebarTab('auto', this)">自动测试</div>
+            </div>
+
+            <!-- Tab 内容区 -->
+            <div style="flex:1; overflow-y:auto; background:var(--bg-panel);">
+                
+                <!-- 运动控制 Tab -->
+                <div id="tab-motion" class="tab-pane active">
+                    <div class="card">
+                        <div class="section-title">绝对定位</div>
+                        <div class="col">
+                            <label>目标位置 (mm)</label>
+                            <div class="row" style="gap:0;">
+                                <input type="number" value="1500.000" style="border-top-right-radius:0; border-bottom-right-radius:0; font-size:14px; font-weight:bold;">
+                                <button class="btn primary" style="border-top-left-radius:0; border-bottom-left-radius:0; padding:0 15px;">GO</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="section-title">点动控制</div>
+                        <div class="row" style="justify-content:space-between; margin-bottom:5px;">
+                            <label>步进距离 (mm)</label>
+                            <input type="number" value="10.0" style="width:60px; text-align:center;">
+                        </div>
+                        <div class="btn-group" style="margin-bottom:10px;">
+                            <button class="btn">0.1</button>
+                            <button class="btn">1</button>
+                            <button class="btn active">10</button>
+                            <button class="btn">50</button>
+                            <button class="btn">100</button>
+                        </div>
+                        <div class="row">
+                            <button class="btn col" style="height:36px;"><i class="fas fa-chevron-left"></i> 后退</button>
+                            <button class="btn col" style="height:36px;">前进 <i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="row" style="margin-top:5px;">
+                            <button class="btn col"><i class="fas fa-home"></i> 复位</button>
+                            <button class="btn danger col"><i class="fas fa-stop"></i> 急停</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 转靶控制 Tab -->
+                <div id="tab-rotary" class="tab-pane">
+                    <div class="card">
+                        <div class="section-title">反射率选择</div>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:5px;">
+                            <button class="btn" style="height:40px;">10%</button>
+                            <button class="btn" style="height:40px;">20%</button>
+                            <button class="btn" style="height:40px;">30%</button>
+                            <button class="btn" style="height:40px;">40%</button>
+                            <button class="btn" style="height:40px;">50%</button>
+                            <button class="btn" style="height:40px;">60%</button>
+                            <button class="btn" style="height:40px;">70%</button>
+                            <button class="btn primary" style="height:40px; font-size:14px;">90%</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="section-title">操作</div>
+                        <button class="btn" style="width:100%; margin-bottom:5px;"><i class="fas fa-sync"></i> 转靶复位</button>
+                        <div class="row">
+                            <span style="font-size:11px; color:var(--text-dim);">当前状态:</span>
+                            <span style="color:var(--status-ok);">就绪</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 自动测试 Tab -->
+                <div id="tab-auto" class="tab-pane">
+                    <div class="card">
+                        <div class="section-title">参数配置</div>
+                        <div class="row">
+                            <div class="col"><label>起始位置</label><input type="number" value="1000"></div>
+                            <div class="col"><label>结束位置</label><input type="number" value="5000"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col"><label>步进距离</label><input type="number" value="1000"></div>
+                            <div class="col"><label>循环次数</label><input type="number" value="2"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="section-title">执行控制</div>
+                        <button class="btn primary" style="width:100%; height:40px; font-size:13px; margin-bottom:5px;">
+                            <i class="fas fa-play"></i> 开始测试
+                        </button>
+                        <button class="btn danger" style="width:100%;">
+                            <i class="fas fa-stop"></i> 停止测试
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="section-title">进度</div>
+                        <div style="background:var(--bg-input); height:6px; border-radius:3px; overflow:hidden; margin-bottom:5px;">
+                            <div style="width:45%; height:100%; background:var(--accent-primary);"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-dim);">
+                            <span>当前: 3/10</span>
+                            <span>剩余: 2m 30s</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 仪表盘 -->
+            <div class="dashboard-grid">
+                <div class="dash-item">
+                    <span class="dash-label">当前位置 (mm)</span>
+                    <span class="dash-value" style="color:var(--accent-primary);">1,250.050</span>
+                </div>
+                <div class="dash-item">
+                    <span class="dash-label">目标位置 (mm)</span>
+                    <span class="dash-value">1,500.000</span>
+                </div>
+                <div class="dash-item">
+                    <span class="dash-label">反射率</span>
+                    <span class="dash-value" style="color:var(--status-warn);">90%</span>
+                </div>
+                <div class="dash-item">
+                    <span class="dash-label">系统状态</span>
+                    <span class="dash-value" style="color:var(--status-ok); font-size:18px;">正在运行 >></span>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">ID</th>
+                            <th>时间戳</th>
+                            <th>目标位置</th>
+                            <th>实际位置</th>
+                            <th>绝对误差</th>
+                            <th>反射率</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>001</td><td>14:30:05.120</td><td>1000.000</td><td>1000.002</td><td style="color:var(--status-err);">+0.002</td><td>10%</td><td>PASS</td></tr>
+                        <tr><td>002</td><td>14:30:10.550</td><td>2000.000</td><td>2000.001</td><td style="color:var(--status-ok);">+0.001</td><td>10%</td><td>PASS</td></tr>
+                        <tr><td>003</td><td>14:30:15.880</td><td>3000.000</td><td>3000.000</td><td style="color:var(--status-ok);">0.000</td><td>10%</td><td>PASS</td></tr>
+                        <tr><td>004</td><td>14:30:20.100</td><td>4000.000</td><td>3999.995</td><td style="color:var(--status-warn);">-0.005</td><td>10%</td><td>PASS</td></tr>
+                        <tr><td>005</td><td>14:30:25.400</td><td>5000.000</td><td>5000.002</td><td style="color:var(--status-err);">+0.002</td><td>10%</td><td>PASS</td></tr>
+                        <!-- 重复行以展示滚动 -->
+                        <tr><td>006</td><td>14:30:30.120</td><td>1000.000</td><td>1000.001</td><td style="color:var(--status-ok);">+0.001</td><td>90%</td><td>PASS</td></tr>
+                        <tr><td>007</td><td>14:30:35.550</td><td>2000.000</td><td>2000.000</td><td style="color:var(--status-ok);">0.000</td><td>90%</td><td>PASS</td></tr>
+                        <tr><td>008</td><td>14:30:40.880</td><td>3000.000</td><td>3000.003</td><td style="color:var(--status-err);">+0.003</td><td>90%</td><td>PASS</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 日志 -->
+            <div class="log-panel">
+                <div class="log-line"><span class="log-time">14:35:20</span><span class="log-tx">[TX] &lt;move#1500&gt;</span></div>
+                <div class="log-line"><span class="log-time">14:35:20</span><span class="log-rx">[RX] &lt;ok&gt;</span></div>
+                <div class="log-line"><span class="log-time">14:35:21</span><span style="color:var(--status-info);">[INFO] Motor started moving to 1500.000</span></div>
+                <div class="log-line"><span class="log-time">14:35:21</span><span class="log-tx">[TX] &lt;get_pos&gt;</span></div>
+                <div class="log-line"><span class="log-time">14:35:21</span><span class="log-rx">[RX] &lt;pos#1250.050&gt;</span></div>
+                <div class="log-line"><span class="log-time">14:35:22</span><span class="log-tx">[TX] &lt;get_status&gt;</span></div>
+                <div class="log-line"><span class="log-time">14:35:22</span><span class="log-rx">[RX] &lt;status#moving&gt;</span></div>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="footer">
+            <div>系统就绪 | 耗时: 0ms</div>
+            <div>UTF-8 | LF | TCP: 已连接 (192.168.2.46:6000)</div>
+        </div>
+    </div>
+
+    <script>
+        function setTheme(themeName, btn) {
+            // 设置 body 属性
+            document.body.setAttribute('data-theme', themeName);
+            
+            // 更新按钮状态
+            document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function switchSidebarTab(tabName, btn) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            btn.classList.add('active');
+
+            // Hide all tab panes
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            // Show target tab pane
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('active');
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('settings-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                toggleSettings();
+            }
+        });
+    </script>
+</body>
+</html>

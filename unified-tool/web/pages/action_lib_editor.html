@@ -1,0 +1,166 @@
+<!-- 动作库编辑器 - 可视化编辑动作和期望定义 -->
+<style>
+.action-editor-page { display:flex; height:100%; overflow:hidden; background:var(--panel-bg); }
+
+/* 左侧：动作列表 */
+.action-left-panel { width:300px; background:var(--card-bg); border-right:1px solid var(--border-color); display:flex; flex-direction:column; overflow:hidden; }
+.action-panel-header { padding:12px 15px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; }
+.action-panel-header h3 { font-size:14px; margin:0; color:var(--text-color); }
+.action-tabs { display:flex; border-bottom:1px solid var(--border-color); }
+.action-tab { flex:1; padding:10px; text-align:center; cursor:pointer; font-size:13px; color:var(--text-muted); border-bottom:2px solid transparent; transition:all 0.2s; }
+.action-tab:hover { background:rgba(33,150,243,0.1); }
+.action-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:rgba(33,150,243,0.1); }
+.action-list { flex:1; overflow-y:auto; padding:8px; }
+
+/* 分类组 */
+.action-category { margin-bottom:8px; }
+.action-category-header { padding:8px 12px; background:var(--input-bg); border-radius:6px 6px 0 0; font-size:12px; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer; }
+.action-category-header:hover { background:rgba(33,150,243,0.15); }
+.action-category-header .count { margin-left:auto; font-size:11px; background:rgba(33,150,243,0.2); padding:2px 6px; border-radius:10px; }
+.action-category-items { border:1px solid var(--border-color); border-top:none; border-radius:0 0 6px 6px; }
+.action-item { padding:10px 12px; border-bottom:1px solid var(--border-color); cursor:pointer; transition:all 0.15s; }
+.action-item:last-child { border-bottom:none; }
+.action-item:hover { background:rgba(33,150,243,0.1); }
+.action-item.selected { background:rgba(33,150,243,0.2); border-left:3px solid var(--accent); }
+.action-item .name { font-weight:600; font-size:13px; color:var(--text-color); margin-bottom:4px; }
+.action-item .desc { font-size:11px; color:var(--text-muted); }
+.action-item .cmd { font-family:monospace; font-size:10px; color:var(--accent); margin-top:4px; }
+
+/* 中间：编辑区 */
+.action-center-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.action-edit-header { height:50px; background:var(--card-bg); border-bottom:1px solid var(--border-color); display:flex; align-items:center; padding:0 20px; gap:15px; }
+.action-edit-header h3 { font-size:16px; margin:0; color:var(--text-color); }
+.action-edit-header .badge { font-size:11px; padding:3px 8px; border-radius:4px; background:rgba(33,150,243,0.2); color:var(--accent); }
+.action-edit-content { flex:1; overflow-y:auto; padding:20px; }
+
+/* 表单样式 */
+.form-section { background:var(--card-bg); border-radius:8px; padding:16px; margin-bottom:16px; border:1px solid var(--border-color); }
+.form-section h4 { font-size:13px; color:var(--text-muted); margin:0 0 12px; padding-bottom:8px; border-bottom:1px solid var(--border-color); }
+.form-row { display:flex; align-items:center; margin-bottom:12px; gap:12px; }
+.form-row:last-child { margin-bottom:0; }
+.form-row label { width:100px; font-size:12px; color:var(--text-muted); flex-shrink:0; }
+.form-row input, .form-row select, .form-row textarea { flex:1; background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-color); padding:8px 12px; border-radius:6px; font-size:13px; }
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline:none; border-color:var(--accent); }
+.form-row textarea { min-height:60px; resize:vertical; font-family:inherit; }
+.form-row .hint { font-size:11px; color:var(--text-muted); margin-top:4px; }
+
+/* 参数列表 */
+.params-list { margin-top:8px; }
+.param-row { display:flex; align-items:center; gap:8px; padding:8px; background:var(--input-bg); border-radius:6px; margin-bottom:6px; }
+.param-row input { width:auto; flex:1; padding:6px 10px; font-size:12px; }
+.param-row select { width:100px; padding:6px 8px; font-size:12px; }
+.param-row .btn-remove { width:28px; height:28px; border:none; background:rgba(244,67,54,0.2); color:#f44336; border-radius:4px; cursor:pointer; font-size:14px; }
+.param-row .btn-remove:hover { background:rgba(244,67,54,0.4); }
+.btn-add-param { padding:6px 12px; background:rgba(76,175,80,0.2); color:#4caf50; border:1px dashed #4caf50; border-radius:6px; cursor:pointer; font-size:12px; width:100%; margin-top:8px; }
+.btn-add-param:hover { background:rgba(76,175,80,0.3); }
+
+/* 复合动作 */
+.composite-actions { margin-top:8px; }
+.composite-row { display:flex; align-items:center; gap:8px; padding:8px; background:var(--input-bg); border-radius:6px; margin-bottom:6px; }
+.composite-row .step-num { width:24px; height:24px; background:var(--accent); color:var(--text-on-accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; }
+.composite-row select { flex:1; }
+.composite-row input { width:80px; }
+
+/* 右侧：预览和帮助 */
+.action-right-panel { width:320px; background:var(--card-bg); border-left:1px solid var(--border-color); display:flex; flex-direction:column; overflow:hidden; }
+.preview-section { padding:16px; border-bottom:1px solid var(--border-color); }
+.preview-section h4 { font-size:12px; color:var(--text-muted); margin:0 0 12px; text-transform:uppercase; }
+.preview-code { background:var(--input-bg); border-radius:6px; padding:12px; font-family:'Consolas','Monaco',monospace; font-size:12px; color:var(--text-color); white-space:pre-wrap; word-break:break-all; max-height:200px; overflow-y:auto; }
+.preview-test { margin-top:12px; }
+.preview-test input { width:100%; margin-bottom:8px; }
+.preview-test .result { padding:8px; background:var(--input-bg); border-radius:4px; font-size:12px; min-height:40px; }
+.preview-test .result.success { border-left:3px solid #4caf50; }
+.preview-test .result.error { border-left:3px solid #f44336; }
+
+/* 帮助面板 */
+.help-section { flex:1; overflow-y:auto; padding:16px; }
+.help-section h4 { font-size:12px; color:var(--text-muted); margin:0 0 12px; text-transform:uppercase; }
+.help-item { padding:10px; background:var(--input-bg); border-radius:6px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; }
+.help-item:hover { background:rgba(33,150,243,0.15); }
+.help-item .title { font-weight:600; font-size:12px; color:var(--text-color); margin-bottom:4px; }
+.help-item .example { font-family:monospace; font-size:11px; color:var(--accent); }
+
+/* 工具栏 */
+.action-toolbar { padding:12px 15px; border-top:1px solid var(--border-color); display:flex; gap:8px; background:var(--card-bg); }
+.action-toolbar .btn { padding:8px 16px; border-radius:6px; font-size:12px; cursor:pointer; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color); transition:all 0.2s; }
+.action-toolbar .btn:hover { background:rgba(33,150,243,0.2); border-color:var(--accent); }
+.action-toolbar .btn.primary { background:var(--accent); color:var(--text-on-accent); border-color:var(--accent); }
+.action-toolbar .btn.danger { background:rgba(244,67,54,0.2); color:#f44336; border-color:#f44336; }
+</style>
+
+<div class="action-editor-page">
+    <!-- 左侧：动作/期望列表 -->
+    <div class="action-left-panel">
+        <div class="action-panel-header">
+            <h3>📚 动作库编辑器</h3>
+        </div>
+        <!-- 设备选择器 -->
+        <div id="device-selector-container" style="padding:8px 12px;border-bottom:1px solid var(--border-color);"></div>
+        <div class="action-tabs">
+            <div class="action-tab active" data-tab="actions" onclick="ActionLibEditor.switchTab('actions')">动作</div>
+            <div class="action-tab" data-tab="expects" onclick="ActionLibEditor.switchTab('expects')">期望</div>
+            <div class="action-tab" data-tab="templates" onclick="ActionLibEditor.switchTab('templates')">模板</div>
+            <div class="action-tab" data-tab="screens" onclick="ActionLibEditor.switchTab('screens')">界面</div>
+        </div>
+        <div class="action-list" id="action-list">
+            <!-- 动态生成 -->
+        </div>
+        <div class="action-toolbar">
+            <button class="btn" onclick="ActionLibEditor.addNew()">➕ 新建</button>
+            <button class="btn" onclick="ActionLibEditor.importLib()">📄 导入</button>
+            <button class="btn" onclick="ActionLibEditor.exportLib()">💾 导出</button>
+            <button class="btn primary" onclick="ActionLibEditor.saveToDevice()">💾 保存</button>
+        </div>
+    </div>
+    
+    <!-- 中间：编辑区 -->
+    <div class="action-center-panel">
+        <div class="action-edit-header">
+            <h3 id="edit-title">选择一个项目进行编辑</h3>
+            <span class="badge" id="edit-type-badge" style="display:none">动作</span>
+        </div>
+        <div class="action-edit-content" id="edit-content">
+            <div style="text-align:center;padding:60px;color:var(--text-muted);">
+                <div style="font-size:48px;margin-bottom:16px;">📝</div>
+                <div>从左侧选择一个动作或期望进行编辑</div>
+                <div style="margin-top:8px;font-size:12px;">或点击"新建"创建新的定义</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右侧：预览和帮助 -->
+    <div class="action-right-panel">
+        <div class="preview-section">
+            <h4>📋 JSON预览</h4>
+            <div class="preview-code" id="preview-code">// 选择项目后显示JSON</div>
+        </div>
+        <div class="preview-section">
+            <h4>🧪 测试解析</h4>
+            <div class="preview-test">
+                <input type="text" id="test-input" placeholder="输入测试字符串，如: K1短按 或 模拟测距成功(5000,3)">
+                <button class="btn" style="width:100%;margin-bottom:8px" onclick="ActionLibEditor.testParse()">解析测试</button>
+                <div class="result" id="test-result">解析结果将显示在这里</div>
+            </div>
+        </div>
+        <!-- LCD预览画布（界面预设时显示） -->
+        <div class="preview-section" id="lcd-preview-section" style="display:none;">
+            <h4>🖥️ LCD预览</h4>
+            <div style="background:#1a1a2e;border-radius:6px;overflow:hidden;">
+                <canvas id="screen-preview-canvas" width="280" height="220" style="display:block;width:100%;"></canvas>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:6px;">
+                <button class="btn" style="flex:1" onclick="ActionLibEditor.syncFromFirmware()">📡 同步固件</button>
+                <button class="btn" style="flex:1" onclick="ActionLibEditor.clearScreenSelection()">🗑️ 清空</button>
+            </div>
+        </div>
+        <div class="help-section">
+            <h4>💡 快速插入</h4>
+            <div id="help-items">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 隐藏的文件输入 -->
+<input type="file" id="lib-import-input" accept=".json" style="display:none" onchange="ActionLibEditor.onImportSelected(event)">

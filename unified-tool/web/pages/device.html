@@ -1,0 +1,149 @@
+<!-- 设备控制页面 -->
+<div class="page-container device-page">
+    <div class="page-header">
+        <h1>🎮 设备控制</h1>
+        <div class="header-actions">
+            <button class="btn" onclick="DevicePage.refreshAll()" title="刷新状态">🔄 刷新</button>
+            <button class="btn" onclick="DevicePage.toggleSelectMode()" id="select-mode-btn">☑️ 批量</button>
+        </div>
+    </div>
+
+    <!-- 设备分组 -->
+    <div class="device-groups">
+        <!-- 运动控制设备 -->
+        <div class="device-group">
+            <div class="group-header">
+                <span class="group-title">🔧 运动控制</span>
+                <span class="group-count" id="motion-count">0</span>
+            </div>
+            <div class="device-grid" id="motion-devices"></div>
+        </div>
+
+        <!-- 测量设备 -->
+        <div class="device-group">
+            <div class="group-header">
+                <span class="group-title">📏 测量设备</span>
+                <span class="group-count" id="measure-count">0</span>
+            </div>
+            <div class="device-grid" id="measure-devices"></div>
+        </div>
+
+        <!-- 其他设备 -->
+        <div class="device-group">
+            <div class="group-header">
+                <span class="group-title">📡 其他设备</span>
+                <span class="group-count" id="other-count">0</span>
+            </div>
+            <div class="device-grid" id="other-devices"></div>
+        </div>
+    </div>
+
+    <!-- 批量操作栏 -->
+    <div class="batch-bar" id="batch-bar" style="display:none;">
+        <span class="batch-info">已选择 <b id="selected-count">0</b> 个设备</span>
+        <div class="batch-actions">
+            <button class="btn" onclick="DevicePage.batchConnect()">连接</button>
+            <button class="btn" onclick="DevicePage.batchDisconnect()">断开</button>
+            <button class="btn danger" onclick="DevicePage.batchReset()">复位</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.device-page { padding: var(--page-pad, 16px); }
+.device-page .page-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+}
+.device-page h1 { margin: 0; font-size: 20px; }
+.header-actions { display: flex; gap: 8px; }
+
+.device-group { margin-bottom: 24px; }
+.group-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+.group-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.group-count {
+    background: var(--accent); color: var(--text-on-accent);
+    padding: 2px 8px; border-radius: 10px; font-size: 11px;
+}
+
+.device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.device-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 8px);
+    padding: 16px;
+    transition: all 0.2s;
+    position: relative;
+}
+.device-card:hover {
+    border-color: var(--accent);
+    background: var(--card-bg-hover);
+}
+.device-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.device-card .card-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.device-card .device-icon { font-size: 24px; }
+.device-card .device-name { font-size: 15px; font-weight: 600; flex: 1; }
+.device-card .status-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: #666;
+}
+.device-card .status-dot.online {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+.device-card .status-dot.busy {
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245,158,11,0.5);
+}
+
+.device-card .device-info {
+    font-size: 12px; color: var(--text-muted);
+    margin-bottom: 12px;
+}
+.device-card .info-row {
+    display: flex; justify-content: space-between; margin-bottom: 4px;
+}
+
+.device-card .card-actions {
+    display: flex; gap: 8px;
+    opacity: 0; transition: opacity 0.2s;
+}
+.device-card:hover .card-actions { opacity: 1; }
+.device-card .action-btn {
+    flex: 1; padding: 8px; border-radius: 6px;
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    color: var(--text-color); font-size: 12px; cursor: pointer;
+}
+.device-card .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+.device-card .action-btn.primary { background: var(--accent); color: var(--text-on-accent); border-color: var(--accent); }
+
+/* 批量操作栏 */
+.batch-bar {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--card-bg); border: 1px solid var(--accent);
+    border-radius: 12px; padding: 12px 20px;
+    display: flex; align-items: center; gap: 20px;
+    box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.3));
+}
+.batch-info { font-size: 13px; }
+.batch-actions { display: flex; gap: 8px; }
+
+.empty-devices {
+    text-align: center; color: var(--text-muted);
+    padding: 40px; font-size: 13px;
+}
+</style>

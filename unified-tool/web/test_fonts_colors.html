@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字体和颜色测试</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/themes_pro.css">
+    <style>
+        .test-section {
+            margin: 20px;
+            padding: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .font-test {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .color-test {
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .current-font {
+            background: var(--accent);
+            color: var(--text-on-accent);
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h2>字体测试</h2>
+        <div class="current-font" id="current-font">当前字体: </div>
+        
+        <div class="font-test" style="font-family: 'Source Han Sans SC VF'">
+            思源黑体 - The quick brown fox jumps over the lazy dog 1234567890
+        </div>
+        
+        <div class="font-test" style="font-family: 'ZCOOL KuaiLe'">
+            站酷快乐体 - The quick brown fox jumps over the lazy dog 1234567890
+        </div>
+        
+        <div class="font-test" style="font-family: 'LXGW WenKai'">
+            霞鹜文楷 - The quick brown fox jumps over the lazy dog 1234567890
+        </div>
+        
+        <div class="font-test" style="font-family: 'Microsoft YaHei UI'">
+            微软雅黑 - The quick brown fox jumps over the lazy dog 1234567890
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>颜色测试</h2>
+        <div class="color-test" style="color: var(--text-color)">
+            普通文本颜色 (--text-color)
+        </div>
+        <div class="color-test" style="color: var(--text-muted)">
+            次要文本颜色 (--text-muted)
+        </div>
+        <div class="color-test" style="color: var(--text-accent)">
+            强调文本颜色 (--text-accent)
+        </div>
+        <div class="color-test" style="background: var(--accent); color: var(--text-on-accent)">
+            按钮上的文字 (--text-on-accent)
+        </div>
+        <div class="color-test" style="background: var(--danger); color: var(--text-on-danger)">
+            危险按钮上的文字 (--text-on-danger)
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>字体切换测试</h2>
+        <button onclick="changeFont('default')">思源黑体</button>
+        <button onclick="changeFont('zcool')">站酷快乐体</button>
+        <button onclick="changeFont('lxgw')">霞鹜文楷</button>
+        <button onclick="changeFont('system')">系统默认</button>
+    </div>
+    
+    <script>
+        function changeFont(family) {
+            const root = document.documentElement;
+            const map = {
+                'default': "'Source Han Sans SC VF', 'Microsoft YaHei UI', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', Arial, sans-serif",
+                'zcool': '"ZCOOL KuaiLe", "Microsoft YaHei UI", "Segoe UI", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif',
+                'lxgw': '"LXGW WenKai", "Microsoft YaHei UI", "Segoe UI", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif',
+                'system': '"Microsoft YaHei UI", "Segoe UI", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif'
+            };
+            
+            const fontStack = map[family] || map.default;
+            root.style.setProperty('--font-family-base', fontStack);
+            root.style.setProperty('--font-ui', fontStack);
+            
+            document.getElementById('current-font').textContent = '当前字体: ' + fontStack;
+            
+            // 强制刷新
+            document.body.style.display = 'none';
+            document.body.offsetHeight;
+            document.body.style.display = '';
+        }
+        
+        // 显示当前字体
+        window.onload = function() {
+            const root = document.documentElement;
+            const currentFont = getComputedStyle(root).getPropertyValue('--font-ui') || 'default';
+            document.getElementById('current-font').textContent = '当前字体: ' + currentFont;
+        };
+    </script>
+</body>
+</html>

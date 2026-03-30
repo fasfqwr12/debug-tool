@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "deviceId": "dot_matrix_lcd_template",
+  "name": "点阵LCD设备模板",
+  "description": "用于创建点阵LCD设备的模板",
+  "createdAt": "2025-12-26T00:00:00.000Z",
+  "updatedAt": "2025-12-26T00:00:00.000Z",
+  "lcdType": "dot_matrix",
+  "bufferSize": 1024,
+  "comCount": 0,
+  "frameFormat": {
+    "header": "AA",
+    "direction": {
+      "send": "EE",
+      "recv": "FE"
+    },
+    "footer": "BB FF",
+    "checksum": "XOR"
+  }
+}

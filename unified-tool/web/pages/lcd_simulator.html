@@ -1,0 +1,211 @@
+<!-- LCD模拟器页面 - 基于像素映射渲染固件LCD状态 + 元素绑定功能 -->
+<style>
+.sim-color-picker { width: 32px; height: 24px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; }
+.sim-slider { width: 80px; }
+.sim-control-group { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--bg-tertiary); border-radius: 6px; }
+.sim-control-label { font-size: 11px; color: var(--text-muted); min-width: 50px; }
+</style>
+
+<div class="page-container" style="display: flex; flex-direction: column; height: 100%; padding: 16px; gap: 16px;">
+    <!-- 顶部工具栏 -->
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <!-- 设备选择器 -->
+        <div id="sim-device-selector" class="device-selector-container" style="min-width: 200px;"></div>
+        
+        <button onclick="LcdSimulatorPage.loadConfig()" style="padding: 6px 12px; border-radius: 4px; background: var(--accent-color); color: white; border: none; cursor: pointer;">
+            📂 加载配置
+        </button>
+        
+        <button onclick="LcdSimulatorPage.syncFromDevice()" style="padding: 6px 12px; border-radius: 4px; background: var(--success-color, #4CAF50); color: white; border: none; cursor: pointer;">
+            🔄 同步固件
+        </button>
+        
+        <button onclick="LcdSimulatorPage.startAutoSync()" id="sim-auto-sync-btn" style="padding: 6px 12px; border-radius: 4px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer;">
+            ▶ 自动同步
+        </button>
+        
+        <div style="width: 1px; height: 24px; background: var(--border-color);"></div>
+        
+        <label style="display: flex; align-items: center; gap: 8px;">
+            <span>缩放:</span>
+            <input type="range" id="sim-zoom" min="0.5" max="4" step="0.1" value="1" style="width: 80px;" onchange="LcdSimulatorPage.setZoom(this.value)">
+            <span id="sim-zoom-value">100%</span>
+        </label>
+        
+        <button onclick="LcdSimulatorPage.fitToView()" title="适应视图" style="padding: 4px 8px; border-radius: 4px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer; font-size: 12px;">
+            📐 适应
+        </button>
+        
+        <button onclick="LcdSimulatorPage.resetView()" title="重置视图" style="padding: 4px 8px; border-radius: 4px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer; font-size: 12px;">
+            🔄 重置
+        </button>
+        
+        <label style="display: flex; align-items: center; gap: 4px;">
+            <input type="checkbox" id="sim-show-labels" checked onchange="LcdSimulatorPage.toggleLabels(this.checked)">
+            <span>标签</span>
+        </label>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div style="display: flex; flex: 1; gap: 16px; min-height: 0;">
+        <!-- 左侧：LCD显示区 -->
+        <div style="flex: 2; display: flex; flex-direction: column; background: var(--bg-secondary); border-radius: 8px; overflow: hidden;">
+            <div style="padding: 8px 12px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
+                <span>LCD 仿真显示 <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">（拖拽平移 / 滚轮缩放）</span></span>
+            </div>
+            <div id="sim-canvas-container" style="flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #2a2a2a;">
+                <canvas id="sim-lcd-canvas" style="image-rendering: pixelated; cursor: grab;"></canvas>
+            </div>
+        </div>
+        
+        <!-- 右侧面板 -->
+        <div style="width: 320px; display: flex; flex-direction: column; gap: 12px; min-height: 0;">
+            
+            <!-- 显示样式控制面板 -->
+            <div style="background: var(--bg-secondary); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 8px 12px; background: linear-gradient(135deg, #9c27b0, #673ab7); color: white; font-weight: 500;">
+                    🎨 显示样式
+                </div>
+                <div style="padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- 背景图透明度 -->
+                    <div class="sim-control-group">
+                        <span class="sim-control-label">背景图:</span>
+                        <input type="range" id="sim-bg-opacity" class="sim-slider" min="0" max="100" value="30" onchange="LcdSimulatorPage.updateStyle()">
+                        <span id="sim-bg-opacity-value" style="font-size:11px;min-width:35px;">30%</span>
+                    </div>
+                    
+                    <!-- LCD背景色 -->
+                    <div class="sim-control-group">
+                        <span class="sim-control-label">LCD底色:</span>
+                        <input type="color" id="sim-lcd-bg-color" class="sim-color-picker" value="#1a1a2e" onchange="LcdSimulatorPage.updateStyle()">
+                        <span style="font-size:11px;color:var(--text-muted);">未点亮区域</span>
+                    </div>
+                    
+                    <!-- 点亮段颜色 -->
+                    <div class="sim-control-group">
+                        <span class="sim-control-label">点亮色:</span>
+                        <input type="color" id="sim-lit-color" class="sim-color-picker" value="#00ff88" onchange="LcdSimulatorPage.updateStyle()">
+                        <span style="font-size:11px;color:var(--text-muted);">段码显示颜色</span>
+                    </div>
+                    
+                    <!-- 未点亮段颜色 -->
+                    <div class="sim-control-group">
+                        <span class="sim-control-label">未亮色:</span>
+                        <input type="color" id="sim-unlit-color" class="sim-color-picker" value="#2a3a2a" onchange="LcdSimulatorPage.updateStyle()">
+                        <input type="range" id="sim-unlit-opacity" class="sim-slider" min="0" max="100" value="50" onchange="LcdSimulatorPage.updateStyle()" style="width:50px;">
+                        <span id="sim-unlit-opacity-value" style="font-size:11px;min-width:30px;">50%</span>
+                    </div>
+                    
+                    <!-- 预设样式 -->
+                    <div style="display:flex;gap:6px;margin-top:4px;">
+                        <button onclick="LcdSimulatorPage.applyPreset('green')" style="flex:1;padding:4px 8px;font-size:11px;background:#1a2a1a;color:#00ff88;border:1px solid #00ff88;border-radius:4px;cursor:pointer;">绿色LCD</button>
+                        <button onclick="LcdSimulatorPage.applyPreset('blue')" style="flex:1;padding:4px 8px;font-size:11px;background:#1a1a2e;color:#00aaff;border:1px solid #00aaff;border-radius:4px;cursor:pointer;">蓝色LCD</button>
+                        <button onclick="LcdSimulatorPage.applyPreset('amber')" style="flex:1;padding:4px 8px;font-size:11px;background:#2a2010;color:#ffaa00;border:1px solid #ffaa00;border-radius:4px;cursor:pointer;">琥珀LCD</button>
+                    </div>
+                    <div style="margin-top:4px;">
+                        <button onclick="LcdSimulatorPage.resetStyle()" style="width:100%;padding:4px 8px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">🔄 重置样式</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 元素信息面板 -->
+            <div style="flex: 1; display: flex; flex-direction: column; background: var(--bg-secondary); border-radius: 8px; overflow: hidden; min-height: 0;">
+                <div style="padding: 8px 12px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
+                    <span>元素列表</span>
+                    <span id="sim-element-count" style="font-size: 12px; color: var(--text-muted);">0 个元素</span>
+                </div>
+                
+                <!-- 当前选中元素详情 -->
+                <div id="sim-element-info" style="padding: 12px; border-bottom: 1px solid var(--border-color); max-height: 120px; overflow-y: auto;">
+                    <div style="color: var(--text-muted); font-size: 13px;">点击LCD上的元素查看详情</div>
+                </div>
+                
+                <!-- 元素列表 -->
+                <div style="flex: 1; overflow-y: auto; padding: 8px;">
+                    <div id="sim-element-list"></div>
+                </div>
+            </div>
+            
+            <!-- UI命令测试面板 -->
+            <div style="background: var(--bg-secondary); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 8px 12px; background: linear-gradient(135deg, #2196F3, #03A9F4); color: white; font-weight: 500;">
+                    🎮 UI命令测试
+                </div>
+                <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- 开机/关机 -->
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="LcdSimulatorPage.sendUICmd('B0')" title="仿真开机" style="flex:1;padding:6px;font-size:11px;background:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;">⚡开机</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('B1')" title="K1释放-确认单位选择" style="flex:1;padding:6px;font-size:11px;background:#2196F3;color:white;border:none;border-radius:4px;cursor:pointer;">✋K1释放</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('BB')" title="K3超长按关机" style="flex:1;padding:6px;font-size:11px;background:#f44336;color:white;border:none;border-radius:4px;cursor:pointer;">⏻关机</button>
+                    </div>
+                    <!-- 按键模拟 -->
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="LcdSimulatorPage.sendUICmd('B3')" title="K1短按-测量/开激光" style="flex:1;padding:6px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">K1测量</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('B5')" title="K2短按-切换模式" style="flex:1;padding:6px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">K2模式</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('B7')" title="K3短按-清除" style="flex:1;padding:6px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">K3清除</button>
+                    </div>
+                    <!-- 长按 -->
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="LcdSimulatorPage.sendUICmd('B4')" title="K1长按-连续测量" style="flex:1;padding:6px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">K1连续</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('B6')" title="K2长按-切换基准" style="flex:1;padding:6px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">K2基准</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('B8')" title="K3长按-背光" style="flex:1;padding:6px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">K3背光</button>
+                    </div>
+                    <!-- 模拟测距 -->
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <input type="number" id="sim-measure-dist" value="5000" min="100" max="99999" style="width:70px;padding:4px;font-size:11px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-tertiary);color:var(--text-primary);" placeholder="距离mm">
+                        <button onclick="LcdSimulatorPage.simMeasureOk()" title="模拟测距成功" style="flex:1;padding:6px;font-size:11px;background:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;">✅测距OK</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('BE')" title="模拟测距失败" style="flex:1;padding:6px;font-size:11px;background:#ff9800;color:white;border:none;border-radius:4px;cursor:pointer;">❌测距Err</button>
+                    </div>
+                    <!-- 状态查询 -->
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="LcdSimulatorPage.queryStatus()" title="查询UI状态" style="flex:1;padding:6px;font-size:11px;background:#2196F3;color:white;border:none;border-radius:4px;cursor:pointer;">📊查询状态</button>
+                        <button onclick="LcdSimulatorPage.sendUICmd('BA')" title="K1+K2组合-蜂鸣器" style="flex:1;padding:6px;font-size:11px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">🔔蜂鸣器</button>
+                    </div>
+                    <!-- 状态显示 -->
+                    <div id="sim-ui-status" style="padding:6px;font-size:11px;background:var(--bg-tertiary);border-radius:4px;color:var(--text-muted);max-height:60px;overflow-y:auto;">
+                        点击按钮发送命令...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 缓冲区预览 -->
+            <div style="background: var(--bg-secondary); border-radius: 8px; overflow: hidden;">
+                <div style="padding: 6px 12px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color);">
+                    <span style="font-size: 12px; color: var(--text-muted);">LCD缓冲区 (54字节)</span>
+                </div>
+                <div id="sim-buffer-hex" style="padding: 8px; font-family: monospace; font-size: 11px; word-break: break-all; max-height: 60px; overflow-y: auto; color: var(--accent-color);">
+                    -- 未同步 --
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部日志 -->
+    <div style="height: 80px; background: var(--bg-secondary); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="padding: 6px 12px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 500;">日志</span>
+            <button onclick="LcdSimulatorPage.clearLog()" style="padding: 2px 8px; font-size: 12px; border-radius: 4px; background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); cursor: pointer;">清空</button>
+        </div>
+        <div id="sim-log-area" style="flex: 1; overflow-y: auto; padding: 8px; font-family: monospace; font-size: 12px;">
+            <div style="color: var(--text-muted);">等待操作...</div>
+        </div>
+    </div>
+</div>
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 16px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px;">
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">将绑定的段码:</div>
+            <div id="sim-bind-preview" style="font-size: 13px; color: var(--accent-color);"></div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button onclick="LcdSimulatorPage.hideBindDialog()" style="padding: 8px 16px; border-radius: 4px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer;">
+                取消
+            </button>
+            <button onclick="LcdSimulatorPage.confirmBind()" style="padding: 8px 16px; border-radius: 4px; background: var(--success-color); color: white; border: none; cursor: pointer;">
+                确认绑定
+            </button>
+        </div>
+    </div>
+</div>

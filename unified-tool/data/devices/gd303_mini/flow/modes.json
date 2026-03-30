@@ -1,0 +1,229 @@
+{
+  "version": "1.0",
+  "description": "测量模式配置",
+  "modes": {
+    "single": {
+      "name": "单次测量",
+      "icon": "📏",
+      "stepCount": 1,
+      "resultType": "length",
+      "steps": [
+        {
+          "step": 1,
+          "action": "measure",
+          "store": "line4",
+          "dataType": "length",
+          "scrollBefore": true,
+          "description": "测量距离"
+        }
+      ],
+      "onComplete": {
+        "display": "line4",
+        "dataType": "length"
+      }
+    },
+    "continuous": {
+      "name": "连续测量",
+      "icon": "🔄",
+      "stepCount": 0,
+      "resultType": "length",
+      "steps": [
+        {
+          "step": 1,
+          "action": "measure",
+          "store": "line4",
+          "dataType": "length",
+          "updateMax": "line2",
+          "updateMin": "line3",
+          "description": "连续测量"
+        }
+      ],
+      "onComplete": null
+    },
+    "area": {
+      "name": "面积测量",
+      "icon": "📐",
+      "stepCount": 2,
+      "resultType": "area",
+      "steps": [
+        {
+          "step": 1,
+          "action": "measure",
+          "store": "line1",
+          "dataType": "length",
+          "variable": "length",
+          "description": "测量长度"
+        },
+        {
+          "step": 2,
+          "action": "measure",
+          "store": "line2",
+          "dataType": "length",
+          "variable": "width",
+          "description": "测量宽度"
+        }
+      ],
+      "calculate": {
+        "formula": "length * width",
+        "variables": ["length", "width"],
+        "result": "area"
+      },
+      "onComplete": {
+        "display": "line4",
+        "dataType": "area"
+      }
+    },
+    "volume": {
+      "name": "体积测量",
+      "icon": "📦",
+      "stepCount": 3,
+      "resultType": "volume",
+      "steps": [
+        {
+          "step": 1,
+          "action": "measure",
+          "store": "line1",
+          "dataType": "length",
+          "variable": "length",
+          "description": "测量长度"
+        },
+        {
+          "step": 2,
+          "action": "measure",
+          "store": "line2",
+          "dataType": "length",
+          "variable": "width",
+          "description": "测量宽度"
+        },
+        {
+          "step": 3,
+          "action": "measure",
+          "store": "line3",
+          "dataType": "length",
+          "variable": "height",
+          "description": "测量高度"
+        }
+      ],
+      "calculate": {
+        "formula": "length * width * height",
+        "variables": ["length", "width", "height"],
+        "result": "volume"
+      },
+      "onComplete": {
+        "display": "line4",
+        "dataType": "volume"
+      }
+    },
+    "pyth1": {
+      "name": "勾股定理1",
+      "icon": "📐",
+      "stepCount": 2,
+      "resultType": "length",
+      "description": "已知斜边和一条直角边，求另一条直角边",
+      "steps": [
+        {
+          "step": 1,
+          "action": "measure",
+          "store": "line1",
+          "dataType": "length",
+          "variable": "hypotenuse",
+          "description": "测量斜边"
+        },
+        {
+          "step": 2,
+          "action": "measure",
+          "store": "line2",
+          "dataType": "length",
+          "variable": "side",
+          "description": "测量直角边"
+        }
+      ],
+      "calculate": {
+        "formula": "sqrt(hypotenuse * hypotenuse - side * side)",
+        "variables": ["hypotenuse", "side"],
+        "result": "length",
+        "validate": "hypotenuse > side"
+      },
+      "onComplete": {
+        "display": "line4",
+        "dataType": "length"
+      }
+    },
+    "pyth2": {
+      "name": "勾股定理2",
+      "icon": "📐",
+      "stepCount": 3,
+      "resultType": "length",
+      "description": "间接测量：测量两点到目标的距离和两点间距离",
+      "steps": [
+        {
+          "step": 1,
+          "action": "measure",
+          "store": "line1",
+          "dataType": "length",
+          "variable": "d1",
+          "description": "测量距离1"
+        },
+        {
+          "step": 2,
+          "action": "measure",
+          "store": "line2",
+          "dataType": "length",
+          "variable": "d2",
+          "description": "测量距离2"
+        },
+        {
+          "step": 3,
+          "action": "measure",
+          "store": "line3",
+          "dataType": "length",
+          "variable": "base",
+          "description": "测量基线"
+        }
+      ],
+      "calculate": {
+        "formula": "sqrt(d1 * d1 - ((d1*d1 - d2*d2 + base*base) / (2*base)) * ((d1*d1 - d2*d2 + base*base) / (2*base)))",
+        "variables": ["d1", "d2", "base"],
+        "result": "length"
+      },
+      "onComplete": {
+        "display": "line4",
+        "dataType": "length"
+      }
+    },
+    "pyth3": {
+      "name": "勾股定理3",
+      "icon": "📐",
+      "stepCount": 2,
+      "resultType": "length",
+      "description": "已知两条直角边，求斜边",
+      "steps": [
+        {
+          "step": 1,
+          "action": "measure",
+          "store": "line1",
+          "dataType": "length",
+          "variable": "a",
+          "description": "测量直角边a"
+        },
+        {
+          "step": 2,
+          "action": "measure",
+          "store": "line2",
+          "dataType": "length",
+          "variable": "b",
+          "description": "测量直角边b"
+        }
+      ],
+      "calculate": {
+        "formula": "sqrt(a * a + b * b)",
+        "variables": ["a", "b"],
+        "result": "length"
+      },
+      "onComplete": {
+        "display": "line4",
+        "dataType": "length"
+      }
+    }
+  }
+}

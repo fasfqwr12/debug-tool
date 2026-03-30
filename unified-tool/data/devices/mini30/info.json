@@ -1,0 +1,9 @@
+{
+  "id": "mini30",
+  "name": "MINI30",
+  "description": "MINI30 测距仪",
+  "lcdType": "segment",
+  "modelPattern": "^(MINI30|mini30|mini-30|GD303-MINI|gd303-mini|GD303_MINI)$",
+  "createdAt": "2025-12-26",
+  "updatedAt": "2025-12-29T10:48:06.869200"
+}

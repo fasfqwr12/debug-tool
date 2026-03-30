@@ -1,0 +1,889 @@
+<div class="page-container" style="display:flex; flex-direction:column; height:calc(100vh - var(--topbar-h, 32px) - 40px); overflow:hidden;">
+    <div class="page-header" style="flex-shrink:0;">
+        <h1>🧪 固件测试</h1>
+        <div class="header-actions" style="display:flex; gap:8px; align-items:center;">
+            <button class="btn btn-primary" onclick="TestQueuePage.importTaskFile()" title="导入研发分配的任务文件">
+                📥 导入任务文件
+            </button>
+            <button class="btn" onclick="TestQueuePage.openShareDir()" title="打开共享目录查看待处理任务">
+                📂 共享目录
+            </button>
+            <button class="help-btn" onclick="switchPage('help_test')" title="使用说明">❓</button>
+        </div>
+    </div>
+
+    <div class="test-layout-new" style="flex:1; min-height:0;">
+        <!-- 左侧：待测队列 + 历史 -->
+        <div class="panel queue-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <div class="panel-header">
+                <span>📋 待测队列</span>
+                <span class="badge warning" id="queue-count">0</span>
+                <button class="mini-btn" onclick="TestQueuePage.scanShareDir()" title="扫描共享目录">🔍</button>
+            </div>
+            <!-- 共享目录状态提示 -->
+            <div id="share-dir-status" style="padding:8px 12px; font-size:11px; color:var(--text-muted); border-bottom:1px solid var(--border-color); display:none;">
+                <span id="share-dir-path">未设置共享目录</span>
+                <button class="mini-btn" onclick="TestQueuePage.openShareDir()" style="margin-left:8px;">设置</button>
+            </div>
+            <div class="queue-list" id="queue-list" style="flex:1; min-height:80px; overflow-y:auto;"></div>
+            
+            <div class="panel-header" style="border-top:1px solid var(--border-color);">
+                <span>📜 历史记录</span>
+                <button class="mini-btn" onclick="TestQueuePage.clearHistory()" title="清空历史">🗑️</button>
+            </div>
+            <div class="history-list" id="history-list" style="flex:1; min-height:80px; overflow-y:auto;"></div>
+        </div>
+
+        <!-- 右侧：测试主面板 -->
+        <div class="test-main-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <!-- 顶部：版本信息 -->
+            <div class="version-bar" id="version-bar">
+                <div class="empty-state">选择左侧待测固件开始测试</div>
+            </div>
+            
+            <!-- 共享文件操作栏 -->
+            <div class="share-bar" id="share-bar" style="display:none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px;">
+                <div class="share-title" style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-color);">
+                    📤 测试操作
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="share-btn" onclick="TestQueuePage.openShareFile()" title="打开共享文件">
+                        📂 打开任务文件
+                    </button>
+                    <button class="share-btn" onclick="TestQueuePage.updateShareFile()" title="保存测试进度" id="btn-update-share">
+                        💾 保存进度
+                    </button>
+                    <button class="share-btn primary" onclick="TestQueuePage.submitResultAndNotify()" title="提交测试结果并发送邮件给研发" id="btn-submit-result">
+                        📧 提交结果并通知研发
+                    </button>
+                </div>
+                <div id="share-status" style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);"></div>
+            </div>
+            
+            <!-- 测试分类标签 -->
+            <div class="test-tabs" id="test-tabs" style="display:none">
+                <button class="tab active" data-tab="ui" onclick="TestQueuePage.switchTab('ui')">📱 UI测试</button>
+                <button class="tab" data-tab="perf" onclick="TestQueuePage.switchTab('perf')">📊 性能测试</button>
+                <button class="tab" data-tab="func" onclick="TestQueuePage.switchTab('func')">⚙️ 功能测试</button>
+                <button class="tab" data-tab="stability" onclick="TestQueuePage.switchTab('stability')">🔄 稳定性测试</button>
+                <button class="tab" data-tab="issues" onclick="TestQueuePage.switchTab('issues')">⚠️ 异常记录</button>
+                <button class="tab" data-tab="summary" onclick="TestQueuePage.switchTab('summary')">📋 测试报告</button>
+                <button class="tab-btn" onclick="TestQueuePage.showTemplateManager()" title="管理测试模板">⚙️</button>
+            </div>
+            
+            <!-- 测试内容区 -->
+            <div class="test-content-area" id="test-content">
+            </div>
+        </div>
+    </div>
+    <!-- 模板选择对话框 -->
+    <div class="dialog-overlay" id="template-select-dialog" style="display:none">
+        <div class="dialog" style="width:500px">
+            <div class="dialog-header">
+                <h3>📋 选择测试模板</h3>
+                <button class="close-btn" onclick="TestQueuePage.hideTemplateSelect()">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="template-list" id="template-list"></div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn secondary" onclick="TestQueuePage.createNewTemplate()">+ 新建模板</button>
+                <button class="btn secondary" onclick="TestQueuePage.hideTemplateSelect()">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模板编辑对话框 -->
+    <div class="dialog-overlay" id="template-dialog" style="display:none">
+        <div class="dialog template-dialog">
+            <div class="dialog-header">
+                <h3>⚙️ 编辑测试模板</h3>
+                <button class="close-btn" onclick="TestQueuePage.hideTemplateManager()">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="template-name-row">
+                    <label>模板名称</label>
+                    <input type="text" id="template-name-input" placeholder="如：激光测距仪标准测试">
+                </div>
+                <div class="template-tabs">
+                    <button class="t-tab active" data-cat="ui" onclick="TestQueuePage.switchTemplateCat('ui')">UI测试</button>
+                    <button class="t-tab" data-cat="perf" onclick="TestQueuePage.switchTemplateCat('perf')">性能测试</button>
+                    <button class="t-tab" data-cat="func" onclick="TestQueuePage.switchTemplateCat('func')">功能测试</button>
+                    <button class="t-tab" data-cat="stability" onclick="TestQueuePage.switchTemplateCat('stability')">稳定性测试</button>
+                </div>
+                <div class="template-content" id="template-content"></div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn secondary" onclick="TestQueuePage.hideTemplateManager()">取消</button>
+                <button class="btn primary" onclick="TestQueuePage.saveTemplate()">保存模板</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 测试项详情对话框 -->
+    <div class="dialog-overlay" id="item-detail-dialog" style="display:none">
+        <div class="dialog item-detail-dialog">
+            <div class="dialog-header">
+                <h3 id="detail-title">测试项详情</h3>
+                <button class="close-btn" onclick="TestQueuePage.hideItemDetail()">×</button>
+            </div>
+            <div class="dialog-body" id="detail-body"></div>
+            <div class="dialog-footer">
+                <button class="btn secondary" onclick="TestQueuePage.hideItemDetail()">关闭</button>
+                <button class="btn primary" onclick="TestQueuePage.saveItemDetail()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 新布局 */
+.test-layout-new {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    height: calc(100vh - 140px);
+}
+
+.test-main-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 版本信息栏 */
+.version-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px 20px;
+}
+.version-bar .info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+.version-bar .info-item .label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.version-bar .info-item .value {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 测试标签页 */
+.test-tabs {
+    display: flex;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+}
+.test-tabs .tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.test-tabs .tab:hover {
+    background: var(--input-bg);
+}
+.test-tabs .tab.active {
+    background: var(--primary-color);
+    color: var(--text-on-accent);
+    font-weight: 500;
+}
+
+/* 测试内容区 */
+.test-content-area {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* 测试组 */
+.test-group {
+    margin-bottom: 24px;
+}
+.test-group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.test-group-header h3 {
+    margin: 0;
+    font-size: 15px;
+}
+.test-group-header .progress {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* 测试项 */
+.test-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+.test-item .checkbox {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.test-item .checkbox.checked {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-on-accent);
+}
+.test-item .checkbox.failed {
+    background: var(--color-danger, #ef4444);
+    border-color: var(--color-danger, #ef4444);
+    color: var(--text-on-danger);
+}
+.test-item .content {
+    flex: 1;
+}
+.test-item .name {
+    font-size: 13px;
+    font-weight: 500;
+}
+.test-item .desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.test-item .value-input {
+    width: 120px;
+    padding: 8px 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 13px;
+    text-align: right;
+}
+.test-item .unit {
+    font-size: 12px;
+    color: var(--text-muted);
+    width: 40px;
+}
+.test-item .result-btns {
+    display: flex;
+    gap: 6px;
+}
+.test-item .result-btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+}
+.test-item .result-btn.pass { border-color: var(--color-success, var(--primary-color)); color: var(--color-success, var(--primary-color)); }
+.test-item .result-btn.fail { border-color: var(--color-danger, #ef4444); color: var(--color-danger, #ef4444); }
+.test-item .result-btn.active.pass { background: var(--color-success, var(--primary-color)); color: var(--text-on-accent); }
+.test-item .result-btn.active.fail { background: var(--color-danger, #ef4444); color: var(--text-on-danger); }
+
+/* 滑台测试链接 */
+.slipway-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--accent-dim);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+.slipway-link .icon { font-size: 22px; }
+.slipway-link .info { flex: 1; }
+.slipway-link .title { font-size: 13px; font-weight: 500; }
+.slipway-link .desc { font-size: 11px; color: var(--text-muted); }
+.slipway-link .btn {
+    padding: 6px 14px;
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    color: var(--text-on-accent);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* 测试总结 */
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    padding: 20px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    text-align: center;
+}
+.stat-card .number {
+    font-size: 32px;
+    font-weight: 600;
+}
+.stat-card .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.stat-card.pass .number { color: var(--color-success, var(--primary-color)); }
+.stat-card.fail .number { color: var(--color-danger, #ef4444); }
+
+.final-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+.final-btn {
+    flex: 1;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.final-btn.reject {
+    background: var(--input-bg);
+    border: 1px solid var(--color-danger, #ef4444);
+    color: var(--color-danger, #ef4444);
+}
+.final-btn.approve {
+    background: var(--primary-color);
+    border: none;
+    color: var(--text-on-accent);
+}
+
+/* 异常记录样式 */
+.issue-card {
+    padding: 14px 16px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--border-color);
+}
+.issue-card.critical { border-left-color: #ef4444; background: rgba(239,68,68,0.1); }
+.issue-card.major { border-left-color: #f59e0b; background: rgba(245,158,11,0.1); }
+.issue-card.minor { border-left-color: #6366f1; background: rgba(99,102,241,0.1); }
+
+.issue-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.severity-badge {
+    padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 500;
+}
+.severity-badge.critical { background: #ef4444; color: var(--text-on-danger); }
+.severity-badge.major { background: #f59e0b; color: var(--text-on-accent); }
+.severity-badge.minor { background: #6366f1; color: var(--text-on-danger); }
+
+.issue-category { font-size: 12px; color: var(--text-muted); }
+.issue-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.issue-desc { font-size: 12px; color: var(--text-muted); }
+.issue-footer { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+.add-btn {
+    padding: 6px 12px; background: var(--primary-color); border: none;
+    border-radius: 4px; color: var(--text-on-accent); font-size: 11px; cursor: pointer;
+}
+.del-btn {
+    width: 24px; height: 24px; border-radius: 4px;
+    background: transparent; border: 1px solid var(--border-color);
+    color: var(--text-muted); cursor: pointer; font-size: 14px;
+}
+.del-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+.empty-hint { color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px; }
+
+/* 测试报告样式 */
+.report-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+}
+.report-header h2 { margin: 0; font-size: 20px; }
+.export-btn {
+    padding: 8px 16px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); cursor: pointer; font-size: 12px;
+}
+.export-btn:hover { border-color: var(--primary-color); }
+
+.report-section {
+    margin-bottom: 24px;
+}
+.report-section h4 {
+    font-size: 14px; margin-bottom: 12px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border-color);
+}
+.report-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+.report-item {
+    display: flex; justify-content: space-between;
+    padding: 10px 14px; background: var(--input-bg); border-radius: 6px;
+    font-size: 13px;
+}
+.report-item .label { color: var(--text-muted); }
+
+/* 对话框样式 */
+.dialog-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92); z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+}
+.dialog {
+    background: #121620;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    max-height: 80vh; display: flex; flex-direction: column;
+    border: 1px solid color-mix(in srgb, var(--border-color) 85%, #fff 15%);
+}
+.template-dialog { width: 700px; }
+.item-detail-dialog { width: 900px; max-width: 95vw; }
+
+.dialog-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+}
+.dialog-header h3 { margin: 0; font-size: 16px; }
+.close-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: transparent; border: none;
+    color: var(--text-muted); cursor: pointer; font-size: 18px;
+}
+.close-btn:hover { background: var(--input-bg); }
+
+.dialog-body { padding: 20px; overflow-y: auto; flex: 1; }
+.dialog-footer {
+    padding: 16px 20px; border-top: 1px solid var(--border-color);
+    display: flex; justify-content: flex-end; gap: 10px;
+}
+.btn {
+    padding: 10px 20px; border-radius: 6px; font-size: 13px; cursor: pointer;
+}
+.btn.primary { background: var(--primary-color); border: none; color: var(--text-on-accent); }
+.btn.secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
+
+/* 模板管理 */
+.template-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.t-tab {
+    padding: 8px 14px; background: var(--input-bg); border: 1px solid var(--border-color);
+    border-radius: 6px; color: var(--text-muted); cursor: pointer; font-size: 12px;
+}
+.t-tab.active { background: var(--primary-color); color: var(--text-on-accent); border-color: var(--primary-color); }
+
+.template-group {
+    margin-bottom: 20px; padding: 16px;
+    background: var(--input-bg); border-radius: 8px;
+}
+.template-group-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+}
+.template-group-header input {
+    flex: 1; padding: 8px 12px; background: var(--card-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); font-size: 14px; font-weight: 500;
+}
+.template-item {
+    display: flex; gap: 10px; align-items: center;
+    padding: 10px 12px; background: var(--card-bg);
+    border-radius: 6px; margin-bottom: 6px;
+}
+.template-item input { flex: 1; padding: 6px 10px; background: transparent; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 12px; }
+.template-item .desc-input { flex: 2; }
+.template-item .mini-btn {
+    width: 26px; height: 26px; border-radius: 4px;
+    background: transparent; border: 1px solid var(--border-color);
+    color: var(--text-muted); cursor: pointer; font-size: 12px;
+}
+.template-item .mini-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.template-item .mini-btn.del:hover { border-color: #ef4444; color: #ef4444; }
+
+.add-group-btn, .add-item-btn {
+    width: 100%; padding: 10px; margin-top: 8px;
+    background: transparent; border: 1px dashed var(--border-color);
+    border-radius: 6px; color: var(--text-muted); cursor: pointer; font-size: 12px;
+}
+.add-group-btn:hover, .add-item-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+/* 模板名称输入 */
+.template-name-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+.template-name-row label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+.template-name-row input {
+    flex: 1; padding: 10px 14px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); font-size: 14px;
+}
+
+/* 模板列表 */
+.template-list { display: flex; flex-direction: column; gap: 10px; }
+.template-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+}
+.template-card:hover { border-color: var(--primary-color); }
+.template-card.active { border-color: var(--primary-color); background: rgba(34,197,94,0.1); }
+.template-card .icon { font-size: 24px; }
+.template-card .info { flex: 1; }
+.template-card .name { font-size: 14px; font-weight: 500; }
+.template-card .desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.template-card .actions { display: flex; gap: 6px; }
+.template-card .action-btn {
+    width: 28px; height: 28px; border-radius: 4px;
+    background: transparent; border: 1px solid var(--border-color);
+    color: var(--text-muted); cursor: pointer; font-size: 12px;
+}
+.template-card .action-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.template-card .action-btn.del:hover { border-color: #ef4444; color: #ef4444; }
+
+/* 标签页设置按钮 */
+.tab-btn {
+    width: 36px; padding: 8px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-muted); cursor: pointer; font-size: 14px;
+}
+.tab-btn:hover { border-color: var(--primary-color); }
+
+/* 测试项详情 */
+.detail-form { display: flex; flex-direction: column; gap: 16px; }
+.detail-row { display: flex; flex-direction: column; gap: 6px; }
+.detail-row label { font-size: 12px; color: var(--text-muted); }
+.detail-row input, .detail-row textarea, .detail-row select {
+    padding: 10px 12px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); font-size: 13px;
+}
+.detail-row textarea { resize: none; }
+.detail-photos { display: flex; gap: 10px; flex-wrap: wrap; }
+.photo-item {
+    width: 80px; height: 80px; background: var(--input-bg);
+    border: 1px dashed var(--border-color); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); cursor: pointer; font-size: 20px;
+}
+
+/* 测试项可点击 */
+.test-item .content { cursor: pointer; }
+.test-item .content:hover .name { color: var(--primary-color); }
+
+.test-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    gap: 16px;
+    height: calc(100vh - 140px);
+}
+
+.panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: var(--input-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600; font-size: 13px;
+}
+
+.badge {
+    background: #f59e0b; color: var(--text-on-accent);
+    padding: 2px 8px; border-radius: 10px; font-size: 11px;
+}
+
+/* 队列列表 */
+.queue-list, .history-list { flex: 1; overflow-y: auto; padding: 8px; }
+
+.queue-item {
+    padding: 12px; border-radius: 8px; cursor: pointer;
+    margin-bottom: 6px; border-left: 3px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+.queue-item:hover { background: rgba(245, 158, 11, 0.2); }
+.queue-item.active { border-left-color: var(--primary-color); background: rgba(0,255,157,0.1); }
+.queue-item.testing { border-left-color: #3b82f6; background: rgba(59,130,246,0.1); }
+
+.queue-item .queue-item-header { display: flex; align-items: center; justify-content: space-between; }
+.queue-item .name { font-size: 14px; font-weight: 500; flex: 1; }
+.queue-item .time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.queue-item .status { font-size: 11px; margin-top: 4px; }
+
+/* 快速驳回按钮 */
+.quick-reject-btn {
+    width: 24px; height: 24px; border-radius: 4px;
+    background: transparent; border: 1px solid rgba(239,68,68,0.3);
+    color: #ef4444; cursor: pointer; font-size: 12px;
+    opacity: 0; transition: opacity 0.2s;
+}
+.queue-item:hover .quick-reject-btn { opacity: 1; }
+.quick-reject-btn:hover { background: #ef4444; color: var(--text-on-danger); }
+
+.history-item {
+    padding: 10px; border-radius: 6px; cursor: pointer;
+    margin-bottom: 4px; font-size: 12px;
+}
+.history-item:hover { background: var(--input-bg); }
+.history-item.passed { border-left: 3px solid var(--primary-color); }
+.history-item.failed { border-left: 3px solid #ef4444; }
+
+/* 测试内容 */
+.test-content { flex: 1; overflow-y: auto; padding: 20px; }
+
+.test-header { margin-bottom: 24px; }
+.test-header h2 { margin: 0; font-size: 22px; }
+.test-header p { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
+.checklist { margin-bottom: 24px; }
+.checklist h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+
+.check-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; background: var(--input-bg); border-radius: 8px;
+    margin-bottom: 6px;
+}
+.check-row input[type="checkbox"] { width: 20px; height: 20px; }
+.check-row .label { flex: 1; font-size: 13px; }
+.check-row .note-input {
+    width: 150px; padding: 6px 10px; background: transparent;
+    border: 1px solid var(--border-color); border-radius: 4px;
+    color: var(--text-color); font-size: 11px;
+}
+
+.data-section { margin-bottom: 24px; }
+.data-section h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+.data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.data-input label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.data-input input {
+    width: 100%; padding: 10px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); font-size: 14px;
+}
+
+.remark-section textarea {
+    width: 100%; padding: 12px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); font-size: 13px; resize: none;
+}
+
+.action-buttons {
+    display: flex; gap: 12px; margin-top: 24px;
+}
+.action-btn {
+    flex: 1; padding: 14px; border-radius: 8px;
+    border: 1px solid var(--border-color); background: var(--input-bg);
+    color: var(--text-color); font-size: 14px; cursor: pointer;
+}
+.action-btn:hover { border-color: var(--primary-color); }
+.action-btn.primary { background: var(--primary-color); color: var(--text-on-accent); border: none; font-weight: 600; }
+.action-btn.danger { background: #ef4444; color: var(--text-on-danger); border: none; }
+
+/* 共享文件按钮 */
+.share-btn {
+    flex: 1; padding: 8px 12px;
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    border-radius: 6px; color: var(--text-color); font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
+}
+.share-btn:hover { 
+    border-color: var(--primary-color); 
+    background: var(--hover-bg);
+}
+.share-btn:disabled { 
+    opacity: 0.5; cursor: not-allowed; 
+}
+.share-btn.primary { 
+    background: var(--primary-color); 
+    color: var(--text-on-accent); 
+    border: none; 
+}
+
+/* 来源信息 */
+.source-info { flex: 1; overflow-y: auto; padding: 16px; }
+
+.source-card {
+    padding: 16px; background: var(--input-bg); border-radius: 8px;
+    margin-bottom: 16px;
+}
+.source-card h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+.source-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
+.source-row .label { color: var(--text-muted); }
+
+.link-btn {
+    display: block; width: 100%; padding: 10px; margin-top: 12px;
+    background: transparent; border: 1px solid var(--border-color);
+    border-radius: 6px; color: var(--text-color); font-size: 12px;
+    cursor: pointer; text-align: center;
+}
+.link-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+.empty-state { color: var(--text-muted); text-align: center; padding: 40px; font-size: 13px; }
+
+/* 校准检查 */
+.calibration-check {
+    padding: 12px 16px; margin-bottom: 20px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 8px;
+}
+.checkbox-label {
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; font-size: 13px;
+}
+.checkbox-label input { width: 18px; height: 18px; }
+
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-header h1 { margin: 0; font-size: 22px; }
+.help-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    color: var(--text-muted); cursor: pointer; font-size: 14px;
+}
+.help-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+/* 多设备测试 - 设备管理栏 */
+.device-bar {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+.device-bar .device-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.device-bar .device-info .label {
+    font-weight: 600;
+    font-size: 14px;
+}
+.device-bar .device-info .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.device-bar .device-info .count {
+    margin-left: auto;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.device-bar .device-info .count.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+.device-bar .device-info .count.ok {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+.device-bar .device-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.device-bar .device-tab {
+    padding: 8px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.device-bar .device-tab:hover {
+    border-color: var(--primary-color);
+}
+.device-bar .device-tab.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-on-accent);
+}
+.device-bar .device-tab.has-data .device-status {
+    color: #22c55e;
+}
+.device-bar .device-tab.active.has-data .device-status {
+    color: var(--text-on-accent);
+}
+.device-bar .add-device-btn {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+}
+.device-bar .add-device-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+.device-bar .current-device-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+.device-bar .btn-small {
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 11px;
+}
+.device-bar .btn-small:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+.device-bar .btn-small.danger:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+</style>

@@ -1,0 +1,8 @@
+{
+  "id": "lg_150",
+  "name": "LG-150",
+  "description": "LG-150 测距仪",
+  "lcdType": "segment",
+  "modelPattern": "^(LG-150|lg-150)$",
+  "createdAt": "2025-12-26"
+}

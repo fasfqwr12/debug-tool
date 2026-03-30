@@ -1,0 +1,68 @@
+{
+  "version": "1.0",
+  "profiles": [
+    {
+      "id": "gd303_80m",
+      "name": "GD303-80M",
+      "model_pattern": "^GD303-80M$",
+      "protocol_id": "default",
+      "allowed_workflows": [],
+      "default_workflow": ""
+    },
+    {
+      "id": "lg_150",
+      "name": "LG-150",
+      "model_pattern": "^(LG-150|lg-150)$",
+      "protocol_id": "default",
+      "allowed_workflows": [
+        "slipway_multi_calibration",
+        "slipway_calibration"
+      ],
+      "default_workflow": "slipway_multi_calibration"
+    },
+    {
+      "id": "mini30",
+      "name": "MINI30",
+      "model_pattern": "^(MINI30|mini30|mini-30)$",
+      "protocol_id": "default",
+      "allowed_workflows": [
+        "slipway_multi_calibration",
+        "slipway_calibration"
+      ],
+      "default_workflow": "slipway_multi_calibration"
+    },
+    {
+      "id": "xy30",
+      "name": "XY30",
+      "model_pattern": "^(XY30|xy30)$",
+      "protocol_id": "default",
+      "allowed_workflows": [
+        "slipway_multi_calibration",
+        "slipway_calibration"
+      ],
+      "default_workflow": "slipway_multi_calibration"
+    },
+    {
+      "id": "xm30",
+      "name": "XM30",
+      "model_pattern": "^(XM30|xm30)$",
+      "protocol_id": "default",
+      "allowed_workflows": [
+        "slipway_calibration",
+        "slipway_multi_calibration"
+      ],
+      "default_workflow": "slipway_multi_calibration"
+    },
+    {
+      "id": "zxxw150",
+      "name": "ZXXW150",
+      "model_pattern": "^(ZXXW150|zxxw150)$",
+      "protocol_id": "default",
+      "allowed_workflows": [
+        "slipway_multi_calibration",
+        "slipway_calibration"
+      ],
+      "default_workflow": "slipway_multi_calibration"
+    }
+  ]
+}

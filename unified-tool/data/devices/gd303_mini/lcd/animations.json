@@ -1,0 +1,416 @@
+{
+  "version": "2.0",
+  "description": "LCD动画效果库 - 帧序列格式",
+  "animations": {
+    "laserBlink": {
+      "name": "激光闪烁",
+      "description": "激光开启时图标闪烁",
+      "category": "激光",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 300,
+          "components": {
+            "laser": {
+              "visible": true
+            }
+          }
+        },
+        {
+          "duration": 300,
+          "components": {
+            "laser": {
+              "visible": false
+            }
+          }
+        }
+      ]
+    },
+    "bluetoothBlink": {
+      "name": "蓝牙搜索",
+      "description": "蓝牙搜索配对时闪烁",
+      "category": "连接",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 500,
+          "components": {
+            "bluetooth": {
+              "visible": true
+            }
+          }
+        },
+        {
+          "duration": 500,
+          "components": {
+            "bluetooth": {
+              "visible": false
+            }
+          }
+        }
+      ]
+    },
+    "wifiBlink": {
+      "name": "WiFi连接",
+      "description": "WiFi连接时闪烁",
+      "category": "连接",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 500,
+          "components": {
+            "wifi": {
+              "visible": true
+            }
+          }
+        },
+        {
+          "duration": 500,
+          "components": {
+            "wifi": {
+              "visible": false
+            }
+          }
+        }
+      ]
+    },
+    "chargingAnim": {
+      "name": "充电动画",
+      "description": "充电时电池格循环动画",
+      "category": "电池",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 250,
+          "components": {
+            "battery": {
+              "value": 1
+            }
+          }
+        },
+        {
+          "duration": 250,
+          "components": {
+            "battery": {
+              "value": 2
+            }
+          }
+        },
+        {
+          "duration": 250,
+          "components": {
+            "battery": {
+              "value": 3
+            }
+          }
+        },
+        {
+          "duration": 250,
+          "components": {
+            "battery": {
+              "value": 0
+            }
+          }
+        }
+      ]
+    },
+    "lowBatteryBlink": {
+      "name": "低电量闪烁",
+      "description": "低电量时电池框闪烁警告",
+      "category": "电池",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 200,
+          "components": {
+            "battery": {
+              "value": 0
+            }
+          }
+        },
+        {
+          "duration": 200,
+          "components": {},
+          "elements": []
+        }
+      ]
+    },
+    "baseFrontBlink": {
+      "name": "前基准闪烁",
+      "description": "前基准图标闪烁提示",
+      "category": "基准",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 300,
+          "components": {
+            "base": {
+              "value": 0
+            }
+          }
+        },
+        {
+          "duration": 300,
+          "elements": []
+        }
+      ]
+    },
+    "baseBackBlink": {
+      "name": "后基准闪烁",
+      "description": "后基准图标闪烁提示",
+      "category": "基准",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 300,
+          "components": {
+            "base": {
+              "value": 1
+            }
+          }
+        },
+        {
+          "duration": 300,
+          "elements": []
+        }
+      ]
+    },
+    "unitSelectAnim": {
+      "name": "单位选择动画",
+      "description": "开机单位选择 - 当前单位闪烁提示",
+      "category": "系统",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 800,
+          "elements": [],
+          "components": {
+            "line4": {
+              "preset": "dash",
+              "unit": 1
+            }
+          }
+        },
+        {
+          "duration": 800,
+          "elements": [],
+          "components": {
+            "line4": {
+              "preset": "dash",
+              "unit": 2
+            }
+          }
+        },
+        {
+          "duration": 800,
+          "components": {
+            "line4": {
+              "preset": "dash"
+            }
+          },
+          "elements": []
+        }
+      ]
+    },
+    "bootFullTest": {
+      "name": "开机全显",
+      "description": "开机时全显测试动画",
+      "category": "系统",
+      "loop": false,
+      "frames": [
+        {
+          "duration": 500,
+          "action": "lcd:showAll"
+        },
+        {
+          "duration": 200,
+          "action": "lcd:clearAll"
+        },
+        {
+          "duration": 500,
+          "action": "lcd:showAll"
+        },
+        {
+          "duration": 200,
+          "action": "lcd:clearAll"
+        }
+      ]
+    },
+    "signalPulse": {
+      "name": "信号脉冲",
+      "description": "测量成功时信号强度脉冲",
+      "category": "测量",
+      "loop": false,
+      "frames": [
+        {
+          "duration": 100,
+          "components": {
+            "signal": {
+              "value": 1
+            }
+          }
+        },
+        {
+          "duration": 100,
+          "components": {
+            "signal": {
+              "value": 3
+            }
+          }
+        },
+        {
+          "duration": 100,
+          "components": {
+            "signal": {
+              "value": 5
+            }
+          }
+        },
+        {
+          "duration": 100,
+          "components": {
+            "signal": {
+              "value": 3
+            }
+          }
+        }
+      ]
+    },
+    "areaSide1Blink": {
+      "name": "面积边1闪烁",
+      "description": "面积测量第一边(长度)闪烁提示",
+      "category": "面积",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 400,
+          "elements": ["Mode_s_1_x"]
+        },
+        {
+          "duration": 400,
+          "elements": []
+        }
+      ]
+    },
+    "areaSide2Blink": {
+      "name": "面积边2闪烁",
+      "description": "面积测量第二边(宽度)闪烁提示",
+      "category": "面积",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 400,
+          "elements": ["Mode_s_1_y"]
+        },
+        {
+          "duration": 400,
+          "elements": []
+        }
+      ]
+    },
+    "volumeSide1Blink": {
+      "name": "体积边1闪烁",
+      "description": "体积测量第一边(长度)闪烁提示",
+      "category": "体积",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 400,
+          "elements": ["Mode_s_1_x"]
+        },
+        {
+          "duration": 400,
+          "elements": []
+        }
+      ]
+    },
+    "volumeSide2Blink": {
+      "name": "体积边2闪烁",
+      "description": "体积测量第二边(宽度)闪烁提示",
+      "category": "体积",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 400,
+          "elements": ["Mode_s_1_y"]
+        },
+        {
+          "duration": 400,
+          "elements": []
+        }
+      ]
+    },
+    "volumeSide3Blink": {
+      "name": "体积边3闪烁",
+      "description": "体积测量第三边(高度)闪烁提示",
+      "category": "体积",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 400,
+          "elements": ["Mode_s_1_z"]
+        },
+        {
+          "duration": 400,
+          "elements": []
+        }
+      ]
+    },
+    "errorFlash": {
+      "name": "错误闪烁",
+      "description": "测量错误时Line4闪烁",
+      "category": "系统",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 300,
+          "components": {
+            "line4": {
+              "preset": "error"
+            }
+          }
+        },
+        {
+          "duration": 300,
+          "components": {
+            "line4": {
+              "value": ""
+            }
+          }
+        }
+      ]
+    },
+    "measuringDots": {
+      "name": "测量中动画",
+      "description": "测量过程中的等待动画",
+      "category": "测量",
+      "loop": true,
+      "frames": [
+        {
+          "duration": 200,
+          "components": {
+            "line4": {
+              "preset": "dot1"
+            }
+          }
+        },
+        {
+          "duration": 200,
+          "components": {
+            "line4": {
+              "preset": "dot2"
+            }
+          }
+        },
+        {
+          "duration": 200,
+          "components": {
+            "line4": {
+              "preset": "dot3"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

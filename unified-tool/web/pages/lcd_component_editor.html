@@ -1,0 +1,717 @@
+<!-- LCD组件编辑器 - 组合元素为可复用组件 -->
+<style>
+    /* 对话框样式 */
+    .hsm-dialog-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.6); z-index: 10000;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .hsm-dialog {
+        background: var(--bg-secondary); border-radius: 8px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .hsm-dialog-header {
+        padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .hsm-dialog-close { 
+        background: none; border: none; color: var(--text-muted); 
+        font-size: 18px; cursor: pointer; padding: 0 4px;
+    }
+    .hsm-dialog-close:hover { color: var(--text-primary); }
+    .hsm-dialog-body { padding: 16px; }
+    
+    .comp-container {
+        display: grid;
+        grid-template-columns: 240px 1fr 360px;
+        grid-template-rows: 40px 1fr;
+        height: 100%;
+        background: var(--bg-primary);
+    }
+    
+    /* 工具栏 */
+    .comp-toolbar {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        gap: 10px;
+    }
+    .comp-toolbar h1 { font-size: 14px; margin: 0; }
+    .comp-toolbar-sep { width: 1px; height: 20px; background: var(--border-color); }
+    .comp-btn {
+        padding: 5px 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .comp-btn:hover { border-color: var(--accent-color); }
+    .comp-btn.primary { background: var(--accent-color); border-color: var(--accent-color); }
+    .comp-btn.success { background: #22c55e; border-color: #22c55e; }
+    
+    /* 左侧面板 */
+    .comp-left {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    /* Tab切换 */
+    .comp-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+    }
+    .comp-tab {
+        flex: 1;
+        padding: 8px 12px;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 12px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+    .comp-tab:hover {
+        color: var(--text-primary);
+        background: var(--bg-primary);
+    }
+    .comp-tab.active {
+        color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
+        background: var(--bg-secondary);
+    }
+    .comp-tab-content {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+    .comp-tab-content.active {
+        display: flex;
+    }
+    
+    .comp-panel { display: flex; flex-direction: column; }
+    .comp-panel.flex { flex: 1; min-height: 0; }
+    .comp-panel-header {
+        padding: 8px 10px;
+        background: var(--bg-tertiary);
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .comp-panel-content { flex: 1; overflow-y: auto; padding: 8px; }
+    
+    /* 组件列表 */
+    .comp-list-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        font-size: 12px;
+    }
+    .comp-list-item:hover { border-color: var(--accent-color); }
+    .comp-list-item.selected { border-color: var(--accent-color); background: rgba(34,197,94,0.1); }
+    .comp-list-item .icon { font-size: 14px; }
+    .comp-list-item .name { flex: 1; }
+    .comp-list-item .type { font-size: 10px; color: var(--text-muted); }
+    .comp-list-item .delete { color: #ef4444; cursor: pointer; opacity: 0.6; }
+    .comp-list-item .delete:hover { opacity: 1; }
+    
+    /* 中间预览区 */
+    .comp-preview {
+        display: flex;
+        flex-direction: column;
+        background: #0a0a0a;
+        overflow: hidden;
+    }
+    .comp-preview-header {
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+    }
+    .comp-preview-canvas {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+    #comp-lcd-canvas {
+        background: #1a1a2e;
+        cursor: crosshair;
+    }
+    
+    /* 测试输入 */
+    .comp-test-bar {
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .comp-test-input {
+        flex: 1;
+        padding: 6px 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 13px;
+    }
+    
+    /* 右侧属性面板 */
+    .comp-right {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    /* 属性表单 */
+    .comp-form-group { margin-bottom: 12px; }
+    .comp-form-group label {
+        display: block;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    .comp-input, .comp-select {
+        width: 100%;
+        padding: 6px 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 12px;
+    }
+    .comp-input:focus, .comp-select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+    }
+    
+    /* 元素选择器 */
+    .comp-element-picker {
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background: var(--bg-primary);
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    .comp-element-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .comp-element-item:last-child { border-bottom: none; }
+    .comp-element-item:hover { background: var(--bg-tertiary); }
+    .comp-element-item.selected { background: rgba(34,197,94,0.2); }
+    .comp-element-item.highlight { background: rgba(0,212,255,0.2); border-left: 2px solid var(--accent-color); }
+    .comp-element-item input { margin: 0; }
+    .comp-element-item .elem-name { flex: 1; }
+    .comp-element-item .elem-config-tag {
+        font-size: 9px;
+        padding: 1px 6px;
+        background: var(--accent-color);
+        color: #000;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+    .comp-element-item.flash {
+        animation: flash-highlight 0.5s ease;
+    }
+    @keyframes flash-highlight {
+        0%, 100% { background: rgba(34,197,94,0.2); }
+        50% { background: rgba(34,197,94,0.5); }
+    }
+    
+    /* 元素选择器字段 */
+    .comp-element-picker-field {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 8px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        transition: all 0.2s;
+    }
+    .comp-element-picker-field:hover {
+        border-color: var(--accent-color);
+        background: var(--bg-tertiary);
+    }
+    .comp-element-picker-field.picking {
+        border-color: #f59e0b;
+        background: rgba(245, 158, 11, 0.1);
+        animation: picker-pulse 1s infinite;
+    }
+    .comp-element-picker-field .value {
+        color: var(--text-primary);
+    }
+    .comp-element-picker-field .value:empty::before,
+    .comp-element-picker-field .value:contains('点击选择') {
+        color: var(--text-muted);
+    }
+    .comp-element-picker-field .pick-icon {
+        font-size: 12px;
+        opacity: 0.6;
+    }
+    .comp-element-picker-field:hover .pick-icon {
+        opacity: 1;
+    }
+    @keyframes picker-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+        50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1); }
+    }
+    
+    /* 选择模式下的元素列表 */
+    body.element-picker-active .comp-element-item {
+        cursor: crosshair;
+    }
+    body.element-picker-active .comp-element-item:hover {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b;
+    }
+    body.element-picker-active #comp-lcd-canvas {
+        cursor: crosshair;
+    }
+    
+    /* 删除按钮 */
+    .comp-btn-icon {
+        padding: 2px 6px;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .comp-btn-icon:hover {
+        border-color: var(--accent-color);
+        color: var(--text-primary);
+    }
+    .comp-btn-icon.delete:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+    }
+    
+    /* 可选择状态的元素 */
+    .comp-element-item.pickable {
+        cursor: crosshair;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        margin: 1px 0;
+    }
+    .comp-element-item.pickable:hover {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b;
+    }
+    
+    /* 模式编辑器 */
+    .comp-mode-list { margin-top: 8px; }
+    .comp-mode-item {
+        background: var(--bg-primary);
+        border-radius: 4px;
+        margin-bottom: 6px;
+        border: 1px solid var(--border-color);
+    }
+    .comp-mode-header {
+        display: flex;
+        align-items: center;
+        padding: 6px 8px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .comp-mode-header:hover { background: var(--bg-tertiary); }
+    .comp-mode-name { flex: 1; font-weight: 500; }
+    .comp-mode-count { font-size: 10px; color: var(--text-muted); margin-right: 8px; }
+    .comp-mode-delete { color: #ef4444; cursor: pointer; }
+    .comp-mode-elements {
+        padding: 6px 8px;
+        border-top: 1px solid var(--border-color);
+        display: none;
+    }
+    .comp-mode-item.expanded .comp-mode-elements { display: block; }
+    .comp-mode-element-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        background: var(--bg-tertiary);
+        border-radius: 10px;
+        font-size: 10px;
+        margin: 2px;
+    }
+    .comp-mode-element-tag .remove {
+        cursor: pointer;
+        color: #ef4444;
+    }
+    
+    /* 数字显示配置 */
+    .comp-digit-config {
+        background: var(--bg-primary);
+        border-radius: 4px;
+        padding: 8px;
+        margin-top: 8px;
+    }
+    .comp-digit-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        font-size: 11px;
+    }
+    .comp-digit-row label { width: 60px; color: var(--text-muted); }
+    .comp-digit-row select, .comp-digit-row input {
+        flex: 1;
+        padding: 4px 6px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+        font-size: 11px;
+    }
+    
+    /* 行为配置 */
+    .comp-behavior-section {
+        background: var(--bg-primary);
+        border-radius: 4px;
+        padding: 8px;
+        margin-top: 8px;
+    }
+    .comp-behavior-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 11px;
+    }
+    .comp-behavior-row input[type="checkbox"] { margin: 0; }
+    .comp-behavior-row label { flex: 1; }
+    .comp-behavior-row input[type="number"] {
+        width: 60px;
+        padding: 3px 6px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        color: var(--text-primary);
+    }
+    
+    /* 空状态 */
+    .comp-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 20px;
+    }
+    .comp-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    
+    /* 行为列表 */
+    .behavior-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        font-size: 12px;
+    }
+    .behavior-item:hover { border-color: var(--accent-color); }
+    .behavior-item.selected { border-color: var(--accent-color); background: rgba(34,197,94,0.1); }
+    .behavior-item .icon { font-size: 14px; }
+    .behavior-item .name { flex: 1; }
+    .behavior-item .type-tag {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: #3b82f6;
+        color: #fff;
+    }
+    .behavior-item .type-tag.anim { background: #8b5cf6; }
+    .behavior-item .enabled-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ef4444;
+    }
+    .behavior-item .enabled-dot.on { background: #22c55e; }
+    .behavior-item .delete { color: #ef4444; cursor: pointer; opacity: 0.6; }
+    .behavior-item .delete:hover { opacity: 1; }
+    
+    /* 规则列表 */
+    .rule-item {
+        padding: 8px 10px;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        font-size: 11px;
+    }
+    .rule-item:hover { border-color: var(--accent-color); }
+    .rule-item.selected { border-color: var(--accent-color); background: rgba(34,197,94,0.1); }
+    .rule-item .rule-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .rule-item .rule-name { flex: 1; font-weight: 500; font-size: 12px; }
+    .rule-item .rule-desc {
+        color: var(--text-muted);
+        font-size: 10px;
+        margin-top: 4px;
+    }
+    .rule-item .trigger-tag {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: #f59e0b;
+        color: #000;
+    }
+    .rule-item .delete { color: #ef4444; cursor: pointer; opacity: 0.6; }
+    .rule-item .delete:hover { opacity: 1; }
+    
+    /* 目标选择器 */
+    .target-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+    }
+    .target-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 10px;
+    }
+    .target-tag .remove {
+        cursor: pointer;
+        color: #ef4444;
+        font-size: 12px;
+    }
+    .target-tag.component { border-color: #22c55e; background: rgba(34,197,94,0.1); }
+    .target-tag.element { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
+    
+    /* 动作列表 */
+    .action-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 4px;
+        font-size: 11px;
+    }
+    .action-item .action-type {
+        padding: 2px 6px;
+        background: #6366f1;
+        color: #fff;
+        border-radius: 4px;
+        font-size: 9px;
+    }
+    .action-item .action-target { flex: 1; }
+    .action-item .delete { color: #ef4444; cursor: pointer; }
+    
+    /* onSet 联动配置样式 */
+    .onset-config {
+        background: var(--bg-primary);
+        border-radius: 6px;
+        padding: 8px;
+        margin-top: 8px;
+    }
+    .onset-item {
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 8px;
+        overflow: hidden;
+    }
+    .onset-item:last-child {
+        margin-bottom: 0;
+    }
+    .onset-header {
+        display: flex;
+        align-items: center;
+        padding: 8px 10px;
+        background: rgba(0,0,0,0.2);
+        border-bottom: 1px solid var(--border-color);
+    }
+    .onset-key {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    .onset-actions {
+        padding: 8px 10px;
+    }
+    .onset-action-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 11px;
+    }
+    .onset-action-row:last-child {
+        margin-bottom: 0;
+    }
+    .onset-action-row label {
+        width: 60px;
+        color: var(--text-muted);
+        margin: 0;
+        flex-shrink: 0;
+    }
+    .onset-action-row .comp-select,
+    .onset-action-row .comp-input {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    .onset-hint {
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-top: 8px;
+        padding: 6px 8px;
+        background: rgba(59,130,246,0.1);
+        border-radius: 4px;
+        border-left: 2px solid #3b82f6;
+    }
+</style>
+
+<div class="comp-container">
+    <!-- 工具栏 -->
+    <div class="comp-toolbar">
+        <h1>🧩 组件编辑器</h1>
+        <div class="comp-toolbar-sep"></div>
+        <div id="comp-device-selector"></div>
+        <div style="flex:1;"></div>
+        <button class="comp-btn" onclick="CompEditor.generateCode()">💻 生成代码</button>
+        <button class="comp-btn primary" onclick="CompEditor.save()">💾 保存</button>
+    </div>
+    
+    <!-- 左侧面板 - Tab切换 -->
+    <div class="comp-left">
+        <div class="comp-tabs">
+            <button class="comp-tab active" data-tab="components" onclick="CompEditor.switchTab('components')">📦 组件</button>
+            <button class="comp-tab" data-tab="behaviors" onclick="CompEditor.switchTab('behaviors')">✨ 行为</button>
+            <button class="comp-tab" data-tab="hardware" onclick="CompEditor.switchTab('hardware')">🔌 硬件</button>
+            <button class="comp-tab" data-tab="elements" onclick="CompEditor.switchTab('elements')">📋 元素</button>
+        </div>
+        
+        <!-- 组件Tab -->
+        <div class="comp-tab-content active" id="tab-components">
+            <div class="comp-panel-header">
+                <span>组件列表</span>
+                <button class="comp-btn" style="padding:2px 8px;font-size:10px;" onclick="CompEditor.showAddDialog()">+ 新建</button>
+            </div>
+            <div class="comp-panel-content" id="comp-list"></div>
+        </div>
+        
+        <!-- 行为Tab -->
+        <div class="comp-tab-content" id="tab-behaviors">
+            <div class="comp-panel-header">
+                <span>行为列表</span>
+                <button class="comp-btn" style="padding:2px 8px;font-size:10px;" onclick="CompEditor.showAddBehaviorDialog()">+ 新建</button>
+            </div>
+            <div class="comp-panel-content" id="behavior-list"></div>
+        </div>
+        
+        <!-- 硬件回调Tab -->
+        <div class="comp-tab-content" id="tab-hardware">
+            <div class="comp-panel-header">
+                <span>硬件回调</span>
+                <button class="comp-btn" style="padding:2px 8px;font-size:10px;" onclick="CompEditor.addHardwareCallback()">+ 新建</button>
+            </div>
+            <div class="comp-panel-content" id="hardware-list"></div>
+        </div>
+        
+        <!-- 元素Tab -->
+        <div class="comp-tab-content" id="tab-elements">
+            <div class="comp-panel-header">
+                <span>可用元素</span>
+                <span id="comp-element-count" style="font-size:10px;color:var(--text-muted);"></span>
+            </div>
+            <div class="comp-panel-content" id="comp-elements"></div>
+        </div>
+    </div>
+    
+    <!-- 中间预览 -->
+    <div class="comp-preview">
+        <div class="comp-preview-header">
+            <span>👁️ 预览</span>
+            <span id="comp-preview-name" style="color:var(--accent-color);"></span>
+            <div style="flex:1;"></div>
+            <span style="font-size:10px;color:var(--text-muted);">滚轮缩放 | Shift+拖动平移</span>
+            <button class="comp-btn" style="padding:2px 8px;" onclick="CompEditor.resetView()">重置</button>
+        </div>
+        <div class="comp-preview-canvas">
+            <canvas id="comp-lcd-canvas" width="600" height="400"></canvas>
+        </div>
+        <div class="comp-test-bar">
+            <span style="font-size:11px;color:var(--text-muted);">测试:</span>
+            <input type="text" class="comp-test-input" id="comp-test-value" placeholder="输入数值如 11.888 或模式名如 front" onkeyup="CompEditor.onTestInput(event)">
+            <button class="comp-btn" onclick="CompEditor.testDisplay()">显示</button>
+        </div>
+    </div>
+    
+    <!-- 右侧属性 -->
+    <div class="comp-right">
+        <div class="comp-panel flex">
+            <div class="comp-panel-header">
+                <span>⚙️ 属性</span>
+                <span id="comp-prop-type" style="font-size:10px;color:var(--text-muted);"></span>
+            </div>
+            <div class="comp-panel-content" id="comp-properties">
+                <div class="comp-empty">
+                    <div class="comp-empty-icon">🧩</div>
+                    <div>选择或创建组件</div>
+                    <div style="font-size:11px;margin-top:8px;">组件可以组合多个元素<br>定义显示行为和API</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/pages/lcd_component_editor.js"></script>

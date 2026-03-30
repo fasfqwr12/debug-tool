@@ -1,0 +1,1805 @@
+{
+  "device": "gd303_mini",
+  "name": "GD303-MINI 完整状态机",
+  "version": "3.1",
+  "description": "GD303-MINI激光测距仪完整UI状态机 - 包含开机流程、所有测量模式、自动超时",
+  "saveTime": "2025-12-31T10:00:00.000Z",
+  "variables": {
+    "runstep": {
+      "type": "int",
+      "default": 1,
+      "description": "当前步骤 (奇数=等待, 偶数=结果)"
+    },
+    "last_step": {
+      "type": "int",
+      "default": 1,
+      "description": "上一步骤"
+    },
+    "line1_data": {
+      "type": "float",
+      "default": 0,
+      "description": "第1行数据"
+    },
+    "line2_data": {
+      "type": "float",
+      "default": 0,
+      "description": "第2行数据"
+    },
+    "line3_data": {
+      "type": "float",
+      "default": 0,
+      "description": "第3行数据"
+    },
+    "line4_data": {
+      "type": "float",
+      "default": 0,
+      "description": "第4行数据"
+    },
+    "max_data": {
+      "type": "float",
+      "default": -1,
+      "description": "连续测量最大值"
+    },
+    "min_data": {
+      "type": "float",
+      "default": -1,
+      "description": "连续测量最小值"
+    },
+    "laser_on": {
+      "type": "bool",
+      "default": false,
+      "description": "激光状态"
+    },
+    "continuous_flag": {
+      "type": "bool",
+      "default": false,
+      "description": "连续测量标志"
+    },
+    "backlight_on": {
+      "type": "bool",
+      "default": true,
+      "description": "背光状态"
+    },
+    "beep_enable": {
+      "type": "bool",
+      "default": true,
+      "description": "蜂鸣器开关"
+    },
+    "base_back": {
+      "type": "bool",
+      "default": true,
+      "description": "后基准(true)/前基准(false)"
+    },
+    "unit": {
+      "type": "int",
+      "default": 1,
+      "description": "单位: 0=m, 1=ft, 2=in"
+    },
+    "measure_mode": {
+      "type": "int",
+      "default": 0,
+      "description": "测量模式"
+    },
+    "error_code": {
+      "type": "int",
+      "default": 0,
+      "description": "错误码"
+    },
+    "distance": {
+      "type": "float",
+      "default": 0,
+      "description": "当前测量距离"
+    },
+    "idle_time": {
+      "type": "int",
+      "default": 0,
+      "description": "空闲计时(秒)"
+    }
+  },
+  "eventCategories": {
+    "key": {
+      "label": "按键事件",
+      "color": "#3b82f6"
+    },
+    "measure": {
+      "label": "测量事件",
+      "color": "#22c55e"
+    },
+    "system": {
+      "label": "系统事件",
+      "color": "#ef4444"
+    },
+    "timer": {
+      "label": "定时器事件",
+      "color": "#f59e0b"
+    }
+  },
+  "events": {
+    "K1_SHORT": {
+      "category": "key",
+      "label": "K1短按",
+      "description": "测量键短按"
+    },
+    "K1_LONG": {
+      "category": "key",
+      "label": "K1长按",
+      "description": "长按进入连续测量"
+    },
+    "K1_RELEASE": {
+      "category": "key",
+      "label": "K1松开",
+      "description": "测量键松开"
+    },
+    "K1_XLONG": {
+      "category": "key",
+      "label": "K1超长按",
+      "description": "超长按开机(1.1秒)"
+    },
+    "K2_SHORT": {
+      "category": "key",
+      "label": "K2短按",
+      "description": "模式键短按"
+    },
+    "K2_LONG": {
+      "category": "key",
+      "label": "K2长按",
+      "description": "长按切换基准"
+    },
+    "K3_SHORT": {
+      "category": "key",
+      "label": "K3短按",
+      "description": "清除键短按"
+    },
+    "K3_LONG": {
+      "category": "key",
+      "label": "K3长按",
+      "description": "长按背光开关"
+    },
+    "K3_XLONG": {
+      "category": "key",
+      "label": "K3超长按",
+      "description": "超长按关机(3秒)"
+    },
+    "K1K2_COMBO": {
+      "category": "key",
+      "label": "K1+K2组合",
+      "description": "蜂鸣器开关"
+    },
+    "MEASURE_OK": {
+      "category": "measure",
+      "label": "测距成功"
+    },
+    "MEASURE_FAIL": {
+      "category": "measure",
+      "label": "测距失败"
+    },
+    "TIMEOUT_1S": {
+      "category": "timer",
+      "label": "1秒超时",
+      "description": "单位切换定时"
+    },
+    "TIMEOUT": {
+      "category": "timer",
+      "label": "通用超时",
+      "description": "状态内部超时事件"
+    },
+    "TIMEOUT_LASER": {
+      "category": "timer",
+      "label": "激光超时",
+      "description": "15秒"
+    },
+    "TIMEOUT_BACKLIGHT": {
+      "category": "timer",
+      "label": "背光超时",
+      "description": "30秒"
+    },
+    "TIMEOUT_POWER": {
+      "category": "timer",
+      "label": "关机超时",
+      "description": "60秒"
+    }
+  },
+  "hierarchy": {
+    "ROOT": {
+      "id": "ROOT",
+      "label": "系统",
+      "type": "compound",
+      "level": 0,
+      "initial": "OFF",
+      "description": "GD303-MINI系统根状态",
+      "children": {
+        "OFF": {
+          "id": "OFF",
+          "label": "关机",
+          "type": "atomic",
+          "level": 1,
+          "description": "设备关机状态，LCD全灭，等待K1超长按开机",
+          "entryActions": [
+            "lcd:clearAll",
+            "comp:setVisible:laser:false",
+            "hw:backlight:off",
+            "assign:backlight_on = false",
+            "assign:idle_time = 0"
+          ],
+          "exitActions": [],
+          "display": {
+            "lcdOff": true
+          }
+        },
+        "BOOT": {
+          "id": "BOOT",
+          "label": "开机流程",
+          "type": "compound",
+          "level": 1,
+          "initial": "FULL_DISPLAY",
+          "description": "开机初始化和单位选择: 全显→延时→清屏→初始界面",
+          "children": {
+            "FULL_DISPLAY": {
+              "id": "FULL_DISPLAY",
+              "label": "全显",
+              "type": "atomic",
+              "level": 2,
+              "description": "开机全显测试，500ms后自动进入初始化",
+              "entryActions": [
+                "hw:backlight:on",
+                "lcd:showAll",
+                "assign:backlight_on = true",
+                "timeout:500"
+              ],
+              "exitActions": [
+                "lcd:clearAll"
+              ],
+              "display": {
+                "action": "lcd:showAll",
+                "expects": [
+                  "LCD全显",
+                  "500ms后自动清屏"
+                ]
+              }
+            },
+            "INIT": {
+              "id": "INIT",
+              "label": "初始化",
+              "type": "atomic",
+              "level": 2,
+              "description": "硬件初始化，显示初始界面",
+              "entryActions": [
+                "preset:boot_init",
+                "assign:idle_time = 0"
+              ],
+              "display": {
+                "preset": "boot_init",
+                "expects": [
+                  "Line4=-----",
+                  "单位显示",
+                  "后基准关闭"
+                ]
+              }
+            },
+            "UNIT_SELECT": {
+              "id": "UNIT_SELECT",
+              "label": "单位选择",
+              "type": "atomic",
+              "level": 2,
+              "description": "K1持续按住时，每1秒自动切换单位 m→ft→in→m，单位闪烁提示",
+              "entryActions": [
+                "preset:unit_select"
+              ],
+              "exitActions": [
+                "anim:unitSelectAnim:stop"
+              ],
+              "display": {
+                "preset": "unit_select",
+                "expects": [
+                  "单位闪烁",
+                  "每秒切换: m→ft→in→m"
+                ]
+              }
+            }
+          },
+          "display": {},
+          "entryActions": [],
+          "exitActions": []
+        },
+        "ON": {
+          "id": "ON",
+          "label": "运行",
+          "type": "compound",
+          "level": 1,
+          "initial": "IDLE",
+          "description": "设备运行状态",
+          "entryActions": [
+            "preset:boot_complete",
+            "assign:idle_time = 0"
+          ],
+          "exitActions": [
+            "comp:setVisible:laser:false",
+            "anim:laserBlink:stop"
+          ],
+          "children": {
+            "IDLE": {
+              "id": "IDLE",
+              "label": "待机",
+              "type": "atomic",
+              "level": 2,
+              "description": "等待用户操作，激光关闭",
+              "entryActions": [
+                "comp:setVisible:laser:false",
+                "anim:laserBlink:stop",
+                "preset:single_idle"
+              ],
+              "display": {
+                "preset": "single_idle",
+                "expects": [
+                  "激光关",
+                  "Line4=-----或上次结果"
+                ]
+              }
+            },
+            "SINGLE": {
+              "id": "SINGLE",
+              "label": "单次测量",
+              "type": "compound",
+              "level": 2,
+              "initial": "LASER_ON",
+              "description": "单次测量流程，支持历史数据滚动",
+              "entryActions": [
+                "assign:measure_mode = 0"
+              ],
+              "children": {
+                "LASER_ON": {
+                  "id": "LASER_ON",
+                  "label": "激光开启",
+                  "type": "atomic",
+                  "level": 3,
+                  "description": "激光开启等待测量，15秒超时自动关闭",
+                  "entryActions": [
+                    "comp:setVisible:laser:true",
+                    "anim:laserBlink:start",
+                    "if:runstep % 2 == 0 then inc:runstep",
+                    "if:runstep > last_step then scroll:history",
+                    "comp:showPreset:Line4:dash",
+                    "assign:idle_time = 0"
+                  ],
+                  "exitActions": [
+                    "assign:last_step = runstep"
+                  ],
+                  "display": {
+                    "preset": "single_laser_on",
+                    "expects": [
+                      "激光闪烁",
+                      "Line4=-----"
+                    ]
+                  }
+                },
+                "RANGING": {
+                  "id": "RANGING",
+                  "label": "测距中",
+                  "type": "atomic",
+                  "level": 3,
+                  "description": "正在执行测距",
+                  "entryActions": [
+                    "anim:measuringDots:start"
+                  ],
+                  "exitActions": [
+                    "anim:measuringDots:stop"
+                  ],
+                  "display": {
+                    "expects": [
+                      "测距动画"
+                    ]
+                  }
+                },
+                "RESULT": {
+                  "id": "RESULT",
+                  "label": "显示结果",
+                  "type": "atomic",
+                  "level": 3,
+                  "description": "显示测量结果，激光关闭",
+                  "entryActions": [
+                    "inc:runstep",
+                    "assign:line4_data = distance",
+                    "comp:setVisible:laser:false",
+                    "anim:laserBlink:stop",
+                    "hw:beep:short",
+                    "comp:setValue:Line4:${line4_data}",
+                    "assign:idle_time = 0"
+                  ],
+                  "display": {
+                    "preset": "single_result",
+                    "expects": [
+                      "Line4=测量值",
+                      "激光关"
+                    ]
+                  }
+                },
+                "ERROR": {
+                  "id": "ERROR",
+                  "label": "错误",
+                  "type": "atomic",
+                  "level": 3,
+                  "description": "测量失败，显示错误码",
+                  "entryActions": [
+                    "comp:setVisible:laser:false",
+                    "anim:laserBlink:stop",
+                    "hw:beep:long",
+                    "preset:error_display",
+                    "anim:errorFlash:start"
+                  ],
+                  "exitActions": [
+                    "anim:errorFlash:stop"
+                  ],
+                  "display": {
+                    "preset": "error_display",
+                    "expects": [
+                      "Line4=NULLx"
+                    ]
+                  }
+                }
+              }
+            },
+            "AREA": {
+              "id": "AREA",
+              "label": "面积测量",
+              "type": "compound",
+              "level": 2,
+              "initial": "AREA_INIT",
+              "description": "面积测量(2步): 长×宽",
+              "flowType": "multi",
+              "totalSteps": 4,
+              "entryActions": [
+                "assign:measure_mode = 1",
+                "flow:setType:multi",
+                "flow:clearSlots",
+                "preset:area_idle"
+              ],
+              "children": {
+                "AREA_INIT": {
+                  "id": "AREA_INIT",
+                  "label": "面积初始",
+                  "type": "atomic",
+                  "level": 3,
+                  "isReady": false,
+                  "stepIndex": 0,
+                  "description": "显示面积模式图标，等待开始",
+                  "entryActions": [
+                    "preset:area_idle"
+                  ],
+                  "display": {
+                    "expects": [
+                      "面积图标",
+                      "Line3=-----",
+                      "Line4=-----"
+                    ]
+                  }
+                },
+                "AREA_STEP1": {
+                  "id": "AREA_STEP1",
+                  "label": "测量长度",
+                  "type": "atomic",
+                  "level": 3,
+                  "isReady": true,
+                  "stepIndex": 1,
+                  "description": "面积测量第一步：测量长度 (准备状态)",
+                  "entryActions": [
+                    "flow:onEnterReady",
+                    "anim:laserBlink:start",
+                    "anim:areaSide1Blink:start",
+                    "preset:area_step1"
+                  ],
+                  "exitActions": [
+                    "anim:areaSide1Blink:stop"
+                  ],
+                  "display": {
+                    "expects": [
+                      "激光闪烁",
+                      "长度边闪烁"
+                    ]
+                  }
+                },
+                "AREA_STEP1_DONE": {
+                  "id": "AREA_STEP1_DONE",
+                  "label": "长度完成",
+                  "type": "atomic",
+                  "level": 3,
+                  "isReady": false,
+                  "stepIndex": 2,
+                  "description": "长度测量完成，等待继续",
+                  "entryActions": [
+                    "flow:storeSlot:1",
+                    "preset:area_step1_done"
+                  ],
+                  "exitActions": [],
+                  "display": {
+                    "expects": [
+                      "Line2=长度值"
+                    ]
+                  }
+                },
+                "AREA_STEP2": {
+                  "id": "AREA_STEP2",
+                  "label": "测量宽度",
+                  "type": "atomic",
+                  "level": 3,
+                  "isReady": true,
+                  "stepIndex": 3,
+                  "description": "面积测量第二步：测量宽度 (准备状态)",
+                  "entryActions": [
+                    "flow:onEnterReady",
+                    "anim:laserBlink:start",
+                    "anim:areaSide2Blink:start"
+                  ],
+                  "exitActions": [
+                    "anim:areaSide2Blink:stop"
+                  ],
+                  "display": {
+                    "expects": [
+                      "激光闪烁",
+                      "宽度边闪烁"
+                    ]
+                  }
+                },
+                "AREA_RESULT": {
+                  "id": "AREA_RESULT",
+                  "label": "面积结果",
+                  "type": "atomic",
+                  "level": 3,
+                  "isReady": false,
+                  "stepIndex": 4,
+                  "description": "显示面积计算结果",
+                  "entryActions": [
+                    "flow:storeSlot:2",
+                    "flow:calcArea",
+                    "anim:laserBlink:stop",
+                    "preset:area_result"
+                  ],
+                  "display": {
+                    "expects": [
+                      "Line2=长",
+                      "Line3=宽",
+                      "Line4=面积"
+                    ]
+                  }
+                }
+              }
+            },
+            "VOLUME": {
+              "id": "VOLUME",
+              "label": "体积测量",
+              "type": "compound",
+              "level": 2,
+              "initial": "VOL_INIT",
+              "description": "体积测量(3步): 长×宽×高",
+              "entryActions": [
+                "assign:measure_mode = 2",
+                "assign:runstep = 1",
+                "preset:volume_idle"
+              ],
+              "children": {
+                "VOL_INIT": {
+                  "id": "VOL_INIT",
+                  "label": "体积初始",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "preset:volume_idle"
+                  ],
+                  "display": {
+                    "expects": [
+                      "体积图标",
+                      "Line1~3=-----"
+                    ]
+                  }
+                },
+                "VOL_STEP1": {
+                  "id": "VOL_STEP1",
+                  "label": "测量长度",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "anim:laserBlink:start",
+                    "anim:volumeSide1Blink:start"
+                  ],
+                  "exitActions": [
+                    "anim:volumeSide1Blink:stop"
+                  ]
+                },
+                "VOL_STEP2": {
+                  "id": "VOL_STEP2",
+                  "label": "测量宽度",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "assign:line1_data = distance",
+                    "comp:setValue:Line1:${line1_data}",
+                    "anim:volumeSide2Blink:start"
+                  ],
+                  "exitActions": [
+                    "anim:volumeSide2Blink:stop"
+                  ]
+                },
+                "VOL_STEP3": {
+                  "id": "VOL_STEP3",
+                  "label": "测量高度",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "assign:line2_data = distance",
+                    "comp:setValue:Line2:${line2_data}",
+                    "anim:volumeSide3Blink:start"
+                  ],
+                  "exitActions": [
+                    "anim:volumeSide3Blink:stop"
+                  ]
+                },
+                "VOL_RESULT": {
+                  "id": "VOL_RESULT",
+                  "label": "体积结果",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "assign:line3_data = distance",
+                    "calc:line4_data = line1_data * line2_data * line3_data",
+                    "anim:laserBlink:stop",
+                    "comp:setValue:Line3:${line3_data}",
+                    "comp:setValue:Line4:${line4_data}"
+                  ],
+                  "display": {
+                    "expects": [
+                      "Line1=长",
+                      "Line2=宽",
+                      "Line3=高",
+                      "Line4=体积"
+                    ]
+                  }
+                }
+              }
+            },
+            "PYTH1": {
+              "id": "PYTH1",
+              "label": "勾股1",
+              "type": "compound",
+              "level": 2,
+              "initial": "P1_INIT",
+              "description": "勾股1(2步): √(斜边²-直角边²)",
+              "entryActions": [
+                "assign:measure_mode = 3",
+                "assign:runstep = 1"
+              ],
+              "children": {
+                "P1_INIT": {
+                  "id": "P1_INIT",
+                  "label": "勾股1初始",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "preset:pyth_idle"
+                  ],
+                  "display": {
+                    "expects": [
+                      "勾股1图标"
+                    ]
+                  }
+                },
+                "P1_STEP1": {
+                  "id": "P1_STEP1",
+                  "label": "测量斜边",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "anim:laserBlink:start",
+                    "anim:pythSide1Blink:start"
+                  ],
+                  "exitActions": [
+                    "anim:pythSide1Blink:stop"
+                  ]
+                },
+                "P1_STEP2": {
+                  "id": "P1_STEP2",
+                  "label": "测量直角边",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "assign:line1_data = distance",
+                    "comp:setValue:Line1:${line1_data}",
+                    "anim:pythSide2Blink:start"
+                  ],
+                  "exitActions": [
+                    "anim:pythSide2Blink:stop"
+                  ]
+                },
+                "P1_RESULT": {
+                  "id": "P1_RESULT",
+                  "label": "勾股1结果",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "assign:line2_data = distance",
+                    "comp:setValue:Line2:${line2_data}",
+                    "calc:line4_data = sqrt(line1_data^2 - line2_data^2)",
+                    "anim:laserBlink:stop",
+                    "comp:setValue:Line4:${line4_data}"
+                  ],
+                  "guard": "line1_data > line2_data",
+                  "display": {
+                    "expects": [
+                      "Line4=计算结果"
+                    ]
+                  }
+                },
+                "P1_ERROR": {
+                  "id": "P1_ERROR",
+                  "label": "勾股1错误",
+                  "type": "atomic",
+                  "level": 3,
+                  "description": "斜边≤直角边，逻辑错误",
+                  "entryActions": [
+                    "assign:error_code = 4",
+                    "preset:error_display"
+                  ],
+                  "display": {
+                    "expects": [
+                      "Line4=NULL4"
+                    ]
+                  }
+                }
+              }
+            },
+            "PYTH2": {
+              "id": "PYTH2",
+              "label": "勾股2",
+              "type": "compound",
+              "level": 2,
+              "initial": "P2_INIT",
+              "description": "勾股2(3步): √(斜边1²-公共边²)+√(斜边2²-公共边²)",
+              "entryActions": [
+                "assign:measure_mode = 4",
+                "assign:runstep = 1"
+              ],
+              "children": {
+                "P2_INIT": {
+                  "id": "P2_INIT",
+                  "label": "勾股2初始",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P2_STEP1": {
+                  "id": "P2_STEP1",
+                  "label": "测量斜边1",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P2_STEP2": {
+                  "id": "P2_STEP2",
+                  "label": "测量公共边",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P2_STEP3": {
+                  "id": "P2_STEP3",
+                  "label": "测量斜边2",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P2_RESULT": {
+                  "id": "P2_RESULT",
+                  "label": "勾股2结果",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "assign:line3_data = distance",
+                    "calc:line4_data = sqrt(line1_data^2 - line2_data^2) + sqrt(line3_data^2 - line2_data^2)",
+                    "comp:setValue:Line4:${line4_data}"
+                  ],
+                  "guard": "line1_data > line2_data && line3_data > line2_data"
+                }
+              }
+            },
+            "PYTH3": {
+              "id": "PYTH3",
+              "label": "勾股3",
+              "type": "compound",
+              "level": 2,
+              "initial": "P3_INIT",
+              "description": "勾股3(3步): √(斜边1²-公共边²)-√(斜边2²-公共边²)",
+              "entryActions": [
+                "assign:measure_mode = 5",
+                "assign:runstep = 1"
+              ],
+              "children": {
+                "P3_INIT": {
+                  "id": "P3_INIT",
+                  "label": "勾股3初始",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P3_STEP1": {
+                  "id": "P3_STEP1",
+                  "label": "测量斜边1",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P3_STEP2": {
+                  "id": "P3_STEP2",
+                  "label": "测量公共边",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P3_STEP3": {
+                  "id": "P3_STEP3",
+                  "label": "测量斜边2",
+                  "type": "atomic",
+                  "level": 3
+                },
+                "P3_RESULT": {
+                  "id": "P3_RESULT",
+                  "label": "勾股3结果",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "assign:line3_data = distance",
+                    "calc:line4_data = sqrt(line1_data^2 - line2_data^2) - sqrt(line3_data^2 - line2_data^2)",
+                    "comp:setValue:Line4:${line4_data}"
+                  ],
+                  "guard": "line2_data < line1_data && line3_data < line1_data && line2_data < line3_data"
+                }
+              }
+            },
+            "CONTINUOUS": {
+              "id": "CONTINUOUS",
+              "label": "连续测量",
+              "type": "compound",
+              "level": 2,
+              "initial": "CONT_INIT",
+              "description": "连续测量模式，显示MAX/MIN/当前值",
+              "entryActions": [
+                "assign:continuous_flag = true",
+                "assign:max_data = -1",
+                "assign:min_data = -1",
+                "preset:continuous_idle"
+              ],
+              "exitActions": [
+                "assign:continuous_flag = false",
+                "anim:laserBlink:stop"
+              ],
+              "children": {
+                "CONT_INIT": {
+                  "id": "CONT_INIT",
+                  "label": "连续初始",
+                  "type": "atomic",
+                  "level": 3,
+                  "entryActions": [
+                    "preset:continuous_idle",
+                    "anim:laserBlink:start"
+                  ],
+                  "display": {
+                    "expects": [
+                      "MAX/MIN图标",
+                      "Line2~4=-----"
+                    ]
+                  }
+                },
+                "CONT_MEASURING": {
+                  "id": "CONT_MEASURING",
+                  "label": "连续测量中",
+                  "type": "atomic",
+                  "level": 3,
+                  "description": "自动循环测量，更新MAX/MIN",
+                  "entryActions": [
+                    "assign:line4_data = distance",
+                    "if:distance > max_data then set:max_data = distance",
+                    "if:distance < min_data || min_data < 0 then set:min_data = distance",
+                    "comp:setValue:Line2:${max_data}",
+                    "comp:setValue:Line3:${min_data}",
+                    "comp:setValue:Line4:${line4_data}"
+                  ],
+                  "display": {
+                    "preset": "continuous_measuring",
+                    "expects": [
+                      "Line2=MAX",
+                      "Line3=MIN",
+                      "Line4=当前"
+                    ]
+                  }
+                }
+              }
+            },
+            "SETTINGS": {
+              "id": "SETTINGS",
+              "label": "设置",
+              "type": "compound",
+              "level": 2,
+              "initial": "BASE_SELECT",
+              "description": "系统设置",
+              "children": {
+                "BASE_SELECT": {
+                  "id": "BASE_SELECT",
+                  "label": "基准选择",
+                  "type": "compound",
+                  "level": 3,
+                  "children": {
+                    "BASE_BACK": {
+                      "id": "BASE_BACK",
+                      "label": "后基准",
+                      "type": "atomic",
+                      "level": 4,
+                      "entryActions": [
+                        "assign:base_back = true"
+                      ],
+                      "display": {
+                        "expects": [
+                          "后基准图标"
+                        ]
+                      }
+                    },
+                    "BASE_FRONT": {
+                      "id": "BASE_FRONT",
+                      "label": "前基准",
+                      "type": "atomic",
+                      "level": 4,
+                      "entryActions": [
+                        "assign:base_back = false"
+                      ],
+                      "display": {
+                        "expects": [
+                          "前基准图标"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "BEEP_SETTING": {
+                  "id": "BEEP_SETTING",
+                  "label": "蜂鸣器设置",
+                  "type": "compound",
+                  "level": 3,
+                  "children": {
+                    "BEEP_ON": {
+                      "id": "BEEP_ON",
+                      "label": "蜂鸣器开",
+                      "type": "atomic",
+                      "level": 4,
+                      "entryActions": [
+                        "assign:beep_enable = true"
+                      ],
+                      "display": {
+                        "expects": [
+                          "蜂鸣器图标亮"
+                        ]
+                      }
+                    },
+                    "BEEP_OFF": {
+                      "id": "BEEP_OFF",
+                      "label": "蜂鸣器关",
+                      "type": "atomic",
+                      "level": 4,
+                      "entryActions": [
+                        "assign:beep_enable = false"
+                      ],
+                      "display": {
+                        "expects": [
+                          "蜂鸣器图标灭"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "BACKLIGHT_SETTING": {
+                  "id": "BACKLIGHT_SETTING",
+                  "label": "背光设置",
+                  "type": "compound",
+                  "level": 3,
+                  "children": {
+                    "BL_ON": {
+                      "id": "BL_ON",
+                      "label": "背光开",
+                      "type": "atomic",
+                      "level": 4,
+                      "entryActions": [
+                        "assign:backlight_on = true"
+                      ]
+                    },
+                    "BL_OFF": {
+                      "id": "BL_OFF",
+                      "label": "背光关",
+                      "type": "atomic",
+                      "level": 4,
+                      "entryActions": [
+                        "assign:backlight_on = false"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "transitions": [
+    {
+      "_comment": "========== 开关机 =========="
+    },
+    {
+      "from": "OFF",
+      "to": "BOOT",
+      "event": "K1_XLONG",
+      "actions": [],
+      "description": "K1超长按开机"
+    },
+    {
+      "from": "ON",
+      "to": "OFF",
+      "event": "K3_XLONG",
+      "actions": [],
+      "description": "K3超长按关机"
+    },
+    {
+      "from": "ON",
+      "to": "OFF",
+      "event": "TIMEOUT_POWER",
+      "actions": [],
+      "description": "60秒超时自动关机"
+    },
+    {
+      "_comment": "========== 开机流程 =========="
+    },
+    {
+      "from": "FULL_DISPLAY",
+      "to": "INIT",
+      "event": "TIMEOUT",
+      "actions": [],
+      "description": "全显500ms后自动进入初始化"
+    },
+    {
+      "from": "INIT",
+      "to": "UNIT_SELECT",
+      "event": "TIMEOUT_1S",
+      "guard": "K1_HELD",
+      "actions": [],
+      "description": "K1持续按住进入单位选择"
+    },
+    {
+      "from": "INIT",
+      "to": "IDLE",
+      "event": "K1_RELEASE",
+      "actions": [
+        "preset:boot_complete"
+      ],
+      "description": "K1松开进入待机"
+    },
+    {
+      "from": "UNIT_SELECT",
+      "to": "UNIT_SELECT",
+      "event": "TIMEOUT_1S",
+      "actions": [
+        "inc:unit",
+        "if:unit > 2 then set:unit = 0",
+        "preset:unit_select"
+      ],
+      "description": "每1秒切换单位并更新显示"
+    },
+    {
+      "from": "UNIT_SELECT",
+      "to": "IDLE",
+      "event": "K1_RELEASE",
+      "actions": [
+        "preset:boot_complete"
+      ],
+      "description": "K1松开确认单位"
+    },
+    {
+      "_comment": "========== 待机状态转移 =========="
+    },
+    {
+      "from": "IDLE",
+      "to": "SINGLE",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "K1短按开始单次测量"
+    },
+    {
+      "from": "IDLE",
+      "to": "CONTINUOUS",
+      "event": "K1_LONG",
+      "actions": [],
+      "description": "K1长按进入连续测量"
+    },
+    {
+      "from": "IDLE",
+      "to": "AREA",
+      "event": "K2_SHORT",
+      "guard": "measure_mode == 0",
+      "actions": [],
+      "description": "切换到面积模式"
+    },
+    {
+      "_comment": "========== 模式切换 (K2短按循环) =========="
+    },
+    {
+      "from": "SINGLE",
+      "to": "AREA",
+      "event": "K2_SHORT",
+      "actions": [],
+      "description": "单次→面积"
+    },
+    {
+      "from": "AREA",
+      "to": "VOLUME",
+      "event": "K2_SHORT",
+      "actions": [],
+      "description": "面积→体积"
+    },
+    {
+      "from": "VOLUME",
+      "to": "PYTH1",
+      "event": "K2_SHORT",
+      "actions": [],
+      "description": "体积→勾股1"
+    },
+    {
+      "from": "PYTH1",
+      "to": "PYTH2",
+      "event": "K2_SHORT",
+      "actions": [],
+      "description": "勾股1→勾股2"
+    },
+    {
+      "from": "PYTH2",
+      "to": "PYTH3",
+      "event": "K2_SHORT",
+      "actions": [],
+      "description": "勾股2→勾股3"
+    },
+    {
+      "from": "PYTH3",
+      "to": "SINGLE",
+      "event": "K2_SHORT",
+      "actions": [],
+      "description": "勾股3→单次"
+    },
+    {
+      "_comment": "========== 单次测量流程 =========="
+    },
+    {
+      "from": "LASER_ON",
+      "to": "RANGING",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "K1短按开始测距"
+    },
+    {
+      "from": "LASER_ON",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": [],
+      "description": "K3短按取消"
+    },
+    {
+      "from": "LASER_ON",
+      "to": "IDLE",
+      "event": "TIMEOUT_LASER",
+      "actions": [],
+      "description": "15秒超时关激光"
+    },
+    {
+      "from": "RANGING",
+      "to": "RESULT",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "测距成功"
+    },
+    {
+      "from": "RANGING",
+      "to": "ERROR",
+      "event": "MEASURE_FAIL",
+      "actions": [],
+      "description": "测距失败"
+    },
+    {
+      "from": "RESULT",
+      "to": "LASER_ON",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "继续测量"
+    },
+    {
+      "from": "RESULT",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": [],
+      "description": "清除结果"
+    },
+    {
+      "from": "RESULT",
+      "to": "IDLE",
+      "event": "TIMEOUT_BACKLIGHT",
+      "actions": [],
+      "description": "30秒超时"
+    },
+    {
+      "from": "ERROR",
+      "to": "LASER_ON",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "重新测量"
+    },
+    {
+      "from": "ERROR",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": [],
+      "description": "清除错误"
+    },
+    {
+      "_comment": "========== 面积测量流程 =========="
+    },
+    {
+      "from": "AREA_INIT",
+      "to": "AREA_STEP1",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "开始测量长度"
+    },
+    {
+      "from": "AREA_STEP1",
+      "to": "AREA_STEP1_DONE",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "长度测量完成"
+    },
+    {
+      "from": "AREA_STEP1_DONE",
+      "to": "AREA_STEP2",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "继续测量宽度"
+    },
+    {
+      "from": "AREA_STEP2",
+      "to": "AREA_RESULT",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "宽度测量完成"
+    },
+    {
+      "from": "AREA_RESULT",
+      "to": "AREA_INIT",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "重新开始"
+    },
+    {
+      "from": "AREA_STEP1_DONE",
+      "to": "AREA_STEP1",
+      "event": "K3_SHORT",
+      "actions": ["flow:undo"],
+      "description": "撤回到测量长度"
+    },
+    {
+      "from": "AREA_STEP2",
+      "to": "AREA_STEP1",
+      "event": "K3_SHORT",
+      "actions": ["flow:undo"],
+      "description": "撤回到测量长度"
+    },
+    {
+      "from": "AREA_RESULT",
+      "to": "AREA_STEP2",
+      "event": "K3_SHORT",
+      "actions": ["flow:undo"],
+      "description": "撤回到测量宽度"
+    },
+    {
+      "from": "AREA",
+      "to": "IDLE",
+      "event": "K3_LONG",
+      "actions": [],
+      "description": "长按退出面积模式"
+    },
+    {
+      "_comment": "========== 体积测量流程 =========="
+    },
+    {
+      "from": "VOL_INIT",
+      "to": "VOL_STEP1",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "开始测量"
+    },
+    {
+      "from": "VOL_STEP1",
+      "to": "VOL_STEP2",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "长度完成"
+    },
+    {
+      "from": "VOL_STEP2",
+      "to": "VOL_STEP3",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "宽度完成"
+    },
+    {
+      "from": "VOL_STEP3",
+      "to": "VOL_RESULT",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "高度完成"
+    },
+    {
+      "from": "VOL_RESULT",
+      "to": "VOL_INIT",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "重新开始"
+    },
+    {
+      "from": "VOLUME",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": [],
+      "description": "退出体积模式"
+    },
+    {
+      "_comment": "========== 勾股1测量流程 =========="
+    },
+    {
+      "from": "P1_INIT",
+      "to": "P1_STEP1",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "开始测量斜边"
+    },
+    {
+      "from": "P1_STEP1",
+      "to": "P1_STEP2",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "斜边完成"
+    },
+    {
+      "from": "P1_STEP2",
+      "to": "P1_RESULT",
+      "event": "MEASURE_OK",
+      "guard": "line1_data > distance",
+      "actions": [],
+      "description": "直角边完成(校验通过)"
+    },
+    {
+      "from": "P1_STEP2",
+      "to": "P1_ERROR",
+      "event": "MEASURE_OK",
+      "guard": "line1_data <= distance",
+      "actions": [],
+      "description": "直角边完成(校验失败)"
+    },
+    {
+      "from": "P1_RESULT",
+      "to": "P1_INIT",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "重新开始"
+    },
+    {
+      "from": "P1_ERROR",
+      "to": "P1_INIT",
+      "event": "K3_SHORT",
+      "actions": [],
+      "description": "清除错误"
+    },
+    {
+      "from": "PYTH1",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": [],
+      "description": "退出勾股1"
+    },
+    {
+      "_comment": "========== 勾股2/3测量流程 (简化) =========="
+    },
+    {
+      "from": "P2_INIT",
+      "to": "P2_STEP1",
+      "event": "K1_SHORT",
+      "actions": []
+    },
+    {
+      "from": "P2_STEP1",
+      "to": "P2_STEP2",
+      "event": "MEASURE_OK",
+      "actions": []
+    },
+    {
+      "from": "P2_STEP2",
+      "to": "P2_STEP3",
+      "event": "MEASURE_OK",
+      "actions": []
+    },
+    {
+      "from": "P2_STEP3",
+      "to": "P2_RESULT",
+      "event": "MEASURE_OK",
+      "actions": []
+    },
+    {
+      "from": "PYTH2",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": []
+    },
+    {
+      "from": "P3_INIT",
+      "to": "P3_STEP1",
+      "event": "K1_SHORT",
+      "actions": []
+    },
+    {
+      "from": "P3_STEP1",
+      "to": "P3_STEP2",
+      "event": "MEASURE_OK",
+      "actions": []
+    },
+    {
+      "from": "P3_STEP2",
+      "to": "P3_STEP3",
+      "event": "MEASURE_OK",
+      "actions": []
+    },
+    {
+      "from": "P3_STEP3",
+      "to": "P3_RESULT",
+      "event": "MEASURE_OK",
+      "actions": []
+    },
+    {
+      "from": "PYTH3",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": []
+    },
+    {
+      "_comment": "========== 连续测量 =========="
+    },
+    {
+      "from": "CONT_INIT",
+      "to": "CONT_MEASURING",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "第一次测量完成"
+    },
+    {
+      "from": "CONT_MEASURING",
+      "to": "CONT_MEASURING",
+      "event": "MEASURE_OK",
+      "actions": [],
+      "description": "持续更新"
+    },
+    {
+      "from": "CONTINUOUS",
+      "to": "IDLE",
+      "event": "K1_SHORT",
+      "actions": [],
+      "description": "K1短按停止"
+    },
+    {
+      "from": "CONTINUOUS",
+      "to": "IDLE",
+      "event": "K3_SHORT",
+      "actions": [],
+      "description": "K3短按停止"
+    },
+    {
+      "_comment": "========== 基准切换 (K2长按) =========="
+    },
+    {
+      "from": "BASE_BACK",
+      "to": "BASE_FRONT",
+      "event": "K2_LONG",
+      "actions": [],
+      "description": "切换到前基准"
+    },
+    {
+      "from": "BASE_FRONT",
+      "to": "BASE_BACK",
+      "event": "K2_LONG",
+      "actions": [],
+      "description": "切换到后基准"
+    },
+    {
+      "_comment": "========== 蜂鸣器开关 (K1+K2组合) =========="
+    },
+    {
+      "from": "BEEP_ON",
+      "to": "BEEP_OFF",
+      "event": "K1K2_COMBO",
+      "actions": [],
+      "description": "关闭蜂鸣器"
+    },
+    {
+      "from": "BEEP_OFF",
+      "to": "BEEP_ON",
+      "event": "K1K2_COMBO",
+      "actions": [],
+      "description": "开启蜂鸣器"
+    },
+    {
+      "_comment": "========== 背光开关 (K3长按) =========="
+    },
+    {
+      "from": "BL_ON",
+      "to": "BL_OFF",
+      "event": "K3_LONG",
+      "actions": [],
+      "description": "关闭背光"
+    },
+    {
+      "from": "BL_OFF",
+      "to": "BL_ON",
+      "event": "K3_LONG",
+      "actions": [],
+      "description": "开启背光"
+    }
+  ],
+  "globalTransitions": [
+    {
+      "event": "K3_XLONG",
+      "to": "OFF",
+      "description": "任何状态下K3超长按关机"
+    },
+    {
+      "event": "TIMEOUT_POWER",
+      "to": "OFF",
+      "guard": "!charging",
+      "description": "60秒超时关机(非充电)"
+    }
+  ],
+  "nodePositions": {
+    "ROOT": {
+      "OFF": {
+        "x": 60,
+        "y": 60
+      },
+      "BOOT": {
+        "x": 290,
+        "y": 60
+      },
+      "ON": {
+        "x": 520,
+        "y": 60
+      }
+    },
+    "ROOT/BOOT": {
+      "FULL_DISPLAY": {
+        "x": 60,
+        "y": 60
+      },
+      "INIT": {
+        "x": 290,
+        "y": 60
+      },
+      "UNIT_SELECT": {
+        "x": 520,
+        "y": 60
+      }
+    },
+    "ROOT/ON": {
+      "IDLE": {
+        "x": 60,
+        "y": 200
+      },
+      "SINGLE": {
+        "x": 290,
+        "y": 60
+      },
+      "AREA": {
+        "x": 290,
+        "y": 340
+      },
+      "VOLUME": {
+        "x": 520,
+        "y": 200
+      },
+      "PYTH1": {
+        "x": 750,
+        "y": 200
+      },
+      "PYTH2": {
+        "x": 980,
+        "y": 200
+      },
+      "PYTH3": {
+        "x": 1210,
+        "y": 200
+      },
+      "CONTINUOUS": {
+        "x": 290,
+        "y": 200
+      },
+      "SETTINGS": {
+        "x": 1440,
+        "y": 200
+      }
+    },
+    "ROOT/ON/SINGLE": {
+      "LASER_ON": {
+        "x": 60,
+        "y": 130
+      },
+      "RANGING": {
+        "x": 290,
+        "y": 130
+      },
+      "RESULT": {
+        "x": 520,
+        "y": 60
+      },
+      "ERROR": {
+        "x": 520,
+        "y": 200
+      }
+    },
+    "ROOT/ON/AREA": {
+      "AREA_INIT": {
+        "x": 60,
+        "y": 60
+      },
+      "AREA_STEP1": {
+        "x": 290,
+        "y": 60
+      },
+      "AREA_STEP1_DONE": {
+        "x": 520,
+        "y": 60
+      },
+      "AREA_RESULT": {
+        "x": 750,
+        "y": 60
+      }
+    },
+    "ROOT/ON/VOLUME": {
+      "VOL_INIT": {
+        "x": 60,
+        "y": 60
+      },
+      "VOL_STEP1": {
+        "x": 290,
+        "y": 60
+      },
+      "VOL_STEP2": {
+        "x": 520,
+        "y": 60
+      },
+      "VOL_STEP3": {
+        "x": 750,
+        "y": 60
+      },
+      "VOL_RESULT": {
+        "x": 980,
+        "y": 60
+      }
+    },
+    "ROOT/ON/PYTH1": {
+      "P1_INIT": {
+        "x": 60,
+        "y": 130
+      },
+      "P1_STEP1": {
+        "x": 290,
+        "y": 130
+      },
+      "P1_STEP2": {
+        "x": 520,
+        "y": 130
+      },
+      "P1_RESULT": {
+        "x": 750,
+        "y": 60
+      },
+      "P1_ERROR": {
+        "x": 750,
+        "y": 200
+      }
+    },
+    "ROOT/ON/CONTINUOUS": {
+      "CONT_INIT": {
+        "x": 60,
+        "y": 60
+      },
+      "CONT_MEASURING": {
+        "x": 290,
+        "y": 60
+      }
+    },
+    "ROOT/ON/SETTINGS": {
+      "BASE_SELECT": {
+        "x": 60,
+        "y": 60
+      },
+      "BEEP_SETTING": {
+        "x": 290,
+        "y": 60
+      },
+      "BACKLIGHT_SETTING": {
+        "x": 520,
+        "y": 60
+      }
+    },
+    "ROOT/ON/PYTH2": {
+      "P2_INIT": {
+        "x": 60,
+        "y": 60
+      },
+      "P2_STEP1": {
+        "x": 290,
+        "y": 60
+      },
+      "P2_STEP2": {
+        "x": 520,
+        "y": 60
+      },
+      "P2_STEP3": {
+        "x": 750,
+        "y": 60
+      },
+      "P2_RESULT": {
+        "x": 980,
+        "y": 60
+      }
+    },
+    "ROOT/ON/PYTH3": {
+      "P3_INIT": {
+        "x": 60,
+        "y": 60
+      },
+      "P3_STEP1": {
+        "x": 290,
+        "y": 60
+      },
+      "P3_STEP2": {
+        "x": 520,
+        "y": 60
+      },
+      "P3_STEP3": {
+        "x": 750,
+        "y": 60
+      },
+      "P3_RESULT": {
+        "x": 980,
+        "y": 60
+      }
+    },
+    "ROOT/ON/SETTINGS/BASE_SELECT": {
+      "BASE_BACK": {
+        "x": 60,
+        "y": 60
+      },
+      "BASE_FRONT": {
+        "x": 290,
+        "y": 60
+      }
+    },
+    "ROOT/ON/SETTINGS/BEEP_SETTING": {
+      "BEEP_ON": {
+        "x": 60,
+        "y": 60
+      },
+      "BEEP_OFF": {
+        "x": 290,
+        "y": 60
+      }
+    },
+    "ROOT/ON/SETTINGS/BACKLIGHT_SETTING": {
+      "BL_ON": {
+        "x": 60,
+        "y": 60
+      },
+      "BL_OFF": {
+        "x": 290,
+        "y": 60
+      }
+    }
+  }
+}

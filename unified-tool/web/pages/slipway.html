@@ -1,0 +1,364 @@
+<div class="slipway-container">
+    <style>
+        .slipway-sidebar .card { padding: 6px !important; }
+        .slipway-sidebar .sidebar-scroll { padding: 6px !important; }
+        .slipway-sidebar .control-section { padding: 6px !important; margin-bottom: 6px !important; }
+        .slipway-sidebar .section-title { margin-bottom: 8px !important; }
+        .slipway-sidebar .sub-block { padding: 5px !important; margin-bottom: 6px !important; }
+        .slipway-sidebar .sub-header { margin-bottom: 6px !important; }
+        .slipway-sidebar .inline-row { gap: 4px !important; margin-bottom: 4px !important; }
+        .slipway-sidebar .inline-row label { font-size: 11px !important; }
+        .slipway-sidebar .unit { min-width: 16px !important; }
+        .slipway-sidebar input[type="text"],
+        .slipway-sidebar input[type="number"],
+        .slipway-sidebar select,
+        .slipway-sidebar textarea {
+            height: 26px !important;
+            padding: 3px 6px !important;
+            border-width: 1px !important;
+            box-shadow: none !important;
+            font-size: 12px !important;
+            border-radius: 4px !important;
+        }
+        .slipway-sidebar textarea { height: auto !important; min-height: 56px !important; }
+        .slipway-sidebar .ctrl-btn { height: 26px !important; padding: 0 8px !important; min-width: 26px !important; width: auto !important; }
+        .slipway-sidebar .ctrl-btn.small { min-width: 26px !important; padding: 0 8px !important; }
+        .slipway-sidebar .form-input { min-width: 0 !important; }
+        .slipway-sidebar .card,
+        .slipway-sidebar .sidebar-scroll { min-height: 0 !important; }
+
+        /* 防止选择/切换模式时“框框变粗/发光”造成观感抖动 */
+        .slipway-sidebar input:focus,
+        .slipway-sidebar select:focus,
+        .slipway-sidebar textarea:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        .slipway-sidebar input:hover,
+        .slipway-sidebar select:hover,
+        .slipway-sidebar textarea:hover {
+            box-shadow: none !important;
+        }
+        .slipway-sidebar button:hover {
+            transform: none !important;
+        }
+
+        /* 高级模式：段预览固定高度，避免内容变化导致框体高度跳动 */
+        .slipway-sidebar #seg-preview {
+            height: 62px !important;
+            overflow: auto !important;
+        }
+
+        /* 关键KPI常显：避免“频率/误差要滚到下面才看到” */
+        .slipway-content .stats-bar {
+            position: sticky;
+            top: 0;
+            z-index: 80;
+            padding: 6px 0;
+            background: rgba(2, 6, 23, 0.65);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+    </style>
+    <!-- 左侧控制面板 -->
+    <div class="slipway-sidebar" style="overflow:hidden;">
+        <div class="card" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+            <div class="sidebar-scroll">
+                <!-- 运动控制 -->
+                <div class="control-section">
+                    <div class="section-title">🎮 运动控制</div>
+                    
+                    <!-- 滑台 -->
+                    <div class="sub-block">
+                        <div class="sub-header">滑台</div>
+                        <div class="inline-row">
+          <input class="form-input" id="slipway-target" type="number" value="5000" min="0" max="38000" placeholder="目标位置(mm)" onchange="SlipwayPage._clampSlipwayTargetInput()" onblur="SlipwayPage._clampSlipwayTargetInput()">
+          <button class="ctrl-btn" onclick="SlipwayPage.moveSlipway()">GO</button>
+                            <button class="ctrl-btn" onclick="SlipwayPage.homeSlipway()" title="回零">🏠</button>
+                            <button class="ctrl-btn danger" onclick="SlipwayPage.stopSlipway()" title="停止">⏹</button>
+                        </div>
+                        <div class="inline-row">
+            <input class="form-input" id="jog-step-input" type="number" value="10" step="0.1" min="0" max="38000" onchange="SlipwayPage.setJogStep(this.value)" style="width:80px;">
+                            <span class="unit">mm</span>
+                            <button class="ctrl-btn" onclick="SlipwayPage.jogNeg()" title="步进后退">后退</button>
+                            <button class="ctrl-btn" onclick="SlipwayPage.jogPos()" title="步进前进">前进</button>
+                        </div>
+                        <div class="inline-row" style="align-items:center; gap:10px; position:relative; z-index:20;">
+                            <button class="ctrl-btn" id="btn-check-home-io" type="button" onclick="_slipwayHomeIoBtnClicked(this)" title="手动检测限位IO" style="position:relative; z-index:30; pointer-events:auto;">检测IO</button>
+                            <span id="slipway-home-io-state" class="unit" style="flex:1; text-align:right; color:#94a3b8; pointer-events:none;">限位IO4: 未知</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 转靶 -->
+                    <div class="sub-block">
+                        <div class="sub-header">转靶 <span id="rotary-ref-val" class="highlight">90%</span></div>
+                        <div class="inline-row">
+                            <label>反射率</label>
+                            <select class="form-input" id="rotary-ref-select" onchange="SlipwayPage.setReflectance(this.value)" style="flex:1;">
+                                <option value="10">10%</option>
+                                <option value="20">20%</option>
+                                <option value="30">30%</option>
+                                <option value="40">40%</option>
+                                <option value="60">60%</option>
+                                <option value="70">70%</option>
+                                <option value="80">80%</option>
+                                <option value="90" selected>90%</option>
+                            </select>
+                            <button class="ctrl-btn" onclick="SlipwayPage.homeRotary()" title="复位">🔄</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 测试配置 -->
+                <div class="control-section">
+                    <div class="section-title">
+                        📊 测试配置
+                        <div class="mode-switch-mini">
+                            <button class="mode-btn-mini active" id="mode-basic-btn" onclick="SlipwayPage.switchMode('basic')">基础</button>
+                            <button class="mode-btn-mini" id="mode-advanced-btn" onclick="SlipwayPage.switchMode('advanced')">高级</button>
+                        </div>
+                    </div>
+
+                    <!-- 基础模式 -->
+                    <div id="basic-mode-panel">
+                        <div class="param-grid-2col">
+                            <label>起始(mm)</label>
+                            <input class="form-input" id="test-start" type="number" value="0">
+                            <label>结束(mm)</label>
+                            <input class="form-input" id="test-end" type="number" value="38000">
+                            <label>步进(mm)</label>
+                            <input class="form-input" id="test-step" type="number" value="1000">
+                            <label>采样次数</label>
+                            <input class="form-input" id="test-repeats" type="number" value="5">
+                        </div>
+                    </div>
+
+                    <!-- 高级模式 -->
+                    <div id="advanced-mode-panel" style="display:none;">
+                        <div class="inline-row">
+                            <select class="form-input" id="adv-config-select" onchange="SlipwayPage.loadAdvConfig(this.value)" style="flex:1;">
+                                <option value="default">默认配置</option>
+                            </select>
+                            <button class="ctrl-btn small" onclick="SlipwayPage.saveAdvConfigAs()" title="另存为">💾</button>
+                            <button class="ctrl-btn small danger" onclick="SlipwayPage.deleteAdvConfig()" title="删除">🗑</button>
+                        </div>
+                        <div class="seg-preview" id="seg-preview" style="margin:8px 0; font-size:11px; color:var(--text-dim);"></div>
+                        <div class="inline-row">
+                            <label>阈值(mm)</label>
+                            <input class="form-input" id="err-threshold" type="number" value="5" style="width:60px;">
+                            <label>单点(s)</label>
+                            <input class="form-input" id="point-time" type="number" value="3" style="width:60px;">
+                        </div>
+                        <button class="ctrl-btn" onclick="SlipwayPage.openPlanConfig()" style="width:100%; margin-top:8px;">🧩 配置流程段</button>
+                    </div>
+                </div>
+                
+                <!-- 标签 -->
+                <div class="control-section">
+                    <div class="section-title">🏷️ 标签</div>
+                    <div class="inline-row">
+                        <label>别名</label>
+                        <input type="text" id="test-alias" class="form-input" placeholder="如: 1#机" style="flex:1;">
+                    </div>
+                    <div class="inline-row">
+                        <label>温度</label>
+                        <input type="number" id="test-temperature" class="form-input" value="25" style="width:60px;">
+                        <span class="unit">℃</span>
+                    </div>
+                    <textarea class="form-input" id="test-remark" placeholder="备注..." rows="2" style="margin-top:6px; resize:none;"></textarea>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-area">
+                <button class="big-btn start" onclick="SlipwayPage.startTest()">▶ 开始测试</button>
+                <button class="big-btn stop" onclick="SlipwayPage.stopTest()">⏹ 停止</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右侧数据区 -->
+    <div class="slipway-content" style="grid-column:2/3; grid-row:1/2;">
+        <!-- 统计栏 -->
+        <div class="stats-bar compact7">
+            <div class="stat-box mini"><div class="stat-num" id="stat-pos">0.000</div><div class="stat-label">位置(mm)</div></div>
+            <div class="stat-box mini"><div class="stat-num" id="stat-hz" style="color:#38bdf8;">--</div><div class="stat-label">测距Hz</div></div>
+            <div class="stat-box mini"><div class="stat-num" id="stat-avg" style="color:#00d4ff;">--</div><div class="stat-label">平均误差</div></div>
+            <div class="stat-box mini"><div class="stat-num" id="stat-max" style="color:#ff6b6b;">--</div><div class="stat-label">最大误差</div></div>
+            <div class="stat-box mini"><div class="stat-num" id="stat-std" style="color:#ffc107;">--</div><div class="stat-label">标准差</div></div>
+            <div class="stat-box mini"><div class="stat-num" id="stat-pass" style="color:#00e676;">--</div><div class="stat-label">通过率</div></div>
+            <div class="stat-box mini">
+                <div class="stat-num" id="stat-status" style="color:var(--accent);">基础</div>
+                <div class="stat-label">模式 <button class="btn-icon" onclick="SlipwayPage.openSettings()">⚙</button></div>
+            </div>
+        </div>
+        
+        <!-- 失败点栏 -->
+        <div class="failed-bar" id="failed-bar" style="display:none;">
+            <div class="failed-bar-header" onclick="SlipwayPage.toggleFailedDetails()">
+                <span class="failed-icon">⚠️</span>
+                <span class="failed-count" id="failed-count">0</span>
+                <span class="failed-text">个失败点</span>
+                <span class="failed-toggle" id="failed-toggle">▼</span>
+            </div>
+            <div class="failed-bar-details" id="failed-details" style="display:none;"></div>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="table-card">
+            <div class="segment-tabs" id="segment-tabs">
+                <button class="seg-tab active" data-seg="all" onclick="SlipwayPage.switchSegmentTab('all')">全部</button>
+            </div>
+            <div class="table-header">
+                <span>ID</span>
+                <span data-chart-metric="time_ms" onclick="SlipwayPage.setChartMetric('time_ms')" title="点击查看耗时趋势">耗时</span>
+                <span>目标位置</span>
+                <span data-chart-metric="actual" onclick="SlipwayPage.setChartMetric('actual')" title="点击查看实际位置趋势">实际位置</span>
+                <span data-chart-metric="amplitude" onclick="SlipwayPage.setChartMetric('amplitude')" title="点击查看幅值趋势">幅值</span>
+                <span data-chart-metric="range_mm" onclick="SlipwayPage.setChartMetric('range_mm')" title="点击查看极差趋势">极差</span>
+                <span data-chart-metric="error" onclick="SlipwayPage.setChartMetric('error')" title="点击查看误差趋势">误差值</span>
+                <span>反射率</span>
+                <span>状态</span>
+            </div>
+            <div class="table-body" id="results-tbody"></div>
+        </div>
+        
+        <!-- 底部操作栏 -->
+        <div class="bottom-action-bar">
+            <div class="record-count">共 <b id="total-records">0</b> 条</div>
+            <div class="action-buttons">
+                <button class="conn-btn" onclick="SlipwayPage.exportResults()">📊 导出</button>
+                <button class="conn-btn danger" onclick="SlipwayPage.clearResults()">🗑 清空</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 误差曲线图 -->
+    <div class="slipway-chart" id="error-chart-panel" style="grid-column:2/3; grid-row:2/3;">
+        <div class="chart-header">
+            <span id="error-chart-title">📈 指标趋势</span>
+            <div class="chart-legend">
+                <label class="legend-item">
+                    <span>指标</span>
+                    <select id="error-chart-metric" style="margin-left:6px;">
+                        <option value="error">误差</option>
+                        <option value="actual">实际位置</option>
+                        <option value="amplitude">幅值</option>
+                        <option value="range_mm">极差</option>
+                        <option value="time_ms">耗时</option>
+                        <option value="fw_time_ms">FW耗时</option>
+                    </select>
+                </label>
+                <span class="legend-item" id="error-chart-series-legend"><span class="legend-dot" id="error-chart-series-dot" style="background:#00ff88;"></span><span id="error-chart-series-label">误差</span></span>
+                <span class="legend-item"><span class="legend-dot" style="background:#ff6b6b;"></span><span id="error-chart-avg-label">平均</span></span>
+                <span class="legend-item" id="error-chart-threshold-legend"><span class="legend-dot" style="background:#ffb020;"></span><span id="error-chart-threshold-label">阈值</span></span>
+                <label class="legend-item"><input id="error-subtract-baseline" type="checkbox" /> 减首点</label>
+                <button id="error-chart-toggle" class="chart-toggle">展开</button>
+            </div>
+        </div>
+        <canvas id="error-chart" style="width:100%; height:220px;"></canvas>
+        <div class="chart-stats" id="chart-stats">
+            <span><span id="chart-max-label">最大</span>:<b id="chart-max">--</b></span>
+            <span><span id="chart-min-label">最小</span>:<b id="chart-min">--</b></span>
+            <span><span id="chart-avg-stat-label">平均</span>:<b id="chart-avg">--</b></span>
+            <span><span id="chart-std-label">标准差</span>:<b id="chart-std">--</b></span>
+        </div>
+    </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div id="slipway-settings-overlay" class="hub-dialog-overlay" onclick="SlipwayPage.closeSettings()" style="z-index:2000;">
+    <div class="hub-dialog" onclick="event.stopPropagation()" style="min-width:480px;">
+        <div class="hub-dialog-header">
+            <span>⚙️ 滑台设置</span>
+            <button class="hub-dialog-close" onclick="SlipwayPage.closeSettings()">×</button>
+        </div>
+        <div class="hub-dialog-body" style="max-height:70vh; overflow:auto;">
+            <div style="margin-bottom:8px; font-weight:700; color:#60a5fa;">基础参数</div>
+            <div class="input-group"><label>软限位最大位置 (mm)</label><input id="ss-max-pos" type="number" value="38000" min="1" /></div>
+            <div class="input-group"><label>点动步进档位 (逗号分隔)</label><input id="ss-step-options" type="text" value="0.1,1,10,50,100,500,1000" /></div>
+            <div class="input-group"><label>移动速度 min/max</label><div style="display:flex; gap:10px;"><input id="ss-move-min" type="number" value="50000" /><input id="ss-move-max" type="number" value="600000" /></div></div>
+            <div class="input-group"><label>复位快段速度</label><div style="display:flex; gap:10px;"><input id="ss-reset-fast-min" type="number" value="70000" /><input id="ss-reset-fast-max" type="number" value="500000" /></div></div>
+            <div class="input-group"><label>第一次慢速</label><div style="display:flex; gap:10px;"><input id="ss-reset-slow-min" type="number" value="50000" /><input id="ss-reset-slow-max" type="number" value="100000" /></div></div>
+            <div class="input-group"><label>第二次超慢速</label><div style="display:flex; gap:10px;"><input id="ss-reset-ultra-min" type="number" value="20000" /><input id="ss-reset-ultra-max" type="number" value="50000" /></div></div>
+            <div class="input-group"><label>限位IO</label><div style="display:flex; gap:10px;"><input id="ss-home-io" type="number" value="4" style="width:60px;" /><select id="ss-io-active"><option value="0">电平=0</option><option value="1">电平=1</option></select></div></div>
+            <div class="input-group"><label>清零确认IO</label><div style="display:flex; gap:10px;"><input id="ss-zero-confirm-io" type="number" value="-1" style="width:60px;" /><select id="ss-zero-confirm-active"><option value="0">电平=0</option><option value="1">电平=1</option></select></div></div>
+            <div style="margin:16px 0 8px; font-weight:700; color:#60a5fa;">进阶复位参数</div>
+            <div class="input-group"><label>起步脱离距离(mm)</label><input id="ss-reset-release-mm" type="number" value="2" step="0.1" /></div>
+            <div class="input-group"><label>限位轮询周期(s)</label><input id="ss-reset-io-poll" type="number" value="0.05" step="0.01" /></div>
+            <div class="input-group"><label>确认采样/间隔</label><div style="display:flex; gap:10px;"><input id="ss-reset-confirm-samples" type="number" value="3" min="1" /><input id="ss-reset-confirm-interval" type="number" value="0.03" step="0.01" /></div></div>
+            <div style="margin:16px 0 8px; font-weight:700; color:#60a5fa;">IO诊断</div>
+            <div class="input-group"><label>监测IO(逗号分隔)</label><input id="ss-io-watch" type="text" value="" placeholder="例如: 4,5,6" /></div>
+            <div class="input-group">
+                <label>IO自动检测</label>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <span style="opacity:.8; font-size:12px;">范围</span>
+                    <input id="ss-io-detect-from" type="number" value="0" style="width:70px;" />
+                    <span style="opacity:.8; font-size:12px;">~</span>
+                    <input id="ss-io-detect-to" type="number" value="15" style="width:70px;" />
+                    <button class="btn" onclick="SlipwayPage.startIoDetect()" style="min-width:90px;">开始</button>
+                    <button class="btn" onclick="SlipwayPage.stopIoDetect()" style="min-width:90px;">停止</button>
+                    <button class="btn" onclick="SlipwayPage.clearIoDetectLog()" style="min-width:90px;">清空</button>
+                </div>
+                <div id="ss-io-detect-log" style="margin-top:8px; font-size:12px; line-height:1.5; max-height:180px; overflow:auto; background:rgba(255,255,255,0.04); padding:8px; border-radius:8px;"></div>
+            </div>
+
+            <hr style="border-color:rgba(255,255,255,0.1); margin:16px 0;">
+            <div class="input-group">
+                <label>全局测距路由</label>
+                <div style="margin-top:6px; opacity:.75; font-size:12px; line-height:1.5;">
+                    说明：测距来源、竞品协议、扩展解析已迁移到右上角设备工具栏的“协议”Tab，这里只展示当前生效结果，不再单独保存一份。
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
+                    <button class="btn" onclick="DeviceToolbar.toggle(); setTimeout(() => DeviceToolbar.switchTab('protocol'), 50);" style="min-width:160px;">打开全局协议工具栏</button>
+                    <span style="font-size:12px; opacity:.72;">统一在工具栏里切换“我司固件 / 竞品协议库”，并查看当前扩展解析。</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>当前生效协议/解析</label>
+                <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                    <button class="btn" onclick="SlipwayPage.loadProtocolOverview()" style="min-width:110px;">刷新概览</button>
+                    <span style="font-size:12px; opacity:.72;">显示当前工位正在生效的测距路由、活动协议和 FB 管理情况</span>
+                </div>
+                <div id="ss-protocol-overview" style="font-size:12px; line-height:1.6; background:rgba(255,255,255,0.04); padding:10px; border-radius:8px; white-space:normal; word-break:break-word;">加载中...</div>
+            </div>
+            <div class="input-group">
+                <label>现场确认</label>
+                <div style="margin-top:6px; opacity:.75; font-size:12px; line-height:1.5;">
+                    “测距一次”会直接走当前全局协议工具栏里选中的测距路由，适合现场确认是机器没回还是解析不对。
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
+                    <button class="btn" onclick="SlipwayPage.measureOnce()" style="min-width:120px;">测距一次</button>
+                    <div id="ss-measure-once-result" style="font-size:12px; opacity:.85; line-height:1.5; word-break:break-all;"></div>
+                </div>
+            </div>
+
+            <div class="input-group"><label>表格最大行数</label><input id="ss-max-table-rows" type="number" value="500" /></div>
+            <div class="input-group"><label>图表最大点数</label><input id="ss-max-chart-points" type="number" value="1000" /></div>
+            <div class="input-group"><label>内存最大结果数</label><input id="ss-max-results" type="number" value="5000" /></div>
+            <div class="btn-row"><button class="btn" onclick="SlipwayPage.closeSettings()">取消</button><button class="btn success" onclick="SlipwayPage.saveSettings()">保存</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- 高级流程配置弹窗 -->
+<div id="plan-config-overlay" class="hub-dialog-overlay" onclick="SlipwayPage.closePlanConfig()" style="z-index:2100;">
+    <div class="hub-dialog plan-dialog" onclick="event.stopPropagation()">
+        <div class="hub-dialog-header">
+            <span>🧩 流程配置 - <span id="current-config-title">默认</span></span>
+            <button class="hub-dialog-close" onclick="SlipwayPage.closePlanConfig()">×</button>
+        </div>
+        <div class="hub-dialog-body">
+            <div class="seg-editor" id="seg-modal-editor">
+                <div class="seg-editor-toolbar">
+                    <button class="btn-sm success" onclick="SlipwayPage.addSegment()">➕ 新增段</button>
+                    <button class="btn-sm" onclick="SlipwayPage.togglePlanJson()">📄 JSON</button>
+                </div>
+                <div class="seg-header"><span>反射率%</span><span>起始mm</span><span>结束mm</span><span>步进mm</span><span>采样</span><span></span></div>
+                <div class="seg-list" id="seg-modal-list"></div>
+            </div>
+            <textarea class="form-input" id="test-plan" rows="6" style="display:none; font-family:monospace; font-size:11px; margin-top:8px;">[{"reflectance":90,"start_pos":0,"end_pos":38000,"step":1000,"samples":1}]</textarea>
+            <div class="btn-row" style="margin-top:12px;"><button class="btn" onclick="SlipwayPage.closePlanConfig()">取消</button><button class="btn success" onclick="SlipwayPage.savePlanConfig()">✓ 保存</button></div>
+        </div>
+    </div>
+</div>

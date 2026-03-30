@@ -1,0 +1,32 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Runtime / logs / local outputs
+unified-tool/logs/
+unified-tool/data/exports/
+unified-tool/data/reports/
+unified-tool/data/webview_storage/
+unified-tool/data/*.db
+unified-tool/data/*.db-journal
+unified-tool/data/*.jsonl
+unified-tool/.vault/
+unified-tool/run_stdout.log
+unified-tool/run_stderr.log
+*.binbak
+
+# Recovery scratch
+unified-tool/_recovered/
+unified-tool/_recovered_text/
+unified-tool/_recovered_pylingual/
+
+# Local backups
+unified-tool/_backup/
+
+# Root compatibility link
+runtime/
+
+# Large binaries (cannot be pushed to GitHub without LFS)
+高德模块/*.exe

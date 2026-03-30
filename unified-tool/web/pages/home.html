@@ -1,0 +1,345 @@
+<!-- 首页 -->
+<div class="page-container home-page">
+    <!-- 顶部概览条 -->
+    <div class="home-overview">
+        <div class="overview-left">
+            <h1>🔬 GreenLaser Unified Tool</h1>
+            <p class="subtitle">激光测距仪生产测试一体化平台</p>
+        </div>
+        <div class="overview-right">
+            <div class="overview-item">
+                <span class="label">当前用户</span>
+                <span class="value" id="home-user">--</span>
+            </div>
+            <div class="overview-item">
+                <span class="label">今日任务</span>
+                <span class="value accent" id="home-tasks">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版本生命周期跟踪 -->
+    <div class="lifecycle-panel" id="lifecycle-panel">
+        <h2 class="section-title">📦 版本生命周期跟踪</h2>
+        <div class="lifecycle-flow">
+            <div class="lifecycle-stage" data-stage="dev">
+                <div class="stage-header">
+                    <span class="stage-icon">💻</span>
+                    <span class="stage-name">研发</span>
+                </div>
+                <div class="stage-count" id="stage-dev-count">0</div>
+                <div class="stage-desc">开发中</div>
+            </div>
+            <div class="lifecycle-arrow">→</div>
+            <div class="lifecycle-stage" data-stage="submitted">
+                <div class="stage-header">
+                    <span class="stage-icon">📤</span>
+                    <span class="stage-name">待测试</span>
+                </div>
+                <div class="stage-count" id="stage-submitted-count">0</div>
+                <div class="stage-desc">已提交</div>
+            </div>
+            <div class="lifecycle-arrow">→</div>
+            <div class="lifecycle-stage" data-stage="testing">
+                <div class="stage-header">
+                    <span class="stage-icon">🧪</span>
+                    <span class="stage-name">测试中</span>
+                </div>
+                <div class="stage-count" id="stage-testing-count">0</div>
+                <div class="stage-desc">进行中</div>
+            </div>
+            <div class="lifecycle-arrow">→</div>
+            <div class="lifecycle-stage" data-stage="passed">
+                <div class="stage-header">
+                    <span class="stage-icon">✅</span>
+                    <span class="stage-name">测试通过</span>
+                </div>
+                <div class="stage-count" id="stage-passed-count">0</div>
+                <div class="stage-desc">待发布</div>
+            </div>
+            <div class="lifecycle-arrow">→</div>
+            <div class="lifecycle-stage" data-stage="released">
+                <div class="stage-header">
+                    <span class="stage-icon">🏭</span>
+                    <span class="stage-name">已发布</span>
+                </div>
+                <div class="stage-count" id="stage-released-count">0</div>
+                <div class="stage-desc">生产中</div>
+            </div>
+        </div>
+        <div class="lifecycle-list" id="lifecycle-list">
+            <div class="empty-hint">暂无版本记录</div>
+        </div>
+    </div>
+
+    <!-- 主内容区：左入口 + 右状态 -->
+    <div class="home-main">
+        <!-- 左侧：常用入口 -->
+        <div class="home-section">
+            <h2 class="section-title">🚀 快捷入口</h2>
+            <div class="home-grid">
+                <div class="home-card card-base" onclick="switchPage('device')">
+                    <span class="card-icon">🎮</span>
+                    <div class="card-content">
+                        <h3>设备控制</h3>
+                        <p>连接和控制滑台、转靶、升降台</p>
+                    </div>
+                </div>
+                
+                <div class="home-card card-base" onclick="switchPage('debug')">
+                    <span class="card-icon">🔧</span>
+                    <div class="card-content">
+                        <h3>研发调试</h3>
+                        <p>串口/WiFi调试、命令管理</p>
+                    </div>
+                </div>
+                
+                <div class="home-card card-base" onclick="switchPage('slipway')">
+                    <span class="card-icon">📏</span>
+                    <div class="card-content">
+                        <h3>滑台测试</h3>
+                        <p>38m滑台精度测试、转靶控制</p>
+                    </div>
+                </div>
+                
+                <div class="home-card card-base" onclick="switchPage('production')">
+                    <span class="card-icon">📦</span>
+                    <div class="card-content">
+                        <h3>生产管理</h3>
+                        <p>程序管理、批量测试</p>
+                    </div>
+                </div>
+                
+                <div class="home-card card-base" onclick="switchPage('calibration')">
+                    <span class="card-icon">📊</span>
+                    <div class="card-content">
+                        <h3>校准测试</h3>
+                        <p>精度校准、数据采集</p>
+                    </div>
+                </div>
+                
+                <div class="home-card card-base" onclick="switchPage('settings')">
+                    <span class="card-icon">⚙️</span>
+                    <div class="card-content">
+                        <h3>系统设置</h3>
+                        <p>配置管理、主题设置</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：系统状态 + 最近记录 -->
+        <div class="home-sidebar">
+            <!-- 系统状态卡片 -->
+            <div class="panel status-panel">
+                <div class="panel-header">
+                    <span>📡 系统状态</span>
+                </div>
+                <div class="panel-body">
+                    <div class="status-row">
+                        <span class="status-dot" id="home-serial-dot"></span>
+                        <span class="status-label">串口</span>
+                        <span class="status-value" id="home-serial-status">未连接</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-dot" id="home-slipway-dot"></span>
+                        <span class="status-label">滑台</span>
+                        <span class="status-value" id="home-slipway-status">未连接</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-dot" id="home-rotary-dot"></span>
+                        <span class="status-label">转靶</span>
+                        <span class="status-value" id="home-rotary-status">未连接</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近记录卡片 -->
+            <div class="panel recent-panel">
+                <div class="panel-header">
+                    <span>🕐 最近操作</span>
+                </div>
+                <div class="panel-body" id="home-recent-list">
+                    <div class="empty-hint">暂无记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 首页专属样式 */
+.home-page { padding: var(--page-pad, 16px); }
+
+.home-overview {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 8px);
+    margin-bottom: 20px;
+}
+.home-overview h1 { margin: 0; font-size: 22px; }
+.home-overview .subtitle { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+.overview-right { display: flex; gap: 32px; }
+.overview-item { text-align: center; }
+.overview-item .label { display: block; font-size: 11px; color: var(--text-dim); }
+.overview-item .value { font-size: 18px; font-weight: 600; }
+.overview-item .value.accent { color: var(--accent); }
+
+.home-main {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+}
+
+.section-title {
+    font-size: 15px;
+    margin: 0 0 16px 0;
+    color: var(--text-muted);
+}
+
+.home-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.home-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    cursor: pointer;
+}
+.home-card .card-icon { font-size: 28px; flex-shrink: 0; }
+.home-card h3 { margin: 0; font-size: 15px; }
+.home-card p { margin: 6px 0 0; font-size: 12px; color: var(--text-muted); }
+
+.home-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+.status-panel .panel-body, .recent-panel .panel-body {
+    padding: 12px 16px;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.status-row:last-child { border-bottom: none; }
+.status-row .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #666;
+}
+.status-row .status-dot.connected {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+.status-row .status-label { flex: 1; font-size: 13px; }
+.status-row .status-value { font-size: 12px; color: var(--text-muted); }
+
+.recent-panel .panel-body { max-height: 200px; overflow-y: auto; }
+.recent-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 12px;
+}
+.recent-item:last-child { border-bottom: none; }
+.recent-item .time { color: var(--text-dim); font-size: 11px; }
+
+/* 版本生命周期跟踪 */
+.lifecycle-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 8px);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+.lifecycle-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 0;
+}
+.lifecycle-stage {
+    text-align: center;
+    padding: 12px 16px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    min-width: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+.lifecycle-stage:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+.lifecycle-stage.active {
+    border-color: var(--primary-color);
+    background: rgba(0, 255, 157, 0.1);
+}
+.lifecycle-stage .stage-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+.lifecycle-stage .stage-icon { font-size: 18px; }
+.lifecycle-stage .stage-name { font-size: 13px; font-weight: 600; }
+.lifecycle-stage .stage-count {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+.lifecycle-stage .stage-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.lifecycle-arrow {
+    font-size: 20px;
+    color: var(--text-muted);
+}
+.lifecycle-list {
+    margin-top: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+}
+.lifecycle-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--input-bg);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+.lifecycle-item:hover { background: var(--hover-bg); }
+.lifecycle-item .item-icon { font-size: 16px; }
+.lifecycle-item .item-info { flex: 1; }
+.lifecycle-item .item-name { font-size: 13px; font-weight: 500; }
+.lifecycle-item .item-meta { font-size: 11px; color: var(--text-muted); }
+.lifecycle-item .item-stage {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+}
+.lifecycle-item .item-stage.dev { background: #6366f1; color: white; }
+.lifecycle-item .item-stage.submitted { background: #f59e0b; color: white; }
+.lifecycle-item .item-stage.testing { background: #3b82f6; color: white; }
+.lifecycle-item .item-stage.passed { background: #22c55e; color: white; }
+.lifecycle-item .item-stage.released { background: var(--primary-color); color: #1a1a2e; }
+</style>

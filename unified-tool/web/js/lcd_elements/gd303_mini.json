@@ -1,0 +1,286 @@
+{
+  "device": "gd303_mini",
+  "name": "GD303 Mini (30H)",
+  "version": "1.0",
+  "bufferSize": 54,
+  "description": "30H Mini 段码LCD元素配置 - 完全映射固件 drv_seg_lcd.c",
+  
+  "elements": {
+    "digits": {
+      "line1": {
+        "description": "第一行数字显示 (SEG 53,52,51,50,49)",
+        "api": "seg_lcd_show_num(LINE_1, value)",
+        "positions": [
+          { "id": "line1_d1", "seg": 53, "A": "COM1", "B": "COM3", "C": "COM6", "D": "COM2", "E": "COM4", "F": "COM5", "G": "COM7" },
+          { "id": "line1_d2", "seg": 52, "A": "COM1", "B": "COM3", "C": "COM6", "D": "COM2", "E": "COM4", "F": "COM5", "G": "COM7" },
+          { "id": "line1_d3", "seg": 51, "A": "COM3", "B": "COM5", "C": "COM4", "D": "COM0", "E": "COM2", "F": "COM7", "G": "COM6" },
+          { "id": "line1_d4", "seg": 50, "A": "COM1", "B": "COM3", "C": "COM6", "D": "COM2", "E": "COM4", "F": "COM5", "G": "COM7" },
+          { "id": "line1_d5", "seg": 49, "A": "COM3", "B": "COM5", "C": "COM4", "D": "COM0", "E": "COM2", "F": "COM7", "G": "COM6" }
+        ],
+        "decimalPoints": [
+          { "id": "line1_dp1", "seg": 52, "com": "COM0", "note": "第1个小数点" },
+          { "id": "line1_dp2", "seg": 53, "com": "COM0", "note": "第2个小数点" },
+          { "id": "line1_dp3", "seg": 50, "com": "COM0", "note": "第3个小数点" }
+        ],
+        "unit": {
+          "description": "单位 s44(48,COM6), s45(47,COM4), s46(46,COM6), s47(45,COM6)",
+          "api": "seg_lcd_set_unit(LINE_1, unit)",
+          "segments": [
+            { "id": "line1_unit_0", "seg": 48, "com": "COM6" },
+            { "id": "line1_unit_1", "seg": 47, "com": "COM4" },
+            { "id": "line1_unit_2", "seg": 46, "com": "COM6" },
+            { "id": "line1_unit_3", "seg": 45, "com": "COM6" }
+          ]
+        }
+      },
+      
+      "line2": {
+        "description": "第二行数字显示 (SEG 36,37,38,39,40)",
+        "api": "seg_lcd_show_num(LINE_2, value)",
+        "positions": [
+          { "id": "line2_d1", "seg": 36, "A": "COM2", "B": "COM4", "C": "COM5", "D": "COM1", "E": "COM3", "F": "COM6", "G": "COM7" },
+          { "id": "line2_d2", "seg": 37, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" },
+          { "id": "line2_d3", "seg": 38, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" },
+          { "id": "line2_d4", "seg": 39, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" },
+          { "id": "line2_d5", "seg": 40, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" }
+        ],
+        "decimalPoints": [
+          { "id": "line2_dp1", "seg": 37, "com": "COM1" },
+          { "id": "line2_dp2", "seg": 38, "com": "COM1" },
+          { "id": "line2_dp3", "seg": 39, "com": "COM1" }
+        ],
+        "unit": {
+          "segments": [
+            { "id": "line2_unit_0", "seg": 40, "com": "COM1" },
+            { "id": "line2_unit_1", "seg": 41, "com": "COM1" },
+            { "id": "line2_unit_2", "seg": 43, "com": "COM1" },
+            { "id": "line2_unit_3", "seg": 44, "com": "COM1" }
+          ]
+        }
+      },
+      
+      "line3": {
+        "description": "第三行数字显示 (SEG 17,18,19,20,21)",
+        "api": "seg_lcd_show_num(LINE_3, value)",
+        "positions": [
+          { "id": "line3_d1", "seg": 17, "A": "COM3", "B": "COM5", "C": "COM4", "D": "COM0", "E": "COM2", "F": "COM7", "G": "COM6" },
+          { "id": "line3_d2", "seg": 18, "A": "COM1", "B": "COM3", "C": "COM6", "D": "COM2", "E": "COM4", "F": "COM5", "G": "COM7" },
+          { "id": "line3_d3", "seg": 19, "A": "COM1", "B": "COM3", "C": "COM6", "D": "COM2", "E": "COM4", "F": "COM5", "G": "COM7" },
+          { "id": "line3_d4", "seg": 20, "A": "COM1", "B": "COM3", "C": "COM6", "D": "COM2", "E": "COM4", "F": "COM5", "G": "COM7" },
+          { "id": "line3_d5", "seg": 21, "A": "COM3", "B": "COM5", "C": "COM4", "D": "COM0", "E": "COM2", "F": "COM7", "G": "COM6" }
+        ],
+        "decimalPoints": [
+          { "id": "line3_dp1", "seg": 18, "com": "COM0" },
+          { "id": "line3_dp2", "seg": 19, "com": "COM0" },
+          { "id": "line3_dp3", "seg": 20, "com": "COM0" }
+        ],
+        "unit": {
+          "segments": [
+            { "id": "line3_unit_0", "seg": 35, "com": "COM6" },
+            { "id": "line3_unit_1", "seg": 34, "com": "COM4" },
+            { "id": "line3_unit_2", "seg": 33, "com": "COM6" },
+            { "id": "line3_unit_3", "seg": 32, "com": "COM6" }
+          ]
+        }
+      },
+      
+      "line4": {
+        "description": "第四行数字显示 - 主显示 (SEG 23,24,25,26,27)",
+        "api": "seg_lcd_show_num(LINE_4, value)",
+        "positions": [
+          { "id": "line4_d1", "seg": 23, "A": "COM2", "B": "COM4", "C": "COM5", "D": "COM1", "E": "COM3", "F": "COM6", "G": "COM7" },
+          { "id": "line4_d2", "seg": 24, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" },
+          { "id": "line4_d3", "seg": 25, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" },
+          { "id": "line4_d4", "seg": 26, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" },
+          { "id": "line4_d5", "seg": 27, "A": "COM0", "B": "COM2", "C": "COM7", "D": "COM3", "E": "COM5", "F": "COM4", "G": "COM6" }
+        ],
+        "decimalPoints": [
+          { "id": "line4_dp1", "seg": 24, "com": "COM1" },
+          { "id": "line4_dp2", "seg": 25, "com": "COM1" },
+          { "id": "line4_dp3", "seg": 26, "com": "COM1" }
+        ],
+        "unit": {
+          "segments": [
+            { "id": "line4_unit_0", "seg": 27, "com": "COM1" },
+            { "id": "line4_unit_1", "seg": 28, "com": "COM1" },
+            { "id": "line4_unit_2", "seg": 30, "com": "COM1" },
+            { "id": "line4_unit_3", "seg": 31, "com": "COM1" }
+          ],
+          "exponent": {
+            "description": "次方显示 (m²/m³)",
+            "segments": [
+              { "id": "line4_exp_A", "seg": 31, "com": "COM6" },
+              { "id": "line4_exp_B", "seg": 31, "com": "COM7" },
+              { "id": "line4_exp_C", "seg": 31, "com": "COM5" },
+              { "id": "line4_exp_D", "seg": 31, "com": "COM3" },
+              { "id": "line4_exp_E", "seg": 30, "com": "COM5" },
+              { "id": "line4_exp_F", "seg": 30, "com": "COM6" },
+              { "id": "line4_exp_G", "seg": 30, "com": "COM7" }
+            ]
+          }
+        }
+      }
+    },
+    
+    "icons": {
+      "battery": {
+        "description": "电池图标 (4级)",
+        "api": "seg_lcd_set_battery(level)",
+        "segments": [
+          { "id": "bat_frame", "seg": 6, "com": "COM5", "note": "电池外框" },
+          { "id": "bat_grid1", "seg": 9, "com": "COM5", "note": "第1格" },
+          { "id": "bat_grid2", "seg": 8, "com": "COM5", "note": "第2格" },
+          { "id": "bat_grid3", "seg": 6, "com": "COM3", "note": "第3格" }
+        ],
+        "levels": {
+          "0": ["bat_frame"],
+          "1": ["bat_frame", "bat_grid1"],
+          "2": ["bat_frame", "bat_grid1", "bat_grid2"],
+          "3": ["bat_frame", "bat_grid1", "bat_grid2", "bat_grid3"]
+        }
+      },
+      
+      "signal": {
+        "description": "信号强度 (5级)",
+        "api": "seg_lcd_set_signal(level)",
+        "segments": [
+          { "id": "sig_1", "seg": 0, "com": "COM4", "note": "第1格" },
+          { "id": "sig_2", "seg": 0, "com": "COM6", "note": "第2格" },
+          { "id": "sig_3", "seg": 0, "com": "COM7", "note": "第3格" },
+          { "id": "sig_4", "seg": 0, "com": "COM5", "note": "第4格" },
+          { "id": "sig_5", "seg": 0, "com": "COM3", "note": "第5格" }
+        ]
+      },
+      
+      "bluetooth": {
+        "description": "蓝牙图标",
+        "api": "seg_lcd_set_bluetooth(on)",
+        "segments": [
+          { "id": "bluetooth", "seg": 10, "com": "COM7" }
+        ]
+      },
+      
+      "beep": {
+        "description": "蜂鸣器图标",
+        "api": "seg_lcd_set_beep_icon(on)",
+        "segments": [
+          { "id": "beep_on", "seg": 10, "com": "COM5", "note": "蜂鸣器开" },
+          { "id": "beep_off", "seg": 9, "com": "COM7", "note": "蜂鸣器关(静音)" }
+        ]
+      },
+      
+      "wifi": {
+        "description": "WiFi图标",
+        "api": "seg_lcd_set_wifi(on)",
+        "segments": [
+          { "id": "wifi", "seg": 0, "com": "COM2" }
+        ]
+      },
+      
+      "max_min": {
+        "description": "MAX/MIN图标",
+        "api": "seg_lcd_set_max_min(on)",
+        "segments": [
+          { "id": "max", "seg": 11, "com": "COM0" },
+          { "id": "min", "seg": 14, "com": "COM7" }
+        ]
+      }
+    },
+    
+    "base": {
+      "description": "基准图标 (8种模式)",
+      "api": "seg_lcd_set_base(mode)",
+      "segments": [
+        { "id": "s1", "seg": 7, "com": "COM7" },
+        { "id": "s19", "seg": 7, "com": "COM6" },
+        { "id": "s21", "seg": 7, "com": "COM4" },
+        { "id": "s26", "seg": 7, "com": "COM2" },
+        { "id": "s29", "seg": 7, "com": "COM0" },
+        { "id": "s2", "seg": 8, "com": "COM7" },
+        { "id": "s20", "seg": 8, "com": "COM6" },
+        { "id": "s22", "seg": 9, "com": "COM6" },
+        { "id": "s23", "seg": 8, "com": "COM4" },
+        { "id": "s25", "seg": 9, "com": "COM4" },
+        { "id": "s24", "seg": 8, "com": "COM2" },
+        { "id": "s28", "seg": 9, "com": "COM2" },
+        { "id": "s27", "seg": 8, "com": "COM0" },
+        { "id": "s30", "seg": 9, "com": "COM0" }
+      ],
+      "modes": {
+        "BASE_F_F_OFF": ["s21", "s20", "s2"],
+        "BASE_F_F_ON": ["s21", "s20", "s2", "s19", "s1"],
+        "BASE_F_B_OFF": ["s21", "s24", "s2", "s22", "s25"],
+        "BASE_F_B_ON": ["s21", "s24", "s2", "s22", "s25", "s19", "s1"],
+        "BASE_B_F_OFF": ["s21", "s24", "s28", "s30"],
+        "BASE_B_B_ON": ["s21", "s22", "s25", "s28", "s30", "s26", "s29"],
+        "BASE_TWO_OFF": ["s21", "s23", "s2", "s22", "s25", "s28", "s30"],
+        "BASE_TWO_ON": ["s21", "s23", "s2", "s22", "s25", "s28", "s30", "s19", "s1", "s26", "s29"]
+      }
+    },
+    
+    "measureMode": {
+      "description": "测量模式图标",
+      "api": "seg_lcd_set_measure_mode(mode, value)",
+      "segments": [
+        { "id": "s_1_w", "seg": 13, "com": "COM4" },
+        { "id": "s_1_x", "seg": 14, "com": "COM2" },
+        { "id": "s_1_y", "seg": 11, "com": "COM6" },
+        { "id": "s_1_z", "seg": 11, "com": "COM7" },
+        { "id": "s_2_h", "seg": 15, "com": "COM7" },
+        { "id": "s_2_w", "seg": 15, "com": "COM5" },
+        { "id": "s_2_x", "seg": 13, "com": "COM2" },
+        { "id": "s_2_y", "seg": 13, "com": "COM0" },
+        { "id": "s_2_z", "seg": 14, "com": "COM4" },
+        { "id": "s_3_h", "seg": 11, "com": "COM4" },
+        { "id": "s_3_x", "seg": 12, "com": "COM2" },
+        { "id": "s_3_y1", "seg": 12, "com": "COM0" },
+        { "id": "s_3_y2", "seg": 11, "com": "COM2" },
+        { "id": "s_3_w", "seg": 14, "com": "COM6" },
+        { "id": "s_3_z", "seg": 15, "com": "COM6" },
+        { "id": "s_q", "seg": 13, "com": "COM6" },
+        { "id": "s_angle", "seg": 13, "com": "COM7" }
+      ],
+      "modes": {
+        "AREA": ["s_1_x", "s_1_y", "s_2_x", "s_2_y"],
+        "VOLUME": ["s_1_x", "s_1_y", "s_2_x", "s_2_y", "s_3_x", "s_3_y1", "s_3_y2", "s_3_h", "s_1_z"],
+        "PYTH1": ["s_1_x", "s_1_y", "s_1_w"],
+        "PYTH2": ["s_1_x", "s_1_y", "s_1_w", "s_2_z", "s_3_w"],
+        "PYTH3": ["s_3_z", "s_2_z", "s_3_w", "s_2_h", "s_2_w", "s_1_x"]
+      }
+    },
+    
+    "angle": {
+      "description": "角度显示",
+      "api": "seg_lcd_show_angle(angle)",
+      "segments": [
+        { "id": "angle_minus", "seg": 6, "com": "COM6", "note": "负号" },
+        { "id": "angle_drop", "seg": 2, "com": "COM6", "note": "小数点" },
+        { "id": "angle_symbol", "seg": 0, "com": "COM0", "note": "度符号" }
+      ],
+      "digits": {
+        "tens": { "seg": [5, 6], "note": "十位" },
+        "ones": { "seg": [3, 4], "note": "个位" },
+        "decimal": { "seg": [1, 2], "note": "小数位" }
+      }
+    }
+  },
+  
+  "unitCodes": {
+    "m": "0x5C",
+    "ft": "0x71",
+    "in": "0x06",
+    "note": "单位字符7段码: m='o'(0x5C), ft='f'(0x71), in='1'(0x06)"
+  },
+  
+  "comBitMapping": {
+    "COM0": 7,
+    "COM1": 6,
+    "COM2": 5,
+    "COM3": 4,
+    "COM4": 3,
+    "COM5": 2,
+    "COM6": 1,
+    "COM7": 0,
+    "note": "COM位在字节中的bit位置: COM0=bit7, COM7=bit0"
+  }
+}

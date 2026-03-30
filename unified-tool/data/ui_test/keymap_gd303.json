@@ -1,0 +1,162 @@
+{
+  "device": "gd303",
+  "name": "GD303 绿光单发 7键按键映射表",
+  "keys": [
+    {
+      "id": 0,
+      "name": "K1",
+      "label": "测量键"
+    },
+    {
+      "id": 1,
+      "name": "K2",
+      "label": "清除键"
+    },
+    {
+      "id": 2,
+      "name": "K3",
+      "label": "基准键"
+    },
+    {
+      "id": 3,
+      "name": "K4",
+      "label": "加号键"
+    },
+    {
+      "id": 4,
+      "name": "K5",
+      "label": "模式键"
+    },
+    {
+      "id": 5,
+      "name": "K7",
+      "label": "保存键"
+    },
+    {
+      "id": 6,
+      "name": "K9",
+      "label": "减号键"
+    }
+  ],
+  "mappings": [
+    {
+      "key": "K1",
+      "trigger": "SHORT",
+      "action": "MEASURE",
+      "label": "K1短按(测量)",
+      "icon": "📏"
+    },
+    {
+      "key": "K1",
+      "trigger": "LONG",
+      "action": "MEASURE_CONT",
+      "label": "K1长按(连续测量)",
+      "icon": "🔁"
+    },
+    {
+      "key": "K1",
+      "trigger": "RELEASE",
+      "action": "CONFIRM",
+      "label": "K1释放(确认)",
+      "icon": "✅"
+    },
+    {
+      "key": "K2",
+      "trigger": "SHORT",
+      "action": "UNDO",
+      "label": "K2短按(撤销)",
+      "icon": "↩️"
+    },
+    {
+      "key": "K2",
+      "trigger": "LONG",
+      "action": "CLEAR",
+      "label": "K2长按(清除)",
+      "icon": "🗑️"
+    },
+    {
+      "key": "K2",
+      "trigger": "SUPER_LONG",
+      "action": "POWER_OFF",
+      "label": "K2超长按(关机)",
+      "icon": "⏻"
+    },
+    {
+      "key": "K3",
+      "trigger": "SHORT",
+      "action": "BASE_SWITCH",
+      "label": "K3短按(切换基准)",
+      "icon": "🎯"
+    },
+    {
+      "key": "K3",
+      "trigger": "LONG",
+      "action": "TIMING",
+      "label": "K3长按(定时测量)",
+      "icon": "⏱️"
+    },
+    {
+      "key": "K4",
+      "trigger": "SHORT",
+      "action": "ADD",
+      "label": "K4短按(累加)",
+      "icon": "➕"
+    },
+    {
+      "key": "K4",
+      "trigger": "LONG",
+      "action": "UNIT_SWITCH",
+      "label": "K4长按(切换单位)",
+      "icon": "📐"
+    },
+    {
+      "key": "K5",
+      "trigger": "SHORT",
+      "action": "MODE_NEXT",
+      "label": "K5短按(下一模式)",
+      "icon": "🔄"
+    },
+    {
+      "key": "K5",
+      "trigger": "LONG",
+      "action": "MODE_PREV",
+      "label": "K5长按(上一模式)",
+      "icon": "◀️"
+    },
+    {
+      "key": "K7",
+      "trigger": "SHORT",
+      "action": "RECALL",
+      "label": "K7短按(调用)",
+      "icon": "📂"
+    },
+    {
+      "key": "K7",
+      "trigger": "LONG",
+      "action": "SAVE",
+      "label": "K7长按(保存)",
+      "icon": "💾"
+    },
+    {
+      "key": "K9",
+      "trigger": "SHORT",
+      "action": "SUB",
+      "label": "K9短按(累减)",
+      "icon": "➖"
+    },
+    {
+      "key": "K9",
+      "trigger": "LONG",
+      "action": "BEEP_TOGGLE",
+      "label": "K9长按(蜂鸣器)",
+      "icon": "🔔"
+    },
+    {
+      "key": "K1+K2",
+      "trigger": "SUPER_LONG",
+      "action": "CALIBRATE",
+      "label": "K1+K2超长按(校准)",
+      "icon": "🔧"
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "version": "1.0",
+  "description": "自定义函数库 - 基于内置函数组合",
+  "functions": {
+    "scrollUp4": {
+      "name": "四行上移",
+      "description": "line1←line2←line3←line4",
+      "category": "数据操作",
+      "icon": "⬆️",
+      "inline": true,
+      "builtin": {
+        "name": "shift",
+        "args": [["line1", "line2", "line3", "line4"], "up"]
+      }
+    },
+    "scrollDown4": {
+      "name": "四行下移",
+      "description": "line4←line3←line2←line1",
+      "category": "数据操作",
+      "icon": "⬇️",
+      "inline": true,
+      "builtin": {
+        "name": "shift",
+        "args": [["line1", "line2", "line3", "line4"], "down"]
+      }
+    },
+    "scrollUp3": {
+      "name": "三行上移",
+      "description": "line2←line3←line4",
+      "category": "数据操作",
+      "icon": "⬆️",
+      "inline": true,
+      "builtin": {
+        "name": "shift",
+        "args": [["line2", "line3", "line4"], "up"]
+      }
+    },
+    "calcArea": {
+      "name": "计算面积",
+      "description": "面积 = line2 × line3 → line4",
+      "category": "计算",
+      "icon": "📐",
+      "inline": true,
+      "builtin": {
+        "name": "calc",
+        "args": ["line2 * line3", {"a": "line2", "b": "line3"}, "line4", "area"]
+      }
+    },
+    "calcVolume": {
+      "name": "计算体积",
+      "description": "体积 = line1 × line2 × line3 → line4",
+      "category": "计算",
+      "icon": "📦",
+      "inline": true,
+      "builtin": {
+        "name": "calc",
+        "args": ["line1 * line2 * line3", {}, "line4", "volume"]
+      }
+    },
+    "calcPyth": {
+      "name": "勾股定理",
+      "description": "√(line2² + line3²) → line4",
+      "category": "计算",
+      "icon": "📐",
+      "inline": true,
+      "builtin": {
+        "name": "calc",
+        "args": ["sqrt(a^2 + b^2)", {"a": "line2", "b": "line3"}, "line4", "length"]
+      }
+    },
+    "calcPythInverse": {
+      "name": "勾股定理(求直角边)",
+      "description": "√(line2² - line3²) → line4",
+      "category": "计算",
+      "icon": "📐",
+      "inline": true,
+      "builtin": {
+        "name": "calc",
+        "args": ["sqrt(a^2 - b^2)", {"a": "line2", "b": "line3"}, "line4", "length"]
+      }
+    },
+    "measureSuccess": {
+      "name": "测量成功",
+      "description": "上移 + 显示结果 + 关激光",
+      "category": "测量",
+      "icon": "✅",
+      "inline": true,
+      "steps": [
+        "shift([\"line1\",\"line2\",\"line3\",\"line4\"], \"up\")",
+        "store(distance, line4)",
+        "setIcon(laser, false)"
+      ]
+    },
+    "measureFail": {
+      "name": "测量失败",
+      "description": "显示错误 + 关激光",
+      "category": "测量",
+      "icon": "❌",
+      "inline": true,
+      "steps": [
+        "showPreset(line4, err)",
+        "setIcon(laser, false)",
+        "hw(beep, error)"
+      ]
+    },
+    "showReady": {
+      "name": "待机显示",
+      "description": "line4显示横线",
+      "category": "显示",
+      "icon": "⏸️",
+      "inline": true,
+      "steps": [
+        "showPreset(line1, empty)",
+        "showPreset(line2, empty)",
+        "showPreset(line3, empty)",
+        "showPreset(line4, dash)"
+      ]
+    },
+    "clearAll": {
+      "name": "清空所有",
+      "description": "所有行显示横线",
+      "category": "显示",
+      "icon": "🗑️",
+      "inline": true,
+      "steps": [
+        "showPreset(line1, dash)",
+        "showPreset(line2, dash)",
+        "showPreset(line3, dash)",
+        "showPreset(line4, dash)"
+      ]
+    },
+    "saveSnapshot": {
+      "name": "保存快照",
+      "description": "保存当前四行数据",
+      "category": "数据操作",
+      "icon": "💾",
+      "inline": true,
+      "builtin": {
+        "name": "snapshot",
+        "args": [["line1", "line2", "line3", "line4"], "save", "main"]
+      }
+    },
+    "restoreSnapshot": {
+      "name": "恢复快照",
+      "description": "恢复保存的四行数据",
+      "category": "数据操作",
+      "icon": "📂",
+      "inline": true,
+      "builtin": {
+        "name": "snapshot",
+        "args": [["line1", "line2", "line3", "line4"], "restore", "main"]
+      }
+    },
+    "laserOn": {
+      "name": "开启激光",
+      "description": "显示激光图标",
+      "category": "硬件",
+      "icon": "🔴",
+      "inline": true,
+      "builtin": {
+        "name": "setIcon",
+        "args": ["laser", true]
+      }
+    },
+    "laserOff": {
+      "name": "关闭激光",
+      "description": "隐藏激光图标",
+      "category": "硬件",
+      "icon": "⚫",
+      "inline": true,
+      "builtin": {
+        "name": "setIcon",
+        "args": ["laser", false]
+      }
+    },
+    "beepShort": {
+      "name": "短蜂鸣",
+      "description": "50ms蜂鸣",
+      "category": "硬件",
+      "icon": "🔔",
+      "inline": true,
+      "builtin": {
+        "name": "hw",
+        "args": ["beep", "short", 50]
+      }
+    },
+    "beepLong": {
+      "name": "长蜂鸣",
+      "description": "200ms蜂鸣",
+      "category": "硬件",
+      "icon": "🔔",
+      "inline": true,
+      "builtin": {
+        "name": "hw",
+        "args": ["beep", "long", 200]
+      }
+    }
+  },
+  "categories": [
+    { "id": "数据操作", "icon": "📊", "order": 1 },
+    { "id": "计算", "icon": "🔢", "order": 2 },
+    { "id": "测量", "icon": "📏", "order": 3 },
+    { "id": "显示", "icon": "🖥️", "order": 4 },
+    { "id": "硬件", "icon": "⚙️", "order": 5 }
+  ]
+}

@@ -1,0 +1,2264 @@
+<div class="pro-cal-container">
+    <!-- 主工作区 -->
+    <div class="pro-main-grid">
+
+        <!-- 左侧：流程控制 -->
+        <div class="pro-panel">
+            <div class="panel-header">
+                <span class="panel-title">流程控制</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="pro-btn sm primary" id="cal-start-btn-mini" onclick="CalibrationPageV2.startWorkflow()" disabled>开始</button>
+                    <button class="pro-btn sm" id="cal-resume-btn-mini" onclick="CalibrationPageV2.resumeWorkflow()" style="display:none">继续</button>
+                    <button class="pro-btn sm danger" id="cal-stop-btn-mini" onclick="CalibrationPageV2.stopWorkflow()" style="display:none">停止</button>
+                </div>
+            </div>
+            
+            <!-- 流程选择 -->
+            <div class="control-section">
+                <label>选择测试流程</label>
+                <select id="cal-workflow-select" class="pro-select" data-remember="workflow" onchange="CalibrationPageV2.selectWorkflow(this.value)">
+                    <option value="">-- 请选择 --</option>
+                </select>
+            </div>
+
+            <div class="control-section" id="cal-wf-info">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <div id="cal-wf-icon" style="font-size:20px; width:26px; text-align:center;">📋</div>
+                    <div style="flex:1; min-width:0;">
+                        <div id="cal-wf-name" style="font-weight:700; line-height:1.2;">选择一个流程</div>
+                        <div id="cal-wf-desc" style="opacity:.75; font-size:12px; line-height:1.2; margin-top:2px;">从左侧选择要执行的测试流程</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 设备选择 -->
+            <div class="control-section">
+                <label>目标设备</label>
+                <select id="cal-device-select" class="pro-select" data-remember="device" onchange="CalibrationPageV2.selectDevice(this.value)">
+                    <option value="">-- 未发现设备 --</option>
+                </select>
+            </div>
+            
+            <!-- 参数配置 -->
+            <div class="control-section" id="cal-params-area">
+                <label>流程配置</label>
+                <div class="cal-config-tab-body">
+                    <div class="cal-tab-panel active" id="cal-config-panel-preview">
+                        <div class="params-placeholder">选择流程后显示预览</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button class="pro-btn primary large" id="cal-start-btn" onclick="CalibrationPageV2.startWorkflow()" disabled>
+                    ▶ 开始执行
+                </button>
+                <button class="pro-btn danger large" id="cal-stop-btn" onclick="CalibrationPageV2.stopWorkflow()" style="display:none">
+                    ⏹ 停止
+                </button>
+            </div>
+            
+            <!-- 进度显示 -->
+            <div class="progress-section" id="cal-progress-card" style="display:none">
+                <div class="progress-header">
+                    <span>执行进度</span>
+                    <span id="cal-progress-pct">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="cal-progress-fill"></div>
+                </div>
+                <div class="progress-step" id="cal-progress-step">准备中...</div>
+            </div>
+        </div>
+        
+        <!-- 中间：日志与结果 -->
+        <div class="pro-panel flex-1">
+            <div class="panel-header">
+                <span class="panel-title">执行日志</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="text-btn" onclick="CalibrationPageV2.toggleLogPause()">暂停</button>
+                    <select class="pro-select" style="height:28px; padding:0 8px;" onchange="CalibrationPageV2.setLogFilter(this.value)">
+                        <option value="all">全部</option>
+                        <option value="info">info</option>
+                        <option value="success">success</option>
+                        <option value="error">error</option>
+                    </select>
+                    <button class="text-btn" onclick="CalibrationPageV2.clearLog()">清空</button>
+                </div>
+            </div>
+            <div class="log-container" id="cal-log"></div>
+            
+            <!-- 确认对话框 -->
+            <div class="confirm-overlay" id="cal-confirm-card" style="display:none">
+                <div class="confirm-box">
+                    <div class="confirm-icon">⚠️</div>
+                    <div class="confirm-msg" id="cal-confirm-msg">请确认继续</div>
+                    <div class="confirm-actions">
+                        <button class="pro-btn" onclick="CalibrationPageV2.confirmWorkflow(false)">取消</button>
+                        <button class="pro-btn primary" onclick="CalibrationPageV2.confirmWorkflow(true)">确认</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：手动命令 -->
+        <div class="pro-panel">
+            <div class="panel-header">
+                <span class="panel-title">手动命令</span>
+            </div>
+            
+            <div class="cmd-list" id="cal-cmd-list">
+                <!-- 动态填充 -->
+            </div>
+            
+            <div class="custom-send">
+                <label>自定义帧</label>
+                <input type="text" id="cal-hex-input" class="pro-input" data-remember="hexInput" placeholder="AA EE F0 02 00 00 ...">
+                <div class="send-actions">
+                    <button class="pro-btn sm" onclick="CalibrationPageV2.calcXor()">计算校验</button>
+                    <button class="pro-btn sm primary" onclick="CalibrationPageV2.sendCustom()">发送</button>
+                </div>
+            </div>
+            
+            <!-- 快捷操作 -->
+            <div class="quick-actions" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1)">
+                <label>快捷操作</label>
+                <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap">
+                    <button class="pro-btn sm danger" onclick="CalibrationPageV2.autoShutdown(10)" title="10秒后自动关机">
+                        ⏻ 10秒关机
+                    </button>
+                    <button class="pro-btn sm" onclick="CalibrationPageV2.autoShutdown(0)" title="取消自动关机">
+                        ✕ 取消关机
+                    </button>
+                    <button class="pro-btn sm primary" onclick="CalibrationPageV2.runDiagnostic()" title="设备诊断">
+                        🔍 诊断
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- 连接设置弹窗 -->
+<div class="modal-overlay" id="conn-modal" style="display:none">
+    <div class="modal-card small">
+        <div class="modal-header">
+            <span>🔌 连接设置</span>
+            <button class="close-btn" onclick="CalibrationPageV2.closeConnDialog()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>连接方式</label>
+                <select id="cal-conn-mode" class="cyber-select" onchange="CalibrationPageV2.onConnModeChanged(this.value)">
+                    <option value="local">本机串口 (COM)</option>
+                    <option value="tcp">网络串口桥接 (TCP)</option>
+                </select>
+            </div>
+            <div class="form-group" id="cal-port-group">
+                <label>串口</label>
+                <div class="input-row">
+                    <select id="cal-port" class="cyber-select flex-1">
+                        <option value="">选择串口...</option>
+                    </select>
+                    <button class="cyber-btn sm" onclick="CalibrationPageV2.refreshPorts()">🔄</button>
+                </div>
+            </div>
+            <div id="cal-tcp-group" style="display:none">
+                <div class="form-group">
+                    <label>远端IP</label>
+                    <input type="text" id="cal-tcp-ip" class="cyber-input" placeholder="192.168.1.50">
+                </div>
+                <div class="form-group">
+                    <label>远端端口</label>
+                    <input type="number" id="cal-tcp-port" class="cyber-input" value="7000" placeholder="7000">
+                </div>
+                <div style="font-size:12px; opacity:.75; margin-top:-4px;">
+                    连接地址将使用 <code>tcp://IP:端口</code>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>波特率</label>
+                <select id="cal-baud" class="cyber-select" data-remember="baudRate">
+                    <option value="115200">115200</option>
+                    <option value="9600">9600</option>
+                    <option value="57600">57600</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="cyber-btn" onclick="CalibrationPageV2.closeConnDialog()">取消</button>
+            <button class="cyber-btn primary" id="conn-modal-btn" onclick="CalibrationPageV2.toggleConnection()">连接</button>
+        </div>
+    </div>
+</div>
+
+<!-- 配置管理弹窗 -->
+<div class="modal-overlay" id="cal-settings-modal" style="display:none">
+    <div class="modal-card xlarge">
+        <div class="modal-header">
+            <span>⚙️ 协议配置管理</span>
+            <div class="header-actions">
+                <button class="cyber-btn sm" onclick="CalibrationPageV2.exportConfig()">📤 导出</button>
+                <button class="cyber-btn sm" onclick="CalibrationPageV2.importConfig()">📥 导入</button>
+            </div>
+            <button class="close-btn" onclick="CalibrationPageV2.closeSettings()">×</button>
+        </div>
+        
+        <!-- 机器类型选择 -->
+        <div class="machine-selector">
+            <label>当前机器类型:</label>
+            <select id="machine-type" class="cyber-select" onchange="CalibrationPageV2.switchMachine(this.value)">
+                <option value="gd_laser">GD激光测距模块</option>
+                <option value="gd_mini30h">GD Mini-30H</option>
+                <option value="gd_dual">GD双头</option>
+            </select>
+            <button class="cyber-btn sm" onclick="CalibrationPageV2.addMachine()">➕ 新建机器</button>
+        </div>
+        
+        <div class="modal-tabs">
+            <button class="tab-btn active" data-tab="commands">📝 命令管理</button>
+            <button class="tab-btn" data-tab="workflows">📋 流程管理</button>
+            <button class="tab-btn" data-tab="params">⚡ 快捷参数</button>
+        </div>
+        
+        <div class="modal-body config-body">
+            <!-- 命令管理 -->
+            <div class="tab-content active" id="tab-commands">
+                <div class="config-toolbar">
+                    <button class="cyber-btn sm primary" onclick="CalibrationPageV2.addCommand()">➕ 新增命令</button>
+                </div>
+                <div class="config-list" id="cmd-config-list">
+                    <!-- 动态填充 -->
+                </div>
+            </div>
+            
+            <!-- 流程管理 -->
+            <div class="tab-content" id="tab-workflows">
+                <div class="config-toolbar">
+                    <button class="cyber-btn sm primary" onclick="CalibrationPageV2.addWorkflow()">➕ 新增流程</button>
+                </div>
+                <div class="config-list" id="wf-config-list">
+                    <!-- 动态填充 -->
+                </div>
+            </div>
+            
+            <!-- 快捷参数 -->
+            <div class="tab-content" id="tab-params">
+                <div class="settings-group">
+                    <h4>🟢 开启激光默认参数</h4>
+                    <div class="settings-row">
+                        <label>型号</label>
+                        <select id="set-laser-model" class="cyber-select">
+                            <option value="0">mini-30h</option>
+                            <option value="1">低价两键</option>
+                            <option value="2">双头</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label>方向</label>
+                        <select id="set-laser-dir" class="cyber-select">
+                            <option value="0">前头激光</option>
+                            <option value="1">后头激光</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h4>🎯 标定距离默认值</h4>
+                    <div class="settings-row">
+                        <label>位置1</label>
+                        <input type="number" id="set-cal-p1" class="cyber-input" value="5000"> mm
+                    </div>
+                    <div class="settings-row">
+                        <label>位置2</label>
+                        <input type="number" id="set-cal-p2" class="cyber-input" value="20000"> mm
+                    </div>
+                    <div class="settings-row">
+                        <label>位置3</label>
+                        <input type="number" id="set-cal-p3" class="cyber-input" value="25000"> mm
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="cyber-btn" onclick="CalibrationPageV2.closeSettings()">取消</button>
+            <button class="cyber-btn primary" onclick="CalibrationPageV2.saveAllConfig()">💾 保存全部配置</button>
+        </div>
+    </div>
+</div>
+
+<!-- 命令编辑弹窗 -->
+<div class="modal-overlay" id="cmd-edit-modal" style="display:none">
+    <div class="modal-card large">
+        <div class="modal-header">
+            <span id="cmd-edit-title">编辑命令</span>
+            <button class="close-btn" onclick="CalibrationPageV2.closeCmdEdit()">×</button>
+        </div>
+        <div class="modal-body">
+            <!-- 基本信息 -->
+            <div class="form-section">
+                <h4>基本信息</h4>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>命令名称</label>
+                        <input type="text" id="cmd-edit-name" class="cyber-input" placeholder="开启激光">
+                    </div>
+                    <div class="form-group">
+                        <label>命令码</label>
+                        <input type="text" id="cmd-edit-code" class="cyber-input" placeholder="F0">
+                    </div>
+                    <div class="form-group">
+                        <label>图标</label>
+                        <select id="cmd-edit-icon" class="cyber-select">
+                            <option value="🟢">🟢 开启</option>
+                            <option value="🔴">🔴 关闭</option>
+                            <option value="🎯">🎯 标定</option>
+                            <option value="📏">📏 测量</option>
+                            <option value="💡">💡 闪烁</option>
+                            <option value="ℹ️">ℹ️ 信息</option>
+                            <option value="�">💓 心跳</option>
+                            <option value="📌">📌 其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label>超时(ms)</label>
+                        <input type="number" id="cmd-edit-timeout" class="cyber-input" value="500">
+                    </div>
+                    <div class="form-group">
+                        <label>重试次数</label>
+                        <input type="number" id="cmd-edit-retry" class="cyber-input" value="3">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 发送参数 -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>📤 发送参数</h4>
+                    <button class="cyber-btn sm" onclick="CalibrationPageV2.addSendParam()">➕ 添加</button>
+                </div>
+                <div class="param-table" id="cmd-send-params">
+                    <div class="param-header">
+                        <span>参数名</span>
+                        <span>类型</span>
+                        <span>显示名</span>
+                        <span>默认值</span>
+                        <span></span>
+                    </div>
+                    <!-- 动态填充 -->
+                </div>
+            </div>
+            
+            <!-- 接收参数 -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>📥 接收解析</h4>
+                    <button class="cyber-btn sm" onclick="CalibrationPageV2.addRecvParam()">➕ 添加</button>
+                </div>
+                <div class="param-table" id="cmd-recv-params">
+                    <div class="param-header">
+                        <span>参数名</span>
+                        <span>类型</span>
+                        <span>显示名</span>
+                        <span>单位</span>
+                        <span></span>
+                    </div>
+                    <!-- 动态填充 -->
+                </div>
+            </div>
+            
+            <!-- 帧预览 -->
+            <div class="form-section">
+                <h4>📋 帧预览</h4>
+                <div class="frame-preview">
+                    <div class="preview-row">
+                        <span class="label">发送:</span>
+                        <code id="cmd-preview-send">AA EE -- -- -- -- BB FF</code>
+                    </div>
+                    <div class="preview-row">
+                        <span class="label">接收:</span>
+                        <code id="cmd-preview-recv">AA FE -- -- -- -- BB FF</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="cyber-btn danger" onclick="CalibrationPageV2.deleteCommand()" id="cmd-delete-btn" style="margin-right:auto">🗑️ 删除</button>
+            <button class="cyber-btn" onclick="CalibrationPageV2.closeCmdEdit()">取消</button>
+            <button class="cyber-btn primary" onclick="CalibrationPageV2.saveCmdEdit()">保存</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- 诊断弹窗 -->
+<div class="modal-overlay" id="diag-modal" style="display:none; background:rgba(0,0,0,0.7)">
+    <div class="modal-card" style="width:520px; background:#1a1a2e; border:1px solid #333">
+        <div class="modal-header">
+            <span>🔍 设备诊断</span>
+            <button class="close-btn" onclick="CalibrationPageV2.closeDiagModal()">×</button>
+        </div>
+        <div class="modal-body" style="padding:20px">
+            <!-- 进度条 -->
+            <div class="diag-progress-wrap" style="margin-bottom:20px">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+                    <span id="diag-step-text">准备中...</span>
+                    <span id="diag-progress-pct">0%</span>
+                </div>
+                <div class="progress-bar" style="height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden">
+                    <div id="diag-progress-fill" style="width:0%; height:100%; background:var(--primary-color); transition:width 0.3s"></div>
+                </div>
+            </div>
+            
+            <!-- 诊断结果列表 -->
+            <div class="diag-results" id="diag-results" style="max-height:360px; overflow-y:auto">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="pro-btn" onclick="CalibrationPageV2.closeDiagModal()">关闭</button>
+            <button class="pro-btn primary" id="diag-start-btn" onclick="CalibrationPageV2.startDiagnostic()">开始诊断</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 诊断结果样式 */
+.diag-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 3px solid transparent;
+}
+.diag-item.pass { border-left-color: #4ade80; }
+.diag-item.fail { border-left-color: #f87171; }
+.diag-item.warn { border-left-color: #fbbf24; }
+.diag-item.pending { border-left-color: #64748b; opacity: 0.6; }
+
+.diag-icon {
+    font-size: 20px;
+    width: 28px;
+    text-align: center;
+}
+.diag-content { flex: 1; }
+.diag-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.diag-detail {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+.diag-detail .val { color: var(--primary-color); font-weight: 500; }
+.diag-detail .err { color: #f87171; }
+</style>
+
+<style>
+/* ========== 专业校准界面样式 ========== */
+
+.pro-cal-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
+    padding: 0;
+    gap: 12px;
+}
+
+/* 顶部标题栏 */
+.pro-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.pro-header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.pro-header .version {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--input-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.header-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.header-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* 状态卡片 */
+.status-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.status-card:hover {
+    border-color: var(--primary-color);
+}
+
+.status-card .card-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--input-bg);
+    border-radius: 8px;
+}
+
+.status-card .card-content {
+    flex: 1;
+}
+
+.status-card .card-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-card .card-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.status-card .card-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+}
+
+.status-card .card-indicator.connected {
+    background: var(--primary-color);
+    box-shadow: 0 0 8px var(--primary-color);
+}
+
+.status-card .card-action {
+    padding: 6px 12px;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 4px;
+    color: var(--text-on-accent);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* 主网格 */
+.pro-main-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* 面板 - 高可见度边框 */
+.pro-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.pro-panel.flex-1 {
+    flex: 1;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--input-bg);
+}
+
+.panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.text-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.text-btn:hover {
+    color: var(--primary-color);
+}
+
+/* 控制区域 */
+.control-section {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 参数区域：只让这块内部滚动，避免破坏整体三栏布局 */
+#cal-params-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-bottom: none;
+    overflow: hidden;
+}
+
+.cal-config-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.cal-tab-btn {
+    flex: 1;
+    padding: 6px 0;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.cal-tab-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.cal-tab-btn.active {
+    background: var(--card-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.cal-config-tab-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.cal-tab-panel {
+    display: none;
+}
+
+.cal-tab-panel.active {
+    display: block;
+}
+
+.control-section label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.pro-select {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 13px;
+}
+.pro-select:hover {
+    border-color: var(--accent);
+}
+.pro-select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.pro-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 13px;
+    font-family: 'Consolas', monospace;
+}
+.pro-input:hover {
+    border-color: var(--accent);
+}
+.pro-input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.params-placeholder {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* 步骤预览 */
+.wf-preview {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+.wf-preview-title {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.wf-preview-body {
+    font-size: 11px;
+    font-family: 'Consolas', monospace;
+    color: var(--text-color);
+    padding: 10px 12px;
+    margin: 0;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    max-height: 180px;
+    overflow: auto;
+}
+
+ .wf-preview-body.expanded {
+    max-height: none;
+ }
+
+ .wf-preview-toggle {
+    border: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.2);
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+ }
+ .wf-preview-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+.wf-preview-body .wf-var {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.wf-preview-body .wf-line { display: inline; }
+.wf-preview-body .wf-act-command { color: var(--accent); font-weight: 600; }
+.wf-preview-body .wf-act-move { color: #7aa2ff; }
+.wf-preview-body .wf-act-delay { color: #ffd166; }
+.wf-preview-body .wf-act-notify { color: #cdb4db; }
+.wf-preview-body .wf-act-other { color: var(--text-muted); }
+.wf-preview-body .wf-tag { display: inline-block; font-size: 10px; line-height: 1; padding: 2px 6px; border-radius: 999px; background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.35); color: var(--accent); margin-right: 6px; }
+.wf-preview-body .wf-cmd { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+/* 操作按钮 - 高可见度 */
+.action-buttons {
+    display: none;
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.pro-btn {
+    padding: 8px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pro-btn:hover {
+    border-color: var(--accent);
+}
+
+.pro-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+}
+
+.pro-btn.primary:hover {
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.pro-btn.danger {
+    background: var(--color-danger, #ef4444);
+    border-color: var(--color-danger, #ef4444);
+    color: var(--text-on-danger);
+    font-weight: 600;
+}
+
+.pro-btn.large {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+}
+
+.pro-btn.sm {
+    padding: 8px 14px;
+    font-size: 12px;
+}
+
+.pro-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 进度条 */
+.progress-section {
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--input-bg);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+.progress-step {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* 日志容器 */
+.log-container {
+    flex: 1;
+    padding: 12px 16px;
+    overflow-y: auto;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.log-container .log-line {
+    padding: 2px 0;
+}
+
+.log-container .log-line.info { color: var(--text-color); }
+.log-container .log-line.success { color: var(--primary-color); }
+.log-container .log-line.error { color: #ef4444; }
+.log-container .log-line.warning { color: #f59e0b; }
+
+.log-container .time {
+    color: var(--text-muted);
+    margin-right: 8px;
+}
+
+/* 确认弹窗 */
+.confirm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+}
+
+.confirm-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.confirm-msg {
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* 命令列表 */
+.cmd-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.cmd-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 4px;
+}
+
+.cmd-item:hover {
+    background: var(--input-bg);
+}
+
+.cmd-item .icon {
+    font-size: 16px;
+}
+
+.cmd-item .cmd-info {
+    flex: 1;
+}
+
+.cmd-item .name {
+    font-size: 13px;
+}
+
+.cmd-item .param-hint {
+    font-size: 11px;
+    color: var(--primary-color);
+}
+
+.cmd-item .code {
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* 自定义发送 */
+.custom-send {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.custom-send label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.send-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.response-box {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.response-box label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.response-content {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: var(--primary-color);
+    background: var(--input-bg);
+    padding: 10px 12px;
+    border-radius: 6px;
+    min-height: 40px;
+}
+
+/* 简化主网格 - 两列 */
+.cal-main-grid-simple {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 15px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* 旧三列布局保留 */
+.cal-main-grid {
+    display: grid;
+    grid-template-columns: auto 1fr 320px;
+    gap: 15px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* 面板通用 */
+.cal-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+}
+
+/* 左侧面板折叠 */
+.cal-left {
+    width: 280px;
+    position: relative;
+    transition: width 0.3s ease;
+}
+
+.cal-left.collapsed {
+    width: 40px;
+}
+
+.cal-left.collapsed .panel-content {
+    display: none;
+}
+
+.cal-left.collapsed .panel-toggle .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.panel-toggle {
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 48px;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+.panel-toggle:hover {
+    background: var(--primary-hover);
+}
+
+.toggle-icon {
+    color: var(--text-on-accent);
+    font-size: 12px;
+    transition: transform 0.3s;
+}
+
+.panel-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.panel-section.flex-1 {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.title-icon {
+    font-size: 16px;
+}
+
+.section-title .mini-btn {
+    margin-left: auto;
+}
+
+/* 连接控制 */
+.conn-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.control-row {
+    display: flex;
+    gap: 8px;
+}
+
+.cyber-select, .cyber-input {
+    flex: 1;
+    padding: 10px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.cyber-select:focus, .cyber-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+.cyber-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.cyber-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.cyber-btn.primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-on-accent);
+    font-weight: 600;
+}
+
+.cyber-btn.primary:hover {
+    background: #00ff9d;
+    box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+}
+
+.cyber-btn.success {
+    background: color-mix(in srgb, var(--color-success, #00ff88) 20%, transparent);
+    border-color: var(--color-success, #00ff88);
+    color: var(--color-success, #00ff88);
+}
+.cyber-btn.success:hover {
+    background: color-mix(in srgb, var(--color-success, #00ff88) 30%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-success, #00ff88) 40%, transparent);
+}
+
+.cyber-btn.danger {
+    background: color-mix(in srgb, var(--color-danger, #ff6b6b) 20%, transparent);
+    border-color: var(--color-danger, #ff6b6b);
+    color: var(--color-danger, #ff6b6b);
+}
+.cyber-btn.danger:hover {
+    background: color-mix(in srgb, var(--color-danger, #ff6b6b) 30%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-danger, #ff6b6b) 40%, transparent);
+}
+
+.cyber-btn.large {
+    padding: 14px 28px;
+    font-size: 16px;
+    border-radius: 10px;
+}
+
+.cyber-btn.sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.cyber-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.icon-btn:hover {
+    border-color: var(--primary-color);
+}
+
+.mini-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.mini-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* 设备网格 */
+.device-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.device-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 8px;
+}
+
+.device-chip .icon { font-size: 20px; }
+.device-chip .info { flex: 1; }
+.device-chip .name { font-weight: 600; font-size: 13px; }
+.device-chip .detail { font-size: 11px; color: var(--text-muted); }
+.device-chip .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    box-shadow: 0 0 8px var(--primary-color);
+}
+
+/* 流程网格 */
+.workflow-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.wf-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--input-bg);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wf-item:hover {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.wf-item.active {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--primary-color);
+}
+
+.wf-item .icon {
+    font-size: 28px;
+    width: 40px;
+    text-align: center;
+}
+
+.wf-item .info { flex: 1; }
+.wf-item .name { font-weight: 600; font-size: 14px; }
+.wf-item .desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* 配置卡片 */
+.config-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), transparent);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-icon {
+    font-size: 36px;
+}
+
+.card-title h3 {
+    font-size: 18px;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.card-title p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.param-group {
+    margin-bottom: 0;
+    padding: 10px 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    min-width: 100px;
+}
+
+.param-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.param-label-text {
+    display: block;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.param-key {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+.param-usage {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.param-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.param-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+@media (max-width: 420px) {
+    .param-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.card-actions {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+}
+
+/* 进度卡片 */
+.progress-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px 20px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.progress-track {
+    height: 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary-color), #00d4ff);
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.progress-step {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* 确认卡片 */
+.confirm-card {
+    background: var(--card-bg);
+    border: 1px solid #f59e0b;
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
+}
+
+.confirm-icon { font-size: 40px; margin-bottom: 10px; }
+.confirm-msg { font-size: 15px; margin-bottom: 20px; }
+.confirm-btns { display: flex; gap: 12px; justify-content: center; }
+
+/* 日志卡片 */
+.log-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+}
+
+.log-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 15px;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.log-line { margin-bottom: 3px; }
+.log-line .time { color: var(--text-muted); }
+.log-line.success { color: var(--primary-color); }
+.log-line.error { color: #ef4444; }
+.log-line.warning { color: #f59e0b; }
+
+/* 命令列表 */
+.cmd-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.cmd-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cmd-item:hover {
+    background: rgba(16, 185, 129, 0.1);
+    transform: translateX(3px);
+}
+
+.cmd-item .icon { font-size: 18px; width: 24px; text-align: center; }
+.cmd-item .cmd-info { flex: 1; }
+.cmd-item .name { font-size: 13px; }
+.cmd-item .param-hint { 
+    font-size: 11px; 
+    color: var(--primary-color); 
+    display: block;
+    margin-top: 2px;
+}
+.cmd-item .code {
+    font-family: monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--primary-color);
+    border-radius: 4px;
+}
+
+/* 自定义发送 */
+.custom-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.custom-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.response-area {
+    margin-top: 10px;
+    padding: 12px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--primary-color);
+    min-height: 60px;
+    word-break: break-all;
+}
+
+/* 弹窗 */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    width: 400px;
+    max-width: 90%;
+}
+
+.modal-card.small {
+    width: 380px;
+}
+
+.modal-card.small .cyber-select {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.input-row .flex-1 {
+    flex: 1;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.close-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.close-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* 设置弹窗 */
+.modal-card.large {
+    width: 600px;
+    max-width: 95%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-card.large .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 20px;
+}
+
+.modal-card.xlarge {
+    width: 800px;
+    max-width: 95%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    margin-right: 10px;
+}
+
+/* 机器选择器 */
+.machine-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    background: rgba(16, 185, 129, 0.05);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.machine-selector label {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.machine-selector .cyber-select {
+    width: 200px;
+}
+
+/* 配置列表 */
+.config-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.config-toolbar {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 10px;
+}
+
+.config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.config-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.config-item:hover {
+    border-color: var(--primary-color);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.config-item .icon {
+    font-size: 20px;
+    width: 30px;
+    text-align: center;
+}
+
+.config-item .info {
+    flex: 1;
+}
+
+.config-item .name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.config-item .meta {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.config-item .code {
+    font-family: monospace;
+    font-size: 12px;
+    padding: 4px 10px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--primary-color);
+    border-radius: 4px;
+}
+
+.config-item .edit-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* 表单 */
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.form-section {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.form-section h4 {
+    font-size: 13px;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.section-header h4 {
+    margin: 0;
+}
+
+/* 参数表格 */
+.param-table {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.param-table .param-header {
+    display: grid;
+    grid-template-columns: 80px 90px 80px 60px 30px;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--input-bg);
+    font-size: 11px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.param-table .param-row {
+    display: grid;
+    grid-template-columns: 80px 90px 80px 60px 30px;
+    gap: 6px;
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+}
+
+.param-table .param-row:last-child {
+    border-bottom: none;
+}
+
+.param-table .param-row input,
+.param-table .param-row select {
+    padding: 4px 6px;
+    font-size: 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+}
+
+.param-table .param-row .del-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 11px;
+}
+
+.param-empty {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* 帧预览 */
+.frame-preview {
+    background: var(--input-bg);
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.preview-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.preview-row:last-child {
+    margin-bottom: 0;
+}
+
+.preview-row .label {
+    width: 40px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.preview-row code {
+    flex: 1;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--primary-color);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.cyber-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 13px;
+    font-family: 'Consolas', monospace;
+    resize: vertical;
+}
+
+/* 步骤列表 */
+.step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.step-item .step-num {
+    width: 24px;
+    height: 24px;
+    background: var(--primary-color);
+    color: var(--text-on-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.step-item select {
+    flex: 1;
+}
+
+.step-item .del-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+.modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 15px;
+}
+
+.tab-btn {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--text-color);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.settings-group {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.settings-group h4 {
+    font-size: 14px;
+    color: var(--text-color);
+    margin-bottom: 12px;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.settings-row label {
+    width: 100px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.settings-row .cyber-input,
+.settings-row .cyber-select {
+    width: 150px;
+    flex: none;
+}
+
+/* 简化状态栏 */
+.status-bar-simple {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 20px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.status-bar-simple .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+.status-bar-simple .status-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.status-bar-simple .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #666;
+}
+
+.status-bar-simple .status-dot.connected {
+    background: var(--accent-color);
+    box-shadow: 0 0 6px var(--accent-color);
+}
+
+.status-bar-simple .scan-btn {
+    padding: 6px 16px;
+    background: linear-gradient(135deg, #00d4aa, #00b894);
+    color: var(--text-on-danger);
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0, 212, 170, 0.3);
+    transition: all 0.2s;
+}
+
+.status-bar-simple .scan-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 212, 170, 0.4);
+}
+
+.status-bar-simple .device-count {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.status-bar-simple .device-count b {
+    color: var(--accent-color);
+}
+
+/* 设备信息栏 */
+.device-info-bar {
+    display: flex;
+    gap: 20px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 200, 255, 0.08));
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    border-radius: 12px;
+    margin: 0 20px 16px;
+    box-shadow: 0 4px 20px rgba(0, 255, 136, 0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.device-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    min-width: 80px;
+}
+
+.device-info-item.highlight {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 255, 0.1));
+    border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.device-info-item .info-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.device-info-item .info-value {
+    font-size: 14px;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.device-info-item .info-value.model-name {
+    color: #00ff88;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.device-info-item .info-value.version {
+    color: #00d4ff;
+}
+
+.device-info-item .info-value.mono {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    letter-spacing: -0.5px;
+}
+
+.device-info-item .info-value.crc {
+    color: #ffd700;
+}
+
+/* KPI指标卡片 */
+.kpi-bar {
+    display: flex;
+    gap: 16px;
+    padding: 12px 20px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+.kpi-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+.kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    color: var(--text-color);
+}
+.kpi-value.accent { color: var(--accent); }
+.kpi-value.warning { color: #f59e0b; }
+.kpi-value.danger { color: #ef4444; }
+.kpi-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+    .cal-main-grid {
+        grid-template-columns: 1fr;
+    }
+    .device-info-bar {
+        flex-wrap: wrap;
+    }
+    .kpi-bar {
+        flex-wrap: wrap;
+    }
+    .kpi-card {
+        min-width: 120px;
+    }
+}
+</style>

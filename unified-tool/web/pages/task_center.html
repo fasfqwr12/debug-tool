@@ -1,0 +1,478 @@
+<!-- 任务中心 - 基于Git的任务流转 -->
+<div class="page-container task-center-page">
+    <!-- 顶部状态栏 -->
+    <div class="task-header">
+        <div class="header-left">
+            <h2>📋 任务中心</h2>
+            <span class="sync-status" id="sync-status">
+                <span class="dot"></span> 未同步
+            </span>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-outline" onclick="TaskCenterPage.configRepo()">
+                ⚙️ 配置仓库
+            </button>
+            <button class="btn btn-primary" onclick="TaskCenterPage.syncTasks()">
+                🔄 同步任务
+            </button>
+        </div>
+    </div>
+
+    <!-- 角色切换 -->
+    <div class="role-tabs">
+        <button class="role-tab active" data-role="tester" onclick="TaskCenterPage.switchRole('tester')">
+            🧪 我是测试
+        </button>
+        <button class="role-tab" data-role="developer" onclick="TaskCenterPage.switchRole('developer')">
+            💻 我是研发
+        </button>
+        <button class="role-tab" data-role="production" onclick="TaskCenterPage.switchRole('production')">
+            🏭 我是生产
+        </button>
+    </div>
+
+    <!-- 任务列表区域 -->
+    <div class="task-content">
+        <!-- 左侧：任务列表 -->
+        <div class="task-list-panel">
+            <div class="panel-header">
+                <span>待处理任务</span>
+                <span class="task-count" id="task-count">0</span>
+            </div>
+            <div class="task-filters">
+                <select id="filter-status" onchange="TaskCenterPage.filterTasks()">
+                    <option value="">全部状态</option>
+                    <option value="pending">待测试</option>
+                    <option value="testing">测试中</option>
+                    <option value="passed">已通过</option>
+                    <option value="failed">未通过</option>
+                </select>
+                <input type="text" id="filter-keyword" placeholder="搜索..." oninput="TaskCenterPage.filterTasks()">
+            </div>
+            <div class="task-list" id="task-list">
+                <div class="empty-hint">点击"同步任务"获取最新任务</div>
+            </div>
+        </div>
+
+        <!-- 右侧：任务详情 -->
+        <div class="task-detail-panel">
+            <div id="task-detail-empty" class="empty-hint">
+                选择任务查看详情
+            </div>
+            <div id="task-detail-content" style="display:none;">
+                <!-- 任务基本信息 -->
+                <div class="detail-section">
+                    <div class="section-title">📦 版本信息</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>项目</label>
+                            <span id="detail-project">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>版本</label>
+                            <span id="detail-version">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>固件CRC</label>
+                            <span id="detail-crc">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>分配人</label>
+                            <span id="detail-assigner">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>分配时间</label>
+                            <span id="detail-assign-time">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>状态</label>
+                            <span id="detail-status">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 发布说明 -->
+                <div class="detail-section">
+                    <div class="section-title">📝 发布说明</div>
+                    <div class="release-note" id="detail-release-note">--</div>
+                </div>
+
+                <!-- 测试要求 -->
+                <div class="detail-section">
+                    <div class="section-title">✅ 测试要求</div>
+                    <div class="test-requirements" id="detail-requirements">
+                        <div class="req-item">精度测试</div>
+                        <div class="req-item">滑台测试</div>
+                    </div>
+                </div>
+
+                <!-- 测试结果（如果有） -->
+                <div class="detail-section" id="result-section" style="display:none;">
+                    <div class="section-title">📊 测试结果</div>
+                    <div class="result-summary" id="detail-result">
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="detail-actions">
+                    <button class="btn btn-primary" id="btn-start-test" onclick="TaskCenterPage.startTest()">
+                        ▶️ 开始测试
+                    </button>
+                    <button class="btn btn-success" id="btn-submit-result" onclick="TaskCenterPage.submitResult()" style="display:none;">
+                        ✅ 提交结果
+                    </button>
+                    <button class="btn btn-outline" id="btn-download-firmware" onclick="TaskCenterPage.downloadFirmware()">
+                        📥 下载固件
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 仓库配置弹窗 -->
+<div class="modal-overlay" id="repo-config-modal" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span>⚙️ 配置任务仓库</span>
+            <button class="close-btn" onclick="TaskCenterPage.hideConfigModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Git仓库地址</label>
+                <input type="text" id="repo-url" placeholder="https://github.com/xxx/tasks.git">
+            </div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="repo-username" placeholder="Git用户名">
+            </div>
+            <div class="form-group">
+                <label>密码/Token</label>
+                <input type="password" id="repo-password" placeholder="密码或Personal Access Token">
+            </div>
+            <div class="form-group">
+                <label>本地目录</label>
+                <div class="input-with-btn">
+                    <input type="text" id="repo-local-path" placeholder="任务仓库本地路径" readonly>
+                    <button class="btn" onclick="TaskCenterPage.selectLocalPath()">选择</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="TaskCenterPage.hideConfigModal()">取消</button>
+            <button class="btn btn-primary" onclick="TaskCenterPage.saveRepoConfig()">保存并克隆</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.task-center-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px;
+    gap: 15px;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-left h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.sync-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.sync-status .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #888;
+}
+
+.sync-status.synced .dot { background: #00e676; }
+.sync-status.syncing .dot { background: #ffc107; animation: pulse 1s infinite; }
+.sync-status.error .dot { background: #ff5252; }
+.sync-status.warning .dot { background: #ff9800; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.header-right {
+    display: flex;
+    gap: 10px;
+}
+
+.role-tabs {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.role-tab {
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.role-tab:hover {
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.role-tab.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.task-content {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+}
+
+.task-list-panel {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 500;
+}
+
+.task-count {
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.task-filters {
+    display: flex;
+    gap: 10px;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.task-filters select,
+.task-filters input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.task-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.task-item {
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.task-item:hover {
+    border-color: var(--primary-color);
+}
+
+.task-item.active {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.task-item .task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.task-item .task-title {
+    font-weight: 500;
+}
+
+.task-item .task-source {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.task-item .task-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+}
+
+.task-item .task-status {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.task-status.pending { background: #ffc107; color: #000; }
+.task-status.testing { background: #2196f3; color: #fff; }
+.task-status.passed { background: #00e676; color: #000; }
+.task-status.failed { background: #ff5252; color: #fff; }
+
+.task-detail-panel {
+    flex: 1;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-item label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.info-item span {
+    font-weight: 500;
+}
+
+.release-note {
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    white-space: pre-wrap;
+    font-size: 13px;
+}
+
+.test-requirements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.req-item {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.result-summary {
+    padding: 15px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.detail-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.empty-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* 弹窗样式 */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.input-with-btn {
+    display: flex;
+    gap: 10px;
+}
+
+.input-with-btn input {
+    flex: 1;
+}
+</style>

@@ -1,0 +1,1603 @@
+{
+  "version": "1.0",
+  "frame_format": {
+    "header": "AA",
+    "direction": {
+      "send": "EE",
+      "recv": "FE"
+    },
+    "footer": "BB FF",
+    "checksum": "XOR"
+  },
+  "commands": {
+    "event_inject": {
+      "code": "D0",
+      "name": "事件注入(通用)",
+      "icon": "🎮",
+      "category": "ui_test",
+      "description": "统一的事件注入命令，替代 B3-C0 等分散命令。参数: evt_type(事件类型), action(动作ID), trigger(触发类型), param(扩展参数)",
+      "timeout": 500,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [
+        {
+          "name": "evt_type",
+          "type": "uint8",
+          "label": "事件类型",
+          "default": 0,
+          "enum": {
+            "0": "INPUT(按键)",
+            "1": "UI_SET(UI设置)",
+            "2": "SIM_MEASURE(模拟测量)",
+            "3": "QUERY(状态查询)",
+            "4": "SYSTEM(系统控制)"
+          }
+        },
+        {
+          "name": "action",
+          "type": "uint8",
+          "label": "动作ID",
+          "default": 1,
+          "description": "INPUT_ACTION_xxx 枚举值，参见 actions.json"
+        },
+        {
+          "name": "trigger",
+          "type": "uint8",
+          "label": "触发类型",
+          "default": 0,
+          "enum": {
+            "0": "SHORT(短按)",
+            "1": "LONG(长按)",
+            "2": "SUPER_LONG(超长按)",
+            "4": "RELEASE(释放)"
+          }
+        },
+        {
+          "name": "param",
+          "type": "uint8",
+          "label": "扩展参数",
+          "default": 0
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "evt_type",
+          "type": "string",
+          "label": "事件类型"
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "label": "动作ID"
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "label": "单位"
+        },
+        {
+          "name": "step",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "example_response": "d0.s;t:0;a:1;e:0;m:SGL;u:m;s:0;l:0;d0.e"
+    },
+    "laser_on": {
+      "code": "F0",
+      "name": "开启激光",
+      "icon": "🟢",
+      "category": "control",
+      "timeout": 500,
+      "retry": 3,
+      "send_params": [
+        {
+          "name": "model",
+          "type": "uint8",
+          "label": "型号",
+          "enum": {
+            "0": "mini-30h",
+            "1": "低价两键",
+            "2": "双头"
+          }
+        },
+        {
+          "name": "direction",
+          "type": "uint8",
+          "label": "方向",
+          "enum": {
+            "0": "前头激光",
+            "1": "后头激光"
+          }
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "model",
+          "type": "uint8"
+        },
+        {
+          "name": "direction",
+          "type": "uint8"
+        }
+      ]
+    },
+    "laser_off": {
+      "code": "F6",
+      "name": "关闭激光",
+      "icon": "🔴",
+      "category": "control",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "calibrate_p1": {
+      "code": "F1",
+      "name": "标定位置1",
+      "icon": "🎯",
+      "category": "calibration",
+      "timeout": 50000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "distance",
+          "type": "uint32",
+          "label": "距离(mm)",
+          "default": 5000
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "calibrate_p2": {
+      "code": "F2",
+      "name": "标定位置2",
+      "icon": "🎯",
+      "category": "calibration",
+      "timeout": 3000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "distance",
+          "type": "uint32",
+          "label": "距离(mm)",
+          "default": 20000
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "calibrate_p3": {
+      "code": "F3",
+      "name": "标定位置3",
+      "icon": "🎯",
+      "category": "calibration",
+      "timeout": 3000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "distance",
+          "type": "uint32",
+          "label": "距离(mm)",
+          "default": 25000
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "measure": {
+      "code": "FB",
+      "name": "测量距离",
+      "icon": "📏",
+      "category": "measure",
+      "timeout": 2000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "detail_level",
+          "type": "uint8",
+          "label": "详情级别",
+          "default": 1
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "distance",
+          "type": "uint32_be",
+          "unit": "mm"
+        },
+        {
+          "name": "amplitude",
+          "type": "uint32_be",
+          "label": "幅值"
+        },
+        {
+          "name": "range_mm",
+          "type": "uint16_be",
+          "label": "极差",
+          "unit": "mm"
+        },
+        {
+          "name": "quality_x1000",
+          "type": "uint16_be",
+          "label": "质量"
+        },
+        {
+          "name": "measure_time_ms",
+          "type": "uint16_be",
+          "label": "固件耗时",
+          "unit": "ms"
+        },
+        {
+          "name": "apd_voltage",
+          "type": "uint16_be",
+          "label": "APD"
+        },
+        {
+          "name": "good_shots",
+          "type": "uint8",
+          "label": "有效shots"
+        },
+        {
+          "name": "total_shots",
+          "type": "uint8",
+          "label": "总shots"
+        },
+        {
+          "name": "retry_count",
+          "type": "uint8",
+          "label": "重试次数"
+        },
+        {
+          "name": "power_mode",
+          "type": "uint8",
+          "label": "功率模式"
+        }
+      ]
+    },
+    "laser_blink": {
+      "code": "FA",
+      "name": "激光闪烁",
+      "icon": "💡",
+      "category": "control",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        }
+      ]
+    },
+    "get_info": {
+      "code": "F7",
+      "name": "获取设备信息",
+      "icon": "ℹ️",
+      "category": "info",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "device_id",
+          "type": "uint32"
+        },
+        {
+          "name": "hw_version",
+          "type": "uint16"
+        },
+        {
+          "name": "sw_version",
+          "type": "uint16"
+        },
+        {
+          "name": "bl_version",
+          "type": "uint16"
+        },
+        {
+          "name": "reserved",
+          "type": "uint16"
+        },
+        {
+          "name": "model",
+          "type": "string16"
+        },
+        {
+          "name": "flash_size",
+          "type": "uint32"
+        },
+        {
+          "name": "app_start",
+          "type": "uint32"
+        },
+        {
+          "name": "app_max_size",
+          "type": "uint32"
+        },
+        {
+          "name": "app_actual_size",
+          "type": "uint32"
+        },
+        {
+          "name": "app_crc",
+          "type": "uint32"
+        }
+      ]
+    },
+    "heartbeat": {
+      "code": "F8",
+      "name": "心跳查询",
+      "icon": "💓",
+      "category": "info",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        }
+      ]
+    },
+    "auto_shutdown": {
+      "code": "F9",
+      "name": "自动关机",
+      "icon": "⏻",
+      "category": "control",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "delay",
+          "type": "uint16_be",
+          "default": 10,
+          "unit": "秒"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "delay_set",
+          "type": "uint16_be"
+        }
+      ]
+    },
+    "diag_status": {
+      "code": "E0",
+      "name": "诊断状态",
+      "icon": "🔍",
+      "category": "diagnostic",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8"
+        },
+        {
+          "name": "sys_err",
+          "type": "uint16_be",
+          "label": "系统错误码"
+        },
+        {
+          "name": "phase_cal",
+          "type": "uint8",
+          "label": "相位校准状态",
+          "enum": {
+            "0": "未校准",
+            "1": "部分",
+            "2": "完成"
+          }
+        },
+        {
+          "name": "speed_cal",
+          "type": "uint8",
+          "label": "光速校准",
+          "enum": {
+            "0": "未校准",
+            "4": "已校准"
+          }
+        },
+        {
+          "name": "hw_status",
+          "type": "uint8",
+          "label": "硬件状态",
+          "bits": {
+            "0": {
+              "name": "MC3416",
+              "fix": "检查加速度计焊接"
+            },
+            "1": {
+              "name": "PLL",
+              "fix": "检查晶振和PLL电路"
+            }
+          },
+          "model_overrides": {
+            "mini-30h": {
+              "0": {
+                "fix": "检查U3(MC3416)焊接"
+              }
+            },
+            "low-cost": {
+              "0": {
+                "name": "加速度计",
+                "fix": "低价版无加速度计，忽略"
+              }
+            }
+          }
+        },
+        {
+          "name": "apdwork_x100",
+          "type": "uint16_be",
+          "label": "apdwork*100"
+        },
+        {
+          "name": "speed_num",
+          "type": "int8",
+          "label": "校准次数"
+        }
+      ]
+    },
+    "diag_adc": {
+      "code": "E1",
+      "name": "ADC诊断",
+      "icon": "📊",
+      "category": "diagnostic",
+      "timeout": 1000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "channel",
+          "type": "uint8",
+          "default": 0,
+          "label": "通道(0-3)"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8",
+          "enum": {
+            "0": "正常",
+            "1": "ADC全0",
+            "2": "ADC卡死"
+          },
+          "fix": {
+            "1": "检查接收电路/APD焊接",
+            "2": "检查触发引脚焊接"
+          },
+          "model_overrides": {
+            "dual-head": {
+              "1": {
+                "text": "ADC全0",
+                "fix": "检查CH1/CH2接收电路"
+              }
+            }
+          }
+        },
+        {
+          "name": "adc_min",
+          "type": "uint16_be"
+        },
+        {
+          "name": "adc_max",
+          "type": "uint16_be"
+        }
+      ]
+    },
+    "diag_apd": {
+      "code": "E2",
+      "name": "APD诊断",
+      "icon": "⚡",
+      "category": "diagnostic",
+      "timeout": 2000,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8",
+          "enum": {
+            "0": "正常",
+            "1": "APD过低",
+            "2": "APD过高"
+          },
+          "fix": {
+            "1": "检查APD供电和偏置电路",
+            "2": "检查升压电路反馈"
+          },
+          "model_overrides": {
+            "mini-30h": {
+              "1": {
+                "fix": "检查3.3V供电是否稳定"
+              },
+              "2": {
+                "fix": "检查R12电阻是否虚焊"
+              }
+            },
+            "low-cost": {
+              "1": {
+                "fix": "检查12V升压是否正常"
+              }
+            }
+          }
+        },
+        {
+          "name": "apd_vol",
+          "type": "uint16_be",
+          "label": "APD电压"
+        },
+        {
+          "name": "best_apd",
+          "type": "uint16_be",
+          "label": "最佳APD"
+        }
+      ]
+    },
+    "diag_phase": {
+      "code": "E3",
+      "name": "相位稳定性",
+      "icon": "📶",
+      "category": "diagnostic",
+      "timeout": 7000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "channel",
+          "type": "uint8",
+          "default": 0,
+          "label": "通道(0-3)"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8",
+          "enum": {
+            "0": "正常",
+            "1": "相位不稳",
+            "2": "幅值低",
+            "3": "相位不稳+幅值低"
+          },
+          "fix": {
+            "1": "检查激光器/光路稳定性",
+            "2": "检查激光功率/APD增益",
+            "3": "检查整体光路系统"
+          },
+          "model_overrides": {
+            "dual-head": {
+              "1": {
+                "fix": "检查前后激光器同步"
+              },
+              "2": {
+                "fix": "检查分光镜对准"
+              }
+            }
+          }
+        },
+        {
+          "name": "phase_x10",
+          "type": "int16_be",
+          "label": "相位*10"
+        },
+        {
+          "name": "amplitude",
+          "type": "uint16_be",
+          "label": "幅值"
+        },
+        {
+          "name": "shake_x10",
+          "type": "uint16_be",
+          "label": "shake*10"
+        }
+      ]
+    },
+    "diag_phase_cal": {
+      "code": "E4",
+      "name": "相位校准数据",
+      "icon": "📋",
+      "category": "diagnostic",
+      "timeout": 2000,
+      "retry": 1,
+      "send_params": [
+        {
+          "name": "index",
+          "type": "uint8",
+          "default": 0,
+          "label": "索引(0-4)"
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8",
+          "enum": {
+            "0": "有效",
+            "1": "相位超范围",
+            "2": "APD无效",
+            "255": "未校准"
+          },
+          "fix": {
+            "1": "重新执行标定",
+            "2": "检查APD电路后重新标定",
+            "255": "执行三点标定流程"
+          }
+        },
+        {
+          "name": "phase_160M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "phase_134M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "phase_159M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "phase_129M_x10",
+          "type": "int16_be"
+        },
+        {
+          "name": "apdvol",
+          "type": "uint16_be"
+        },
+        {
+          "name": "mode_flag",
+          "type": "uint8"
+        }
+      ]
+    },
+    "diag_coeff_speed": {
+      "code": "E5",
+      "name": "系数+光速",
+      "icon": "⚡",
+      "category": "diagnostic",
+      "timeout": 6000,
+      "retry": 3,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "uint8",
+          "enum": {
+            "0": "全部有效",
+            "1": "系数异常",
+            "2": "光速未校准",
+            "3": "距离无效"
+          },
+          "fix": {
+            "1": "检查Flash数据或重新校准",
+            "2": "执行光速校准流程",
+            "3": "检查校准位置数据"
+          }
+        },
+        {
+          "name": "apdwork_x1000",
+          "type": "uint16_be",
+          "label": "apdwork*1000"
+        },
+        {
+          "name": "apd2work_x1000",
+          "type": "uint16_be",
+          "label": "apd2work*1000"
+        },
+        {
+          "name": "apdcoeff_x1000",
+          "type": "int16_be",
+          "label": "apdcoeff*1000"
+        },
+        {
+          "name": "speed_num",
+          "type": "int8",
+          "label": "校准次数(2=全)"
+        },
+        {
+          "name": "actual_dis1",
+          "type": "int32_be",
+          "label": "校准位置1(mm)"
+        },
+        {
+          "name": "actual_dis2",
+          "type": "int32_be",
+          "label": "校准位置2(mm)"
+        }
+      ]
+    },
+    "ui_k1_short": {
+      "code": "B3",
+      "name": "K1短按(测量)",
+      "icon": "📏",
+      "category": "ui_test",
+      "description": "中间按键短按 - 单次测量/开激光。响应格式: b3.s...b3.e 文本帧",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码",
+          "enum": {
+            "0": "成功"
+          }
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态",
+          "enum": {
+            "IDLE": "空闲",
+            "LASER_ON": "激光开",
+            "RESULT": "结果",
+            "ERROR": "错误"
+          }
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式",
+          "enum": {
+            "SINGLE": "单次",
+            "AREA": "面积",
+            "VOLUME": "体积",
+            "CONTINUOUS": "连续"
+          }
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准",
+          "enum": {
+            "FRONT": "前基准",
+            "BACK": "后基准"
+          }
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光",
+          "enum": {
+            "ON": "开",
+            "OFF": "关"
+          }
+        }
+      ],
+      "response_type": "text",
+      "example_response": "b3.s;error: 0;state: LASER_ON;mode: SINGLE;base: BACK;runstep: 1;laser: ON;b3.e"
+    },
+    "ui_k1_long": {
+      "code": "B4",
+      "name": "K1长按(连续)",
+      "icon": "🔁",
+      "category": "ui_test",
+      "description": "中间按键长按 - 连续测量模式。响应格式: b4.s...b4.e 文本帧",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "b4.s;error: 0;state: LASER_ON;mode: CONTINUOUS;base: BACK;runstep: 1;laser: ON;b4.e"
+    },
+    "ui_k2_short": {
+      "code": "B5",
+      "name": "K2短按(模式)",
+      "icon": "🔄",
+      "category": "ui_test",
+      "description": "左边按键短按 - 切换测量模式(单次→面积→体积→勾股→连续)。响应格式: b5.s...b5.e",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "b5.s;error: 0;state: IDLE;mode: AREA;base: BACK;runstep: 0;laser: OFF;b5.e"
+    },
+    "ui_k2_long": {
+      "code": "B6",
+      "name": "K2长按(基准)",
+      "icon": "📐",
+      "category": "ui_test",
+      "description": "左边按键长按 - 切换前/后基准。响应格式: b6.s...b6.e",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "b6.s;error: 0;state: IDLE;mode: SINGLE;base: FRONT;runstep: 0;laser: OFF;b6.e"
+    },
+    "ui_k3_short": {
+      "code": "B7",
+      "name": "K3短按(清除)",
+      "icon": "🗑️",
+      "category": "ui_test",
+      "description": "右边按键短按 - 清除/返回。响应格式: b7.s...b7.e",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "b7.s;error: 0;state: IDLE;mode: SINGLE;base: BACK;runstep: 0;laser: OFF;b7.e"
+    },
+    "ui_k3_long": {
+      "code": "B8",
+      "name": "K3长按(背光)",
+      "icon": "💡",
+      "category": "ui_test",
+      "description": "右边按键长按 - 背光开关。响应格式: b8.s...b8.e",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "b8.s;error: 0;state: IDLE;mode: SINGLE;base: BACK;runstep: 0;laser: OFF;b8.e"
+    },
+    "ui_status_text": {
+      "code": "B9",
+      "name": "获取UI状态(文本)",
+      "icon": "📝",
+      "category": "ui_test",
+      "description": "获取完整UI状态，文本格式。响应格式: b9.s...b9.e",
+      "timeout": 500,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "State",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "Mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "Base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "Laser",
+          "type": "string",
+          "label": "激光"
+        },
+        {
+          "name": "Backlight",
+          "type": "string",
+          "label": "背光"
+        },
+        {
+          "name": "Beep",
+          "type": "string",
+          "label": "蜂鸣器"
+        },
+        {
+          "name": "Idle",
+          "type": "string",
+          "label": "空闲秒数"
+        },
+        {
+          "name": "Max",
+          "type": "string",
+          "label": "最大值"
+        },
+        {
+          "name": "Min",
+          "type": "string",
+          "label": "最小值"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "运行步骤"
+        },
+        {
+          "name": "last_step",
+          "type": "string",
+          "label": "上次步骤"
+        },
+        {
+          "name": "line1",
+          "type": "string",
+          "label": "行1"
+        },
+        {
+          "name": "line2",
+          "type": "string",
+          "label": "行2"
+        },
+        {
+          "name": "line3",
+          "type": "string",
+          "label": "行3"
+        },
+        {
+          "name": "line4",
+          "type": "string",
+          "label": "行4"
+        }
+      ],
+      "example_response": "b9.s;State: IDLE;Mode: SINGLE;Base: BACK;Laser: OFF;Backlight: ON;Beep: ON;Idle: 0;Max: 0.000;Min: 0.000;runstep: 0;last_step: 0;line1: 0.000;line2: 0.000;line3: 0.000;line4: 0.000;b9.e"
+    },
+    "ui_combo_beep": {
+      "code": "BA",
+      "name": "K1+K2(蜂鸣器)",
+      "icon": "🔔",
+      "category": "ui_test",
+      "description": "组合键 - 切换蜂鸣器开关。响应格式: ba.s...ba.e",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "ba.s;error: 0;state: IDLE;mode: SINGLE;base: BACK;runstep: 0;laser: OFF;ba.e"
+    },
+    "ui_k3_3s": {
+      "code": "BB",
+      "name": "K3超长按(关机)",
+      "icon": "⏻",
+      "category": "ui_test",
+      "description": "右边按键超长按3秒 - 关机。响应格式: bb.s...bb.e",
+      "timeout": 300,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "bb.s;error: 0;state: IDLE;mode: SINGLE;base: BACK;runstep: 0;laser: OFF;bb.e"
+    },
+    "ui_lcd_dump": {
+      "code": "BC",
+      "name": "读取LCD缓冲区",
+      "icon": "🖥️",
+      "category": "ui_test",
+      "description": "读取LCD缓冲区(54字节HEX)。响应格式: bc.s...bc.e",
+      "timeout": 500,
+      "retry": 1,
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "lcd_hex",
+          "type": "string",
+          "label": "LCD缓冲区(108字符HEX)"
+        }
+      ],
+      "response_type": "text",
+      "example_response": "bc.s;error: 0;lcd_hex: 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;bc.e"
+    },
+    "ui_sim_measure_ok": {
+      "code": "BD",
+      "name": "模拟测距成功",
+      "icon": "✅",
+      "category": "ui_test",
+      "description": "模拟测距成功，用于UI测试。参数: distance(mm), signal(1-4)。响应格式: bd.s...bd.e",
+      "timeout": 300,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [
+        {
+          "name": "distance",
+          "type": "uint16_be",
+          "label": "距离(mm)",
+          "default": 5000
+        },
+        {
+          "name": "signal",
+          "type": "uint8",
+          "label": "信号强度",
+          "default": 3
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "dist",
+          "type": "string",
+          "label": "测量距离(m)"
+        },
+        {
+          "name": "signal",
+          "type": "string",
+          "label": "信号强度"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "步骤"
+        },
+        {
+          "name": "line4",
+          "type": "string",
+          "label": "显示值(含基准偏移)"
+        }
+      ],
+      "example_response": "bd.s;error: 0;dist: 5.000;signal: 3;state: RESULT;mode: SINGLE;runstep: 2;line4: 5.068;bd.e"
+    },
+    "ui_sim_measure_err": {
+      "code": "BE",
+      "name": "模拟测距失败",
+      "icon": "❌",
+      "category": "ui_test",
+      "description": "模拟测距失败，用于UI测试。参数: error(1=超时,2=信号弱,3=太近,4=太远)。响应格式: be.s...be.e",
+      "timeout": 300,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [
+        {
+          "name": "error",
+          "type": "uint8",
+          "label": "错误码",
+          "default": 1,
+          "enum": {
+            "1": "超时",
+            "2": "信号弱",
+            "3": "太近",
+            "4": "太远"
+          }
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码",
+          "enum": {
+            "1": "超时",
+            "2": "信号弱",
+            "3": "太近",
+            "4": "太远"
+          }
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        }
+      ],
+      "example_response": "be.s;error: 1;state: ERROR;be.e"
+    },
+    "ui_status_json": {
+      "code": "BF",
+      "name": "获取UI状态(完整)",
+      "icon": "📊",
+      "category": "ui_test",
+      "description": "获取完整UI状态，包含所有字段。响应格式: bf.s...bf.e",
+      "timeout": 500,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "label": "基准"
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "label": "单位"
+        },
+        {
+          "name": "laser",
+          "type": "string",
+          "label": "激光"
+        },
+        {
+          "name": "backlight",
+          "type": "string",
+          "label": "背光"
+        },
+        {
+          "name": "beep",
+          "type": "string",
+          "label": "蜂鸣器"
+        },
+        {
+          "name": "idle",
+          "type": "string",
+          "label": "空闲秒数"
+        },
+        {
+          "name": "max",
+          "type": "string",
+          "label": "最大值"
+        },
+        {
+          "name": "min",
+          "type": "string",
+          "label": "最小值"
+        },
+        {
+          "name": "runstep",
+          "type": "string",
+          "label": "运行步骤"
+        },
+        {
+          "name": "last_step",
+          "type": "string",
+          "label": "上次步骤"
+        },
+        {
+          "name": "line1",
+          "type": "string",
+          "label": "行1"
+        },
+        {
+          "name": "line2",
+          "type": "string",
+          "label": "行2"
+        },
+        {
+          "name": "line3",
+          "type": "string",
+          "label": "行3"
+        },
+        {
+          "name": "line4",
+          "type": "string",
+          "label": "行4"
+        }
+      ],
+      "example_response": "bf.s;state: IDLE;mode: SINGLE;base: BACK;unit: m;laser: OFF;backlight: ON;beep: ON;idle: 0;max: 0.000;min: 0.000;runstep: 0;last_step: 0;line1: 0.000;line2: 0.000;line3: 0.000;line4: 0.000;bf.e"
+    },
+    "ui_set_unit": {
+      "code": "C0",
+      "name": "设置单位",
+      "icon": "📐",
+      "category": "ui_test",
+      "description": "设置显示单位。参数: unit(0=m, 1=ft, 2=in)。响应格式: c0.s...c0.e",
+      "timeout": 300,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [
+        {
+          "name": "unit",
+          "type": "uint8",
+          "label": "单位",
+          "default": 0,
+          "enum": {
+            "0": "m",
+            "1": "ft",
+            "2": "in"
+          }
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "label": "单位",
+          "enum": {
+            "m": "米",
+            "ft": "英尺",
+            "in": "英寸"
+          }
+        }
+      ],
+      "example_response": "c0.s;error: 0;unit: m;c0.e"
+    },
+    "ui_k1_up": {
+      "code": "B1",
+      "name": "K1释放(确认单位)",
+      "icon": "✋",
+      "category": "ui_test",
+      "description": "仿真K1按键释放，用于开机选单位流程完成。响应格式: b1.s...b1.e",
+      "timeout": 300,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        }
+      ],
+      "example_response": "b1.s;error: 0;b1.e"
+    },
+    "ui_k3_up": {
+      "code": "C9",
+      "name": "K3释放(备用)",
+      "icon": "✋",
+      "category": "ui_test",
+      "description": "仿真K3按键释放(备用)。响应格式: c9.s...c9.e",
+      "timeout": 300,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "label": "状态"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "label": "单位"
+        }
+      ],
+      "example_response": "c9.s;error: 0;state: IDLE;mode: SINGLE;base: BACK;runstep: 0;laser: OFF;c9.e"
+    },
+    "seg_test": {
+      "code": "C8",
+      "name": "段码测试",
+      "icon": "💡",
+      "category": "ui_test",
+      "description": "点亮指定SEG:COM的LCD段码，用于验证段码映射。mode: 0=清屏后点亮, 1=叠加, 2=熄灭, 0xFF=全显",
+      "timeout": 300,
+      "retry": 1,
+      "response_type": "text",
+      "send_params": [
+        {
+          "name": "seg",
+          "type": "uint8",
+          "label": "SEG索引",
+          "default": 0,
+          "min": 0,
+          "max": 53
+        },
+        {
+          "name": "com",
+          "type": "uint8",
+          "label": "COM索引",
+          "default": 0,
+          "min": 0,
+          "max": 7
+        },
+        {
+          "name": "mode",
+          "type": "uint8",
+          "label": "模式",
+          "default": 0,
+          "enum": {
+            "0": "清屏后点亮",
+            "1": "叠加点亮",
+            "2": "熄灭",
+            "255": "全显"
+          }
+        }
+      ],
+      "recv_params": [
+        {
+          "name": "error",
+          "type": "string",
+          "label": "错误码"
+        },
+        {
+          "name": "seg",
+          "type": "string",
+          "label": "SEG"
+        },
+        {
+          "name": "com",
+          "type": "string",
+          "label": "COM"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "label": "模式"
+        }
+      ],
+      "example_response": "c8.s;error: 0;seg: 17;com: 3;mode: 0;bit: 0x10;c8.e"
+    }
+  }
+}

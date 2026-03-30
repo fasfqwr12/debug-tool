@@ -1,0 +1,606 @@
+<!-- 状态机可视化编辑器 V2 - 画布优先设计 -->
+<div class="sme2-container">
+    <!-- 顶部工具栏 -->
+    <div class="sme2-toolbar">
+        <div class="sme2-toolbar-left">
+            <h1>🔄 状态机编辑器</h1>
+            <div id="sme2-device-selector" class="device-selector-container"></div>
+            <select id="sme2-machine-select">
+                <option value="">-- 选择状态机 --</option>
+            </select>
+            <button onclick="SME2.newMachine()" class="sme2-btn">📄 新建</button>
+            <button onclick="SME2.saveMachine()" class="sme2-btn sme2-btn-primary">💾 保存</button>
+        </div>
+        <div class="sme2-toolbar-right">
+            <button onclick="SME2.generateCode('c')" class="sme2-btn">⚙️ 生成C代码</button>
+            <button onclick="SME2.generateCode('test')" class="sme2-btn">🧪 生成测试</button>
+            <span class="sme2-divider"></span>
+            <button onclick="SME2.showHelp()" class="sme2-btn">❓ 帮助</button>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="sme2-main">
+        <!-- 左侧工具面板 -->
+        <div class="sme2-tools-panel">
+            <div class="sme2-tool-group">
+                <div class="sme2-tool-title">🖱️ 工具</div>
+                <button class="sme2-tool-btn active" data-tool="pointer" onclick="SME2.setTool('pointer')" title="选择/移动">
+                    <span>↖</span>
+                </button>
+                <button class="sme2-tool-btn" data-tool="hand" onclick="SME2.setTool('hand')" title="平移画布">
+                    <span>✋</span>
+                </button>
+                <button class="sme2-tool-btn" data-tool="state" onclick="SME2.setTool('state')" title="添加状态">
+                    <span>⬜</span>
+                </button>
+                <button class="sme2-tool-btn" data-tool="transition" onclick="SME2.setTool('transition')" title="添加转移">
+                    <span>→</span>
+                </button>
+            </div>
+            <div class="sme2-tool-group">
+                <div class="sme2-tool-title">🔍 视图</div>
+                <button class="sme2-tool-btn" onclick="SME2.zoomIn()" title="放大">+</button>
+                <button class="sme2-tool-btn" onclick="SME2.zoomOut()" title="缩小">−</button>
+                <button class="sme2-tool-btn" onclick="SME2.fitView()" title="适应视图">⊡</button>
+                <button class="sme2-tool-btn" onclick="SME2.resetView()" title="重置视图">⟲</button>
+            </div>
+            <div class="sme2-tool-group">
+                <div class="sme2-tool-title">📋 快捷</div>
+                <button class="sme2-tool-btn" onclick="SME2.duplicateSelected()" title="复制选中">📋</button>
+                <button class="sme2-tool-btn" onclick="SME2.deleteSelected()" title="删除选中">🗑️</button>
+                <button class="sme2-tool-btn" onclick="SME2.autoLayout()" title="自动布局">📐</button>
+            </div>
+        </div>
+
+        <!-- 中间画布区域 -->
+        <div class="sme2-canvas-container" id="sme2-canvas-container">
+            <canvas id="sme2-canvas"></canvas>
+            <!-- 缩放指示器 -->
+            <div class="sme2-zoom-indicator" id="sme2-zoom-indicator">100%</div>
+            <!-- 快捷添加菜单 -->
+            <div class="sme2-quick-menu" id="sme2-quick-menu" style="display:none;">
+                <div class="sme2-quick-menu-title">添加状态</div>
+                <input type="text" id="sme2-quick-state-id" placeholder="状态ID (如 IDLE)">
+                <input type="text" id="sme2-quick-state-label" placeholder="状态名称 (如 待机)">
+                <div class="sme2-quick-menu-actions">
+                    <button onclick="SME2.confirmQuickAdd()">✓ 添加</button>
+                    <button onclick="SME2.hideQuickMenu()">✕ 取消</button>
+                </div>
+            </div>
+            <!-- 空状态提示 -->
+            <div class="sme2-empty-hint" id="sme2-empty-hint">
+                <div class="sme2-empty-icon">🎨</div>
+                <div class="sme2-empty-title">开始设计状态机</div>
+                <div class="sme2-empty-desc">双击画布添加状态，或从左侧工具栏选择工具</div>
+                <button onclick="SME2.quickStart()" class="sme2-btn sme2-btn-primary">🚀 加载示例</button>
+            </div>
+        </div>
+
+        <!-- 右侧属性面板 -->
+        <div class="sme2-property-panel" id="sme2-property-panel">
+            <!-- 无选中时显示概览 -->
+            <div class="sme2-panel-section" id="sme2-overview-panel">
+                <div class="sme2-panel-title">📊 状态机概览</div>
+                <div class="sme2-overview-stats">
+                    <div class="sme2-stat">
+                        <span class="sme2-stat-value" id="sme2-stat-states">0</span>
+                        <span class="sme2-stat-label">状态</span>
+                    </div>
+                    <div class="sme2-stat">
+                        <span class="sme2-stat-value" id="sme2-stat-transitions">0</span>
+                        <span class="sme2-stat-label">转移</span>
+                    </div>
+                    <div class="sme2-stat">
+                        <span class="sme2-stat-value" id="sme2-stat-events">0</span>
+                        <span class="sme2-stat-label">事件</span>
+                    </div>
+                </div>
+                <div class="sme2-mini-preview">
+                    <canvas id="sme2-mini-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 状态属性编辑 -->
+            <div class="sme2-panel-section" id="sme2-state-panel" style="display:none;">
+                <div class="sme2-panel-title">
+                    <span>📦 状态属性</span>
+                    <button class="sme2-close-btn" onclick="SME2.deselectAll()">✕</button>
+                </div>
+                <div class="sme2-form-group">
+                    <label>状态ID</label>
+                    <input type="text" id="sme2-state-id" disabled>
+                </div>
+                <div class="sme2-form-group">
+                    <label>名称</label>
+                    <input type="text" id="sme2-state-label" onchange="SME2.updateStateProperty('label', this.value)">
+                </div>
+                <div class="sme2-form-group">
+                    <label>类型</label>
+                    <select id="sme2-state-type" onchange="SME2.updateStateProperty('type', this.value)">
+                        <option value="atomic">原子状态</option>
+                        <option value="compound">复合状态</option>
+                    </select>
+                </div>
+                <div class="sme2-form-group">
+                    <label>描述</label>
+                    <textarea id="sme2-state-desc" rows="2" onchange="SME2.updateStateProperty('description', this.value)"></textarea>
+                </div>
+                
+                <!-- LCD显示设置 -->
+                <div class="sme2-panel-subtitle">📺 LCD显示</div>
+                <div id="sme2-lcd-components"></div>
+                
+                <!-- LCD预览 -->
+                <div class="sme2-lcd-preview">
+                    <canvas id="sme2-lcd-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 转移属性编辑 -->
+            <div class="sme2-panel-section" id="sme2-transition-panel" style="display:none;">
+                <div class="sme2-panel-title">
+                    <span>🔀 转移属性</span>
+                    <button class="sme2-close-btn" onclick="SME2.deselectAll()">✕</button>
+                </div>
+                <div class="sme2-form-group">
+                    <label>从状态</label>
+                    <input type="text" id="sme2-trans-from" disabled>
+                </div>
+                <div class="sme2-form-group">
+                    <label>到状态</label>
+                    <input type="text" id="sme2-trans-to" disabled>
+                </div>
+                <div class="sme2-form-group">
+                    <label>触发事件</label>
+                    <select id="sme2-trans-event" onchange="SME2.updateTransitionProperty('event', this.value)"></select>
+                </div>
+                <div class="sme2-form-group">
+                    <label>执行动作</label>
+                    <div id="sme2-trans-actions" class="sme2-checkbox-list"></div>
+                </div>
+                <div class="sme2-form-group">
+                    <label>条件</label>
+                    <input type="text" id="sme2-trans-guard" placeholder="如: batteryLevel > 20" onchange="SME2.updateTransitionProperty('guard', this.value)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部状态栏 -->
+    <div class="sme2-statusbar">
+        <span id="sme2-status-tool">工具: 选择</span>
+        <span id="sme2-status-pos">X: 0, Y: 0</span>
+        <span id="sme2-status-selection">未选中</span>
+        <span class="sme2-statusbar-right">
+            <span id="sme2-status-device">设备: -</span>
+            <span id="sme2-status-modified"></span>
+        </span>
+    </div>
+</div>
+
+<style>
+/* ==================== 基础变量 ==================== */
+.sme2-container {
+    --sme2-toolbar-h: 48px;
+    --sme2-statusbar-h: 24px;
+    --sme2-tools-w: 48px;
+    --sme2-panel-w: 320px;
+    --sme2-node-w: 140px;
+    --sme2-node-h: 60px;
+    --sme2-node-radius: 8px;
+    
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--topbar-h, 32px) - 40px);
+    background: var(--bg-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ==================== 顶部工具栏 ==================== */
+.sme2-toolbar {
+    height: var(--sme2-toolbar-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.sme2-toolbar-left, .sme2-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sme2-toolbar h1 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+}
+.sme2-btn {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.sme2-btn:hover {
+    border-color: var(--accent-color);
+    background: var(--bg-secondary);
+}
+.sme2-btn-primary {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+.sme2-btn-primary:hover {
+    background: #1a9f4a;
+}
+.sme2-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+}
+#sme2-machine-select {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+/* ==================== 主内容区 ==================== */
+.sme2-main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ==================== 左侧工具面板 ==================== */
+.sme2-tools-panel {
+    width: var(--sme2-tools-w);
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 4px;
+    gap: 16px;
+}
+.sme2-tool-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.sme2-tool-title {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 4px;
+}
+.sme2-tool-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.sme2-tool-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+.sme2-tool-btn.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+/* ==================== 中间画布区域 ==================== */
+.sme2-canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #1a1a1a;
+    background-image: 
+        radial-gradient(circle, #333 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+#sme2-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: default;
+}
+.sme2-zoom-indicator {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    font-size: 11px;
+    border-radius: 4px;
+}
+.sme2-empty-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text-muted);
+}
+.sme2-empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+.sme2-empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+.sme2-empty-desc {
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* 快捷添加菜单 */
+.sme2-quick-menu {
+    position: absolute;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 100;
+    width: 200px;
+}
+.sme2-quick-menu-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--accent-color);
+}
+.sme2-quick-menu input {
+    width: 100%;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 12px;
+}
+.sme2-quick-menu-actions {
+    display: flex;
+    gap: 8px;
+}
+.sme2-quick-menu-actions button {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 11px;
+    cursor: pointer;
+}
+.sme2-quick-menu-actions button:first-child {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+/* ==================== 右侧属性面板 ==================== */
+.sme2-property-panel {
+    width: var(--sme2-panel-w);
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+}
+.sme2-panel-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+.sme2-panel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--accent-color);
+}
+.sme2-panel-subtitle {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 16px 0 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+.sme2-close-btn {
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+}
+.sme2-close-btn:hover {
+    color: var(--text-primary);
+}
+
+/* 概览统计 */
+.sme2-overview-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.sme2-stat {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+.sme2-stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+.sme2-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.sme2-mini-preview {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 8px;
+    height: 150px;
+}
+.sme2-mini-preview canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* 表单组 */
+.sme2-form-group {
+    margin-bottom: 12px;
+}
+.sme2-form-group label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.sme2-form-group input,
+.sme2-form-group select,
+.sme2-form-group textarea {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 12px;
+}
+.sme2-form-group input:focus,
+.sme2-form-group select:focus,
+.sme2-form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+.sme2-form-group input:disabled {
+    opacity: 0.6;
+}
+
+/* LCD组件编辑 */
+.sme2-lcd-component {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+.sme2-lcd-component-label {
+    min-width: 70px;
+    font-size: 11px;
+    font-weight: 500;
+}
+.sme2-lcd-component-input {
+    flex: 1;
+}
+.sme2-lcd-component-input input,
+.sme2-lcd-component-input select {
+    width: 100%;
+    padding: 4px 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 11px;
+}
+.sme2-radio-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.sme2-radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+/* LCD预览 */
+.sme2-lcd-preview {
+    margin-top: 12px;
+    background: #d0d0c8;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+}
+.sme2-lcd-preview canvas {
+    max-width: 100%;
+    max-height: 120px;
+}
+
+/* 复选框列表 */
+.sme2-checkbox-list {
+    max-height: 120px;
+    overflow-y: auto;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    padding: 8px;
+}
+.sme2-checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+/* ==================== 底部状态栏 ==================== */
+.sme2-statusbar {
+    height: var(--sme2-statusbar-h);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-muted);
+    gap: 16px;
+}
+.sme2-statusbar-right {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+}
+</style>
+
+</div>

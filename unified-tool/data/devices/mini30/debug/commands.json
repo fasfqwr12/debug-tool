@@ -1,0 +1,86 @@
+{
+  "_version": "1.0",
+  "saveTime": "2025-12-29T02:48:06.792Z",
+  "commands": [
+    {
+      "hex": "AA EE F0 00 00 00 00 F0 BB FF",
+      "name": "🟢 开启激光",
+      "delay": 500
+    },
+    {
+      "hex": "AA EE F6 00 00 00 00 F6 BB FF",
+      "name": "🔴 关闭激光",
+      "delay": 500
+    },
+    {
+      "hex": "AA EE F1 88 13 00 00 6A BB FF",
+      "name": "🎯 标定位置1",
+      "delay": 50000
+    },
+    {
+      "hex": "AA EE F2 20 4E 00 00 9C BB FF",
+      "name": "🎯 标定位置2",
+      "delay": 3000
+    },
+    {
+      "hex": "AA EE F3 A8 61 00 00 3A BB FF",
+      "name": "🎯 标定位置3",
+      "delay": 3000
+    },
+    {
+      "hex": "AA EE FB 00 00 00 00 FB BB FF",
+      "name": "📏 测量距离",
+      "delay": 2000
+    },
+    {
+      "hex": "AA EE FA 00 00 00 00 FA BB FF",
+      "name": "💡 激光闪烁",
+      "delay": 500
+    },
+    {
+      "hex": "AA EE F7 00 00 00 00 F7 BB FF",
+      "name": "ℹ️ 获取设备信息",
+      "delay": 500
+    },
+    {
+      "hex": "AA EE F8 00 00 00 00 F8 BB FF",
+      "name": "💓 心跳查询",
+      "delay": 300
+    },
+    {
+      "hex": "AA EE F9 00 0A 00 00 F3 BB FF",
+      "name": "⏻ 自动关机",
+      "delay": 500
+    },
+    {
+      "hex": "AA EE E0 00 00 00 00 E0 BB FF",
+      "name": "🔍 诊断状态",
+      "delay": 500
+    },
+    {
+      "hex": "AA EE E1 00 00 00 00 E1 BB FF",
+      "name": "📊 ADC诊断",
+      "delay": 1000
+    },
+    {
+      "hex": "AA EE E2 00 00 00 00 E2 BB FF",
+      "name": "⚡ APD诊断",
+      "delay": 2000
+    },
+    {
+      "hex": "AA EE E3 00 00 00 00 E3 BB FF",
+      "name": "📶 相位稳定性",
+      "delay": 7000
+    },
+    {
+      "hex": "AA EE E4 00 00 00 00 E4 BB FF",
+      "name": "📋 相位校准数据",
+      "delay": 2000
+    },
+    {
+      "hex": "AA EE E5 00 00 00 00 E5 BB FF",
+      "name": "⚡ 系数+光速",
+      "delay": 6000
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+{
+  "version": "3.0",
+  "saveTime": "2025-12-31T00:00:00.000Z",
+  "description": "组件定义 v3.0 - Line/Selector/Icon 三种类型",
+  
+  "components": {
+    "line4": {
+      "type": "Line",
+      "description": "第4行数字显示 (主显示行)",
+      "digits": [
+        { "element": "Line4_D1", "position": 0 },
+        { "element": "Line4_D2", "position": 1 },
+        { "element": "Line4_D3", "position": 2 },
+        { "element": "Line4_D4", "position": 3 },
+        { "element": "Line4_D5", "position": 4 }
+      ],
+      "dots": [
+        { "element": "Line4_DP1", "afterDigit": 0 },
+        { "element": "Line4_DP2", "afterDigit": 1 },
+        { "element": "Line4_DP3", "afterDigit": 2 }
+      ],
+      "minus": null,
+      "units": {
+        "length": { "m": ["Line4_Unit_U2"], "ft": ["Line4_Unit_U0"], "in": ["Line4_Unit_U1"] },
+        "area": { "m2": ["Line4_Unit_U2", "Line4_Unit_Sq"], "ft2": ["Line4_Unit_U0", "Line4_Unit_Sq"], "in2": ["Line4_Unit_U1", "Line4_Unit_Sq"] },
+        "volume": { "m3": ["Line4_Unit_U2", "Line4_Unit_Cu"], "ft3": ["Line4_Unit_U0", "Line4_Unit_Cu"], "in3": ["Line4_Unit_U1", "Line4_Unit_Cu"] }
+      },
+      "digitCount": 5,
+      "hasSign": false,
+      "unitConfig": {
+        "length": {
+          "m":  { "factor": 1.0,     "decimals": 3, "min": 0.05,  "max": 99.999 },
+          "ft": { "factor": 3.28084, "decimals": 3, "min": 0.164, "max": 328.08 },
+          "in": { "factor": 39.3701, "decimals": 2, "min": 1.97,  "max": 3937.0 }
+        },
+        "area": {
+          "m2":  { "factor": 1.0,      "decimals": 3, "min": 0, "max": 999.99 },
+          "ft2": { "factor": 10.7639,  "decimals": 2, "min": 0, "max": 9999.9 },
+          "in2": { "factor": 1550.003, "decimals": 1, "min": 0, "max": 99999 }
+        },
+        "volume": {
+          "m3":  { "factor": 1.0,       "decimals": 3, "min": 0, "max": 999.99 },
+          "ft3": { "factor": 35.3147,   "decimals": 2, "min": 0, "max": 9999.9 },
+          "in3": { "factor": 61023.744, "decimals": 0, "min": 0, "max": 99999 }
+        }
+      }
+    },
+    
+    "line3": {
+      "type": "Line",
+      "description": "第3行数字显示",
+      "digits": [
+        { "element": "Line3_D1", "position": 0 },
+        { "element": "Line3_D2", "position": 1 },
+        { "element": "Line3_D3", "position": 2 },
+        { "element": "Line3_D4", "position": 3 },
+        { "element": "Line3_D5", "position": 4 }
+      ],
+      "dots": [
+        { "element": "Line3_DP1", "afterDigit": 0 },
+        { "element": "Line3_DP2", "afterDigit": 1 },
+        { "element": "Line3_DP3", "afterDigit": 2 }
+      ],
+      "minus": null,
+      "units": {
+        "length": { "m": ["Line3_Unit_U2"], "ft": ["Line3_Unit_U0"], "in": ["Line3_Unit_U1"] }
+      },
+      "digitCount": 5,
+      "hasSign": false,
+      "unitConfig": {
+        "length": {
+          "m":  { "factor": 1.0,     "decimals": 3, "min": 0.05,  "max": 99.999 },
+          "ft": { "factor": 3.28084, "decimals": 3, "min": 0.164, "max": 328.08 },
+          "in": { "factor": 39.3701, "decimals": 2, "min": 1.97,  "max": 3937.0 }
+        }
+      }
+    },
+    
+    "line2": {
+      "type": "Line",
+      "description": "第2行数字显示",
+      "digits": [
+        { "element": "Line2_D1", "position": 0 },
+        { "element": "Line2_D2", "position": 1 },
+        { "element": "Line2_D3", "position": 2 },
+        { "element": "Line2_D4", "position": 3 },
+        { "element": "Line2_D5", "position": 4 }
+      ],
+      "dots": [
+        { "element": "Line2_DP1", "afterDigit": 0 },
+        { "element": "Line2_DP2", "afterDigit": 1 },
+        { "element": "Line2_DP3", "afterDigit": 2 }
+      ],
+      "minus": null,
+      "units": {
+        "length": { "m": ["Line2_Unit_U2"], "ft": ["Line2_Unit_U0"], "in": ["Line2_Unit_U1"] }
+      },
+      "digitCount": 5,
+      "hasSign": false,
+      "unitConfig": {
+        "length": {
+          "m":  { "factor": 1.0,     "decimals": 3, "min": 0.05,  "max": 99.999 },
+          "ft": { "factor": 3.28084, "decimals": 3, "min": 0.164, "max": 328.08 },
+          "in": { "factor": 39.3701, "decimals": 2, "min": 1.97,  "max": 3937.0 }
+        }
+      }
+    },
+    
+    "line1": {
+      "type": "Line",
+      "description": "第1行数字显示 (顶部小字)",
+      "digits": [
+        { "element": "Line1_D1", "position": 0 },
+        { "element": "Line1_D2", "position": 1 },
+        { "element": "Line1_D3", "position": 2 },
+        { "element": "Line1_D4", "position": 3 },
+        { "element": "Line1_D5", "position": 4 }
+      ],
+      "dots": [
+        { "element": "Line1_DP1", "afterDigit": 0 },
+        { "element": "Line1_DP2", "afterDigit": 1 },
+        { "element": "Line1_DP3", "afterDigit": 2 }
+      ],
+      "minus": null,
+      "units": {
+        "length": { "m": ["Line1_Unit_U2"], "ft": ["Line1_Unit_U0"], "in": ["Line1_Unit_U1"] }
+      },
+      "digitCount": 5,
+      "hasSign": false,
+      "unitConfig": {
+        "length": {
+          "m":  { "factor": 1.0,     "decimals": 3, "min": 0.05,  "max": 99.999 },
+          "ft": { "factor": 3.28084, "decimals": 3, "min": 0.164, "max": 328.08 },
+          "in": { "factor": 39.3701, "decimals": 2, "min": 1.97,  "max": 3937.0 }
+        }
+      }
+    },
+    
+    "unit": {
+      "type": "Selector",
+      "description": "单位选择",
+      "options": [
+        { "key": "M",  "value": 0, "elements": ["Unit_m"] },
+        { "key": "FT", "value": 1, "elements": ["Unit_ft"] },
+        { "key": "IN", "value": 2, "elements": ["Unit_in"] }
+      ],
+      "default": 0,
+      "triggerRefresh": true
+    },
+    
+    "battery": {
+      "type": "Selector",
+      "description": "电量指示",
+      "options": [
+        { "key": "EMPTY", "value": 0, "elements": [] },
+        { "key": "LOW",   "value": 1, "elements": ["Battery_Grid1"] },
+        { "key": "MID",   "value": 2, "elements": ["Battery_Grid1", "Battery_Grid2"] },
+        { "key": "FULL",  "value": 3, "elements": ["Battery_Grid1", "Battery_Grid2", "Battery_Grid3"] }
+      ],
+      "frame": ["Battery_Frame"],
+      "default": 3
+    },
+    
+    "signal": {
+      "type": "Selector",
+      "description": "信号强度",
+      "options": [
+        { "key": "L0", "value": 0, "elements": [] },
+        { "key": "L1", "value": 1, "elements": ["Signal_1"] },
+        { "key": "L2", "value": 2, "elements": ["Signal_1", "Signal_2"] },
+        { "key": "L3", "value": 3, "elements": ["Signal_1", "Signal_2", "Signal_3"] },
+        { "key": "L4", "value": 4, "elements": ["Signal_1", "Signal_2", "Signal_3", "Signal_4"] },
+        { "key": "L5", "value": 5, "elements": ["Signal_1", "Signal_2", "Signal_3", "Signal_4", "Signal_5"] }
+      ],
+      "default": 0
+    },
+    
+    "base": {
+      "type": "Selector",
+      "description": "基准模式",
+      "options": [
+        { "key": "FRONT",  "value": 0, "elements": ["Base_s2", "Base_s20"] },
+        { "key": "BEHIND", "value": 1, "elements": ["Base_s22", "Base_s2", "Base_s25", "Base_s28"] }
+      ],
+      "default": 1
+    },
+    
+    "beep": {
+      "type": "Selector",
+      "description": "蜂鸣器模式",
+      "options": [
+        { "key": "OFF", "value": 0, "elements": ["Beep_Off"] },
+        { "key": "ON",  "value": 1, "elements": ["Beep_On"] }
+      ],
+      "default": 1
+    },
+    
+    "laser": {
+      "type": "Icon",
+      "description": "激光图标",
+      "elements": ["Base_s19", "Base_s1"],
+      "default": false
+    },
+    
+    "bluetooth": {
+      "type": "Icon",
+      "description": "蓝牙图标",
+      "elements": ["Bluetooth"],
+      "default": false
+    },
+    
+    "wifi": {
+      "type": "Icon",
+      "description": "WiFi图标",
+      "elements": ["WiFi"],
+      "default": false
+    },
+    
+    "rangefinder": {
+      "type": "Icon",
+      "description": "测距仪图标 (常显)",
+      "elements": ["Base_s21"],
+      "default": true
+    }
+  },
+  
+  "specialValues": {
+    "LINE_DASH": "-----",
+    "LINE_ERR": "Err",
+    "LINE_OL": "OL",
+    "LINE_OFF": "OFF"
+  }
+}

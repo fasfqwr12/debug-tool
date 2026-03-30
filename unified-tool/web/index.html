@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="sl-theme-dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenLaser Unified Tool</title>
+    <style>
+        /* 状态点呼吸动画 - 内联确保生效 */
+        @keyframes pulse-glow {
+            0%, 100% { color: #00ff88; text-shadow: 0 0 8px #00ff88; }
+            50% { color: #66ffaa; text-shadow: 0 0 16px #00ff88, 0 0 24px #00ff88; }
+        }
+        .status-dot.on {
+            color: #00ff88 !important;
+            text-shadow: 0 0 8px #00ff88 !important;
+            animation: pulse-glow 1.5s ease-in-out infinite !important;
+        }
+    </style>
+    <link rel="stylesheet" href="css/style.css?v=20260317-global-protocol-hub-1">
+    <link rel="stylesheet" href="css/themes.css?v=20260317-global-protocol-hub-1">
+    <link rel="stylesheet" href="css/themes_pro.css?v=20260317-global-protocol-hub-1">
+    <link rel="stylesheet" href="css/theme_lite.css?v=20260317-global-protocol-hub-1">
+    <link rel="stylesheet" href="css/device_selector.css?v=20260317-global-protocol-hub-1">
+    <script>
+        // 早期定义全局函数，避免onclick找不到函数
+    window.__assetVersion = '20260318-temperature-export-offset-6';
+        console.info('[Boot] assetVersion =', window.__assetVersion);
+        function toggleSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var toggleBtn = document.querySelector('.sidebar-toggle');
+            if (!sidebar) return;
+            var isCollapsed = sidebar.classList.toggle('collapsed');
+            document.body.classList.toggle('sidebar-hidden', isCollapsed);
+            localStorage.setItem('sidebar_collapsed', isCollapsed);
+            if (toggleBtn) {
+                toggleBtn.textContent = isCollapsed ? '▶' : '◀';
+            }
+        }
+        // 收缩状态下点击图标展开侧边栏
+        function expandIfCollapsed() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('collapsed')) {
+                toggleSidebar();
+            }
+        }
+        function toggleFolder(el) {
+            var folder = el.parentElement;
+            folder.classList.toggle('open');
+            // 保存菜单展开状态
+            saveMenuState();
+        }
+        // 收起所有菜单
+        function collapseAllMenus() {
+            document.querySelectorAll('.nav-folder.open').forEach(function(folder) {
+                folder.classList.remove('open');
+            });
+            saveMenuState();
+        }
+        // 保存菜单展开状态
+        function saveMenuState() {
+            var openMenus = [];
+            document.querySelectorAll('.nav-folder.open').forEach(function(folder, index) {
+                var header = folder.querySelector('.nav-folder-header .nav-text');
+                if (header) {
+                    openMenus.push(header.textContent.trim());
+                }
+            });
+            localStorage.setItem('menu_open_state', JSON.stringify(openMenus));
+        }
+        // 恢复菜单展开状态
+        function restoreMenuState() {
+            try {
+                var saved = localStorage.getItem('menu_open_state');
+                if (saved) {
+                    var openMenus = JSON.parse(saved);
+                    document.querySelectorAll('.nav-folder').forEach(function(folder) {
+                        var header = folder.querySelector('.nav-folder-header .nav-text');
+                        if (header && openMenus.includes(header.textContent.trim())) {
+                            folder.classList.add('open');
+                        }
+                    });
+                }
+            } catch(e) {}
+        }
+        // 页面加载后恢复菜单状态
+        document.addEventListener('DOMContentLoaded', restoreMenuState);
+        function switchPage(name) {
+            if (window.App && window.App.navigate) {
+                window.App.navigate(name);
+            }
+        }
+
+        function openUserManagement() {
+            expandIfCollapsed();
+            switchPage('settings');
+            setTimeout(() => {
+                if (window.SettingsPage && window.SettingsPage.switchTab) {
+                    window.SettingsPage.switchTab('users');
+                }
+            }, 200);
+        }
+    </script>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo" onclick="expandIfCollapsed()">
+                <span class="logo-icon">💚</span>
+                <span class="logo-text">GreenLaser</span>
+            </div>
+            <button class="sidebar-collapse-all" onclick="collapseAllMenus()" title="收起所有菜单">📁</button>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="收起/展开">◀</button>
+        </div>
+        
+        <div class="nav-tree">
+            <!-- 仪表盘 -->
+            <div class="nav-item active" data-page="home" onclick="expandIfCollapsed(); switchPage('home')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">仪表盘</span>
+            </div>
+            
+            <!-- 测距调试 - 核心功能 -->
+            <div class="nav-folder">
+                <div class="nav-folder-header" onclick="expandIfCollapsed(); toggleFolder(this)">
+                    <span class="folder-arrow">▶</span>
+                    <span class="nav-icon">📏</span>
+                    <span class="nav-text">测距</span>
+                </div>
+                <div class="nav-folder-content">
+                    <div class="nav-item" data-page="debug_pro" onclick="switchPage('debug_pro')">
+                        <span class="nav-text">🔧 调试助手</span>
+                    </div>
+                    <div class="nav-item" data-page="calibration" onclick="switchPage('calibration')">
+                        <span class="nav-text">🎯 设备校准</span>
+                    </div>
+                    <div class="nav-item" data-page="test_queue" onclick="switchPage('test_queue')">
+                        <span class="nav-text">📋 固件测试</span>
+                    </div>
+                    <div class="nav-item" data-page="slipway" onclick="switchPage('slipway')">
+                        <span class="nav-text">🛤️ 滑台测试</span>
+                    </div>
+                    <div class="nav-item" data-page="lift_control" onclick="switchPage('lift_control')">
+                        <span class="nav-text">🔼 升降控制</span>
+                    </div>
+                    <div class="nav-item" data-page="protocol_manager" onclick="switchPage('protocol_manager')">
+                        <span class="nav-text">📡 协议管理</span>
+                    </div>
+                    <div class="nav-item" data-page="test_data" onclick="switchPage('test_data')">
+                        <span class="nav-text">📊 测试数据</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 研发（代码管理） -->
+            <div class="nav-folder">
+                <div class="nav-folder-header" onclick="expandIfCollapsed(); toggleFolder(this)">
+                    <span class="folder-arrow">▶</span>
+                    <span class="nav-icon">💻</span>
+                    <span class="nav-text">研发</span>
+                </div>
+                <div class="nav-folder-content">
+                    <div class="nav-item" data-page="task_center" onclick="switchPage('task_center')">
+                        <span class="nav-text">📋 任务中心</span>
+                    </div>
+                    <div class="nav-item" data-page="dev_git" onclick="switchPage('dev_git')">
+                        <span class="nav-text">代码管理</span>
+                    </div>
+                    <div class="nav-item" data-page="vault" onclick="switchPage('vault')">
+                        <span class="nav-text">📸 版本快照</span>
+                    </div>
+                    <div class="nav-item" data-page="dev_release" onclick="switchPage('dev_release')">
+                        <span class="nav-text">版本发布</span>
+                    </div>
+                    <div class="nav-item" data-page="code_generator" onclick="switchPage('code_generator')">
+                        <span class="nav-text">🔧 代码生成</span>
+                    </div>
+                    <div class="nav-item" data-page="product_config" onclick="switchPage('product_config')">
+                        <span class="nav-text">📦 产品配置</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 生产 -->
+            <div class="nav-folder">
+                <div class="nav-folder-header" onclick="expandIfCollapsed(); toggleFolder(this)">
+                    <span class="folder-arrow">▶</span>
+                    <span class="nav-icon">🏭</span>
+                    <span class="nav-text">生产</span>
+                </div>
+                <div class="nav-folder-content">
+                    <div class="nav-item" data-page="prod_flash" onclick="switchPage('prod_flash')">
+                        <span class="nav-text">固件烧录</span>
+                    </div>
+                    <div class="nav-item" data-page="hex_merge" onclick="switchPage('hex_merge')">
+                        <span class="nav-text">HEX合并</span>
+                    </div>
+                    <div class="nav-item" data-page="prod_stats" onclick="switchPage('prod_stats')">
+                        <span class="nav-text">生产统计</span>
+                    </div>
+                    <div class="nav-item" data-page="traceability" onclick="switchPage('traceability')">
+                        <span class="nav-text">📈 追溯统计</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- UI自动化 - 单独大类 -->
+            <div class="nav-folder">
+                <div class="nav-folder-header" onclick="expandIfCollapsed(); toggleFolder(this)">
+                    <span class="folder-arrow">▶</span>
+                    <span class="nav-icon">🤖</span>
+                    <span class="nav-text">UI自动化</span>
+                </div>
+                <div class="nav-folder-content">
+                    <div class="nav-item" data-page="ui_test" onclick="switchPage('ui_test')">
+                        <span class="nav-text">执行测试</span>
+                    </div>
+                    <div class="nav-item" data-page="ui_test_review" onclick="switchPage('ui_test_review')">
+                        <span class="nav-text">🔍 结果审核</span>
+                    </div>
+                    <div class="nav-item" data-page="ui_test_workbench" onclick="switchPage('ui_test_workbench')">
+                        <span class="nav-text">🔬 测试工作台</span>
+                    </div>
+                    <div class="nav-item" data-page="test_script_editor" onclick="switchPage('test_script_editor')">
+                        <span class="nav-text">脚本编辑</span>
+                    </div>
+                    <div class="nav-item" data-page="lcd_segment_editor" onclick="switchPage('lcd_segment_editor')">
+                        <span class="nav-text">段码编辑器</span>
+                    </div>
+                    <div class="nav-item" data-page="lcd_component_editor" onclick="switchPage('lcd_component_editor')">
+                        <span class="nav-text">组件编辑器</span>
+                    </div>
+                    <div class="nav-item" data-page="lcd_preset_editor" onclick="switchPage('lcd_preset_editor')">
+                        <span class="nav-text">界面库编辑</span>
+                    </div>
+                    <div class="nav-item" data-page="lcd_animation_editor" onclick="switchPage('lcd_animation_editor')">
+                        <span class="nav-text">动画库编辑</span>
+                    </div>
+                    <div class="nav-item" data-page="lcd_simulator" onclick="switchPage('lcd_simulator')">
+                        <span class="nav-text">LCD模拟器</span>
+                    </div>
+                    <div class="nav-item" data-page="action_lib_editor" onclick="switchPage('action_lib_editor')">
+                        <span class="nav-text">动作库编辑</span>
+                    </div>
+                    <div class="nav-item" data-page="flow_editor" onclick="switchPage('flow_editor')">
+                        <span class="nav-text">🔀 流程编辑器</span>
+                    </div>
+                    <div class="nav-item" data-page="state_machine_editor_v2" onclick="switchPage('state_machine_editor_v2')">
+                        <span class="nav-text">状态机编辑</span>
+                    </div>
+                    <div class="nav-item" data-page="ui_dev_studio" onclick="switchPage('ui_dev_studio')">
+                        <span class="nav-text">🎨 开发工作室</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- 系统设置 - 固定在底部 -->
+        <div class="nav-bottom">
+            <div class="nav-item" data-page="theme_selector" onclick="expandIfCollapsed(); switchPage('theme_selector')">
+                <span class="nav-icon">🎨</span>
+                <span class="nav-text">主题风格</span>
+            </div>
+            <div class="nav-item" data-page="user_switch" onclick="expandIfCollapsed(); if(window.UserSwitchPage){window.UserSwitchPage.show();}">
+                <span class="nav-icon">👤</span>
+                <span class="nav-text">切换用户</span>
+            </div>
+            <div class="nav-item" data-page="user_manage" onclick="openUserManagement()">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">用户管理</span>
+            </div>
+            <div class="nav-item" data-page="settings" onclick="expandIfCollapsed(); switchPage('settings')">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">系统设置</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 全局设备状态栏 -->
+    <div class="device-status-bar" id="device-status-bar">
+        <!-- 左侧: 串口 + 设备信息 -->
+        <div class="status-left">
+            <span class="status-item clickable" onclick="DeviceHub.showConnectDialog('serial')">串口: <b class="status-dot" id="hub-serial-dot">●</b> <span id="hub-serial-text">未连接</span></span>
+            <button class="status-scan-btn" onclick="DeviceHub.autoScan()" title="自动扫描">🔍</button>
+            <span class="dev-info" ondblclick="App.navigate('protocol_manager')" style="cursor:pointer" title="双击查看协议配置"><span class="dim">型号:</span><b id="hub-dev-model">--</b></span>
+            <span class="dev-info"><span class="dim">ID:</span><b id="hub-dev-id">--</b></span>
+            <span class="dev-info" style="cursor:pointer;" onclick="App.vaultLookupCRC()" title="点击查找对应版本"><span class="dim">CRC:</span><b id="hub-dev-crc">--</b></span>
+            <button class="status-expand-btn" id="hub-dev-expand-btn" onclick="DeviceHub.toggleDevInfoExpand()" title="展开/收起更多信息">⋯</button>
+            <span class="dev-info extra" data-extra="dev"><span class="dim">软件:</span><b id="hub-dev-sw">--</b></span>
+            <span class="dev-info extra" data-extra="dev"><span class="dim">硬件:</span><b id="hub-dev-hw">--</b></span>
+            <span class="dev-info extra" data-extra="dev"><span class="dim">Flash:</span><b id="hub-dev-flash">--</b></span>
+            <span class="dev-info extra" data-extra="dev"><span class="dim">App:</span><b id="hub-dev-app">--</b></span>
+        </div>
+        
+        <!-- 右侧: 仿真开关 + 滑台/转靶 -->
+        <div class="status-right">
+            <span class="status-item simulation-toggle" onclick="DeviceHub.toggleSimulation()" title="仿真模式">
+                <span id="hub-sim-icon">🔌</span>
+                <span id="hub-sim-text">实机</span>
+            </span>
+            <span class="status-item clickable" onclick="DeviceHub.showConnectDialog('slipway')">滑台/转靶: <b class="status-dot" id="hub-slipway-dot">●</b> <span id="hub-slipway-text">未连接</span></span>
+            <span class="dev-info"><span class="dim">滑台:</span><b id="hub-slipway-pos">--</b><span class="dim">mm</span></span>
+            <span class="dev-info"><span class="dim">反射率:</span><b id="hub-rotary-ref">--</b></span>
+            <button class="status-toolbar-btn" onclick="DeviceToolbar.toggle()" title="设备控制工具栏">🎛️</button>
+        </div>
+    </div>
+    
+    <!-- 全局设备控制工具栏 -->
+    <div class="device-toolbar" id="device-toolbar" style="display:none;">
+        <div class="toolbar-header" id="toolbar-drag-handle">
+            <span>🎛️ 设备控制</span>
+            <button class="toolbar-close" onclick="DeviceToolbar.toggle()">×</button>
+        </div>
+        <div class="toolbar-content">
+            <div class="toolbar-tabs">
+                <button class="toolbar-tab-btn active" data-toolbar-tab="protocol" onclick="DeviceToolbar.switchTab('protocol')">协议</button>
+                <button class="toolbar-tab-btn" data-toolbar-tab="motion" onclick="DeviceToolbar.switchTab('motion')">运动</button>
+                <button class="toolbar-tab-btn" data-toolbar-tab="workflow" onclick="DeviceToolbar.switchTab('workflow')">流程</button>
+                <button class="toolbar-tab-btn" data-toolbar-tab="competitor" onclick="DeviceToolbar.switchTab('competitor')" style="display:none;">竞品</button>
+            </div>
+            <div class="toolbar-tab-panel active" data-toolbar-panel="protocol">
+                <div class="toolbar-section" id="toolbar-protocol-section">
+                    <div class="toolbar-section-title">🧭 全局协议与测距</div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" style="min-width:72px;">全局机型:</span>
+                        <select id="toolbar-protocol-device-select" class="toolbar-select" style="flex:1;" onchange="DeviceToolbar.switchProtocolDevice(this.value)">
+                            <option value="">-- 选择机型 --</option>
+                        </select>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.refreshProtocolOverview()" title="刷新协议状态">🔄</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" style="min-width:72px;">测距模式:</span>
+                        <select id="toolbar-measure-mode-select" class="toolbar-select" style="flex:1;" onchange="DeviceToolbar.switchMeasureMode(this.value)">
+                            <option value="">-- 选择模式 --</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-row" id="toolbar-comp-profile-row" style="display:none;">
+                        <span class="toolbar-label" style="min-width:72px;">竞品协议:</span>
+                        <select id="toolbar-comp-profile-select" class="toolbar-select" style="flex:1;" onchange="DeviceToolbar.switchCompetitorProfile(this.value)">
+                            <option value="">-- 选择竞品协议 --</option>
+                        </select>
+                        <button class="toolbar-btn small" onclick="switchPage('settings')">协议库</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" style="min-width:72px;">活动协议:</span>
+                        <span id="toolbar-active-protocol" style="flex:1;">--</span>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" style="min-width:72px;">当前解析:</span>
+                        <span id="toolbar-measure-parser-current" style="flex:1;">--</span>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" style="min-width:72px;">测距路由:</span>
+                        <span id="toolbar-measure-route" style="flex:1;">--</span>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" style="min-width:72px;">FB状态:</span>
+                        <span id="toolbar-fb-summary" style="flex:1;">--</span>
+                    </div>
+                    <div class="toolbar-protocol-library" id="toolbar-supported-parsers"></div>
+                    <div class="toolbar-row">
+                        <span id="toolbar-protocol-hint" class="toolbar-label" style="opacity:.76; flex:1;">切换“全局机型”会同步当前活动协议；竞品测距则走独立Provider。</span>
+                        <button class="toolbar-btn small" onclick="switchPage('protocol_manager')">协议管理</button>
+                    </div>
+                </div>
+            </div>
+            <div class="toolbar-tab-panel" data-toolbar-panel="motion">
+                <div class="toolbar-section">
+                    <div class="toolbar-section-title">🛤️ 滑台</div>
+                    <div class="toolbar-row">
+                        <input type="text" id="toolbar-slipway-ip" placeholder="192.168.2.46:6000" style="flex:1;">
+                        <button class="toolbar-btn" onclick="DeviceToolbar.connectSlipway()" id="toolbar-slipway-btn">连接</button>
+                        <button class="toolbar-btn small danger" onclick="DeviceToolbar.forceDisconnect()" title="强制断开所有TCP">💀</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <input type="number" id="toolbar-slipway-target" min="0" max="38000" placeholder="0 ~ 38000" onchange="DeviceToolbar._clampSlipwayTargetInput()" onblur="DeviceToolbar._clampSlipwayTargetInput()" style="width:100px;">
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.slipwayMove()">移动</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.slipwayHome()">🏠</button>
+                        <button class="toolbar-btn small danger" onclick="DeviceToolbar.slipwayStop()">⏹</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label">步进:</span>
+                        <input type="number" id="toolbar-slipway-step" min="0" max="38000" placeholder="0 ~ 38000" value="10" onchange="DeviceToolbar._clampSlipwayStepInput()" onblur="DeviceToolbar._clampSlipwayStepInput()" style="width:80px;">
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.slipwayJog(-1)">◀</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.slipwayJog(1)">▶</button>
+                        <span class="toolbar-label">mm</span>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label">位置:</span>
+                        <span id="toolbar-slipway-pos">--</span>
+                        <span class="toolbar-label">mm</span>
+                    </div>
+                </div>
+                <div class="toolbar-section">
+                    <div class="toolbar-section-title">🎯 转靶</div>
+                    <div class="toolbar-row ref-btns">
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(10)">10%</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(20)">20%</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(30)">30%</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(40)">40%</button>
+                    </div>
+                    <div class="toolbar-row ref-btns">
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(60)">60%</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(70)">70%</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(80)">80%</button>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.setReflectance(90)">90%</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.rotaryHome()">🏠 复位</button>
+                        <span class="toolbar-label">当前:</span>
+                        <span id="toolbar-rotary-ref">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="toolbar-tab-panel" data-toolbar-panel="workflow">
+                <div class="toolbar-section">
+                    <div class="toolbar-section-title">📋 流程</div>
+                    <div class="toolbar-row">
+                        <select id="toolbar-workflow-select" class="toolbar-select" onchange="DeviceToolbar.selectWorkflow(this.value)" style="flex:1;">
+                            <option value="">-- 选择流程 --</option>
+                        </select>
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.refreshWorkflows()" title="刷新">🔄</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <select id="toolbar-device-select" class="toolbar-select" style="flex:1;">
+                            <option value="">-- 选择设备 --</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-row">
+                        <button class="toolbar-btn primary" id="toolbar-cal-start" onclick="DeviceToolbar.startCalibration()" disabled style="flex:1;">▶ 开始</button>
+                        <button class="toolbar-btn danger" id="toolbar-cal-stop" onclick="DeviceToolbar.stopCalibration()" style="display:none; flex:1;">⏹ 停止</button>
+                    </div>
+                    <div class="toolbar-progress" id="toolbar-cal-progress" style="display:none;">
+                        <div class="toolbar-progress-bar">
+                            <div class="toolbar-progress-fill" id="toolbar-cal-progress-fill"></div>
+                        </div>
+                        <div class="toolbar-progress-text" id="toolbar-cal-progress-text">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="toolbar-tab-panel" data-toolbar-panel="competitor">
+                <div class="toolbar-section" id="toolbar-competitor-section" style="display:none;">
+                    <div class="toolbar-section-title">🧪 竞品基准控制</div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" style="min-width:72px;">Controls:</span>
+                        <div id="toolbar-comp-controls" style="display:flex; gap:8px; flex-wrap:wrap; flex:1;"></div>
+                    </div>
+                    <div class="toolbar-row">
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.l1MeasureOnce()" title="按当前工位 measure.type 测距一次">📏 测距一次</button>
+                        <span class="toolbar-label">间隔:</span>
+                        <input type="number" id="toolbar-l1-measure-interval" value="200" min="50" step="10" style="width:80px;">
+                        <button class="toolbar-btn small" id="toolbar-l1-measure-loop-btn" onclick="DeviceToolbar.toggleL1MeasureLoop()">▶ 连续</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" id="toolbar-l1-measure-status" style="opacity:.85; font-family: monospace;">--</span>
+                    </div>
+                    <div class="toolbar-row">
+                        <input type="text" id="toolbar-l1-cmd" placeholder="手动发送ASCII命令（自动加\\r\\n）" style="flex:1; font-family: monospace;">
+                        <button class="toolbar-btn small" onclick="DeviceToolbar.l1SendFromInput()">发送</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <span class="toolbar-label" id="toolbar-competitor-hint" style="opacity:.75;">提示: 只有滑台测距来源选择了竞品协议，才会显示这一栏。</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 连接对话框 -->
+    <div class="hub-dialog-overlay" id="hub-dialog-overlay" onclick="DeviceHub.hideConnectDialog()">
+        <div class="hub-dialog" onclick="event.stopPropagation()">
+            <div class="hub-dialog-header">
+                <span id="hub-dialog-title">连接设备</span>
+                <button class="hub-dialog-close" onclick="DeviceHub.hideConnectDialog()">×</button>
+            </div>
+            <div class="hub-dialog-body" id="hub-dialog-body">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 动态页面容器 -->
+        <div id="page-container">
+        
+        <!-- 首页 (内联作为后备，实际由home.html动态加载) -->
+        <section id="home" class="page active">
+            <!-- 内容将由 pages/home.html 动态加载替换 -->
+        </section>
+
+        <!-- 以下页面全部由 pages/*.html 动态加载 -->
+        <!-- 占位符，内容由 App.navigate() 动态填充 -->
+        </div><!-- /page-container -->
+    </main>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container"></div>
+    
+    <!-- 用户切换对话框 -->
+    <div class="dialog-overlay" id="user-switch-dialog" style="display:none">
+        <div class="dialog" style="width:420px">
+            <div class="dialog-header">
+                <h3>👤 切换用户</h3>
+                <button class="close-btn" onclick="UserSwitchPage.hide()">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>选择用户</label>
+                    <select id="switch-user-select" onchange="UserSwitchPage.onUserSelect()">
+                        <option value="">请选择用户</option>
+                    </select>
+                </div>
+                <div class="form-group" id="password-group" style="display:none;">
+                    <label>密码</label>
+                    <input type="password" id="switch-password" placeholder="请输入密码" style="width: 100%; padding: 10px 12px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 14px;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 12px; color: var(--text-muted);">
+                        提示：普通用户无需密码，管理员需要密码验证
+                    </label>
+                </div>
+                <div class="current-user" id="current-user-info" style="margin-top: 16px; padding: 12px; background: var(--input-bg); border-radius: 6px; font-size: 13px;">
+                    当前用户：未登录
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn secondary" onclick="UserSwitchPage.hide()">取消</button>
+                <button class="btn primary" onclick="UserSwitchPage.switchUser()" style="flex: 1;">切换用户</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    /* 用户切换对话框样式 */
+    .dialog-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5); display: flex;
+        align-items: center; justify-content: center; z-index: 1000;
+    }
+    .dialog {
+        background: var(--card-bg); border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        max-height: 90vh; overflow-y: auto;
+    }
+    .dialog-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 20px; border-bottom: 1px solid var(--border-color);
+    }
+    .dialog-header h3 {
+        margin: 0; font-size: 16px; font-weight: 600;
+    }
+    .close-btn {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: transparent; border: none;
+        color: var(--text-muted); font-size: 20px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .close-btn:hover {
+        background: var(--input-bg); color: var(--text-color);
+    }
+    .dialog-body {
+        padding: 20px;
+    }
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-group label {
+        display: block; font-size: 13px; font-weight: 500;
+        color: var(--text-color); margin-bottom: 8px;
+    }
+    .form-group select {
+        width: 100%; padding: 10px 12px;
+        background: var(--input-bg); border: 1px solid var(--border-color);
+        border-radius: 6px; color: var(--text-color);
+        font-size: 14px;
+    }
+    .form-group select:focus {
+        outline: none; border-color: var(--primary-color);
+    }
+    .dialog-footer {
+        display: flex; justify-content: flex-end; gap: 12px;
+        padding: 20px; border-top: 1px solid var(--border-color);
+    }
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+    }
+    .btn.primary {
+        background: var(--primary-color);
+        color: var(--text-on-accent);
+        border: none;
+    }
+    .btn.secondary {
+        background: var(--card-bg);
+        color: var(--text-color);
+    }
+    
+    /* 导航栏用户显示样式 */
+    .nav-user-display {
+        margin-left: auto;
+        margin-right: 16px;
+    }
+    .current-user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--input-bg);
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .current-user-info:hover {
+        background: var(--border-color);
+    }
+    .user-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: var(--text-on-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .user-name {
+        font-size: 13px;
+        color: var(--text-color);
+    }
+    .switch-icon {
+        font-size: 10px;
+        color: var(--text-muted);
+        transition: transform 0.2s;
+    }
+    .current-user-info:hover .switch-icon {
+        transform: rotate(180deg);
+    }
+    </style>
+
+    <!-- 核心 JS（启动必需，同步加载） -->
+    <script src="js/api.js?v=20260317-global-protocol-hub-1"></script>
+    <script src="js/utils.js?v=20260317-global-protocol-hub-1"></script>
+    <!-- WS事件 -> Toast（右上角），不再使用右下角面板 -->
+    <script src="js/ws_notify.js?v=20260317-slipway-toast-actions-1"></script>
+    <script src="js/state-manager.js?v=20260317-global-protocol-hub-1"></script>
+    <script src="js/device_hub.js?v=20260317-global-protocol-hub-1"></script>
+    <script src="js/device_toolbar.js?v=20260317-global-protocol-hub-1"></script>
+    <script src="js/pages/user_login.js?v=20260317-global-protocol-hub-1"></script>
+    <script src="js/pages/user_switch.js?v=20260317-global-protocol-hub-1"></script>
+    <script src="js/app.js?v=20260317-global-protocol-hub-1"></script>
+</body>
+</html>

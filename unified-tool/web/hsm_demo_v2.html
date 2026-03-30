@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>层级状态机编辑器 V2 - GD303-MINI</title>
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #252540;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666;
+            --border-color: #333;
+            --accent-color: #22c55e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 220px 1fr 340px;
+            grid-template-rows: 46px 1fr;
+            height: 100vh;
+        }
+        .toolbar {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            gap: 12px;
+        }
+        .toolbar h1 { font-size: 14px; margin-right: 16px; color: var(--accent-color); }
+        .breadcrumb { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+        .breadcrumb-item {
+            padding: 3px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .breadcrumb-item:hover { background: #3b82f6; color: white; }
+        .breadcrumb-item.current { background: var(--accent-color); color: white; }
+        .breadcrumb-sep { color: var(--text-muted); font-size: 10px; }
+        .btn {
+            padding: 5px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .btn:hover { border-color: var(--accent-color); }
+        .left-panel {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 8px 10px;
+            background: var(--bg-tertiary);
+            font-size: 11px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .panel-content { flex: 1; overflow-y: auto; padding: 6px; }
+        .level-indicator { display: flex; gap: 4px; padding: 8px; background: var(--bg-tertiary); border-radius: 5px; margin-bottom: 8px; }
+        .level-dot {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .level-dot.l0 { background: #ef444430; color: #ef4444; }
+        .level-dot.l1 { background: #f59e0b30; color: #f59e0b; }
+        .level-dot.l2 { background: #3b82f630; color: #3b82f6; }
+        .level-dot.l3 { background: #22c55e30; color: #22c55e; }
+        .level-dot.l4 { background: #8b5cf630; color: #8b5cf6; }
+        .level-dot.active { transform: scale(1.1); box-shadow: 0 0 8px currentColor; border-color: currentColor; }
+        .tree-node { margin-bottom: 1px; }
+        .tree-header {
+            display: flex; align-items: center; gap: 4px;
+            padding: 5px 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            border: 1px solid transparent;
+        }
+        .tree-header:hover { border-color: var(--accent-color); }
+        .tree-header.selected { border-color: var(--accent-color); background: rgba(34,197,94,0.15); }
+        .tree-header.current-level { background: rgba(59,130,246,0.15); border-color: #3b82f6; }
+        .tree-expand { width: 14px; font-size: 8px; color: var(--text-muted); }
+        .tree-expand.expanded { transform: rotate(90deg); }
+        .tree-expand.empty { visibility: hidden; }
+        .tree-icon { font-size: 11px; }
+        .tree-name { flex: 1; }
+        .tree-badge { font-size: 8px; padding: 1px 4px; background: var(--bg-tertiary); border-radius: 8px; }
+        .tree-badge.compound { background: #f59e0b30; color: #f59e0b; }
+        .tree-badge.initial { background: #22c55e30; color: #22c55e; }
+        .tree-children { margin-left: 14px; padding-left: 8px; border-left: 1px dashed var(--border-color); display: none; }
+        .tree-children.expanded { display: block; }
+        .canvas-area {
+            position: relative;
+            background: 
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow: hidden;
+        }
+        #canvas { position: absolute; top: 0; left: 0; }
+        .canvas-tools {
+            position: absolute; top: 8px; left: 8px;
+            display: flex; gap: 3px;
+            background: var(--bg-secondary);
+            padding: 3px; border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+        .tool-btn {
+            width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent; border: none; border-radius: 3px;
+            color: var(--text-secondary); cursor: pointer; font-size: 12px;
+        }
+        .tool-btn:hover { background: var(--bg-tertiary); }
+        .tool-btn.active { background: var(--accent-color); color: white; }
+        .level-hint {
+            position: absolute; bottom: 8px; left: 8px;
+            padding: 6px 10px;
+            background: var(--bg-secondary);
+            border-radius: 5px; font-size: 11px;
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .hint-icon {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 600;
+        }
+        .shortcuts {
+            position: absolute; bottom: 8px; right: 8px;
+            font-size: 9px; color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 4px 8px; border-radius: 3px;
+        }
+        .shortcuts kbd { background: var(--bg-tertiary); padding: 1px 4px; border-radius: 2px; }
+        .right-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .lcd-preview {
+            height: 180px;
+            background: linear-gradient(135deg, #0a1a0a 0%, #0f2f0f 100%);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        #lcd-canvas { width: 100%; height: 100%; }
+        .lcd-preview-label {
+            position: absolute;
+            top: 4px; left: 8px;
+            font-size: 10px;
+            color: #00ff88;
+            opacity: 0.7;
+        }
+        .lcd-elements-hint {
+            position: absolute;
+            bottom: 4px; right: 8px;
+            font-size: 9px;
+            color: #00ff88;
+            opacity: 0.6;
+        }
+        .props-empty {
+            flex: 1;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: var(--text-muted); text-align: center; padding: 16px;
+        }
+        .props-empty-icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 6px 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            color: var(--text-primary); font-size: 12px;
+        }
+        .form-group textarea { resize: vertical; min-height: 50px; }
+        .section-title {
+            font-size: 10px; color: var(--text-muted);
+            text-transform: uppercase;
+            margin: 12px 0 6px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 3px; }
+        .action-tag {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 2px 6px;
+            background: #3b82f630; color: #3b82f6;
+            border-radius: 8px; font-size: 9px;
+        }
+        .expect-tag {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 2px 6px;
+            background: #22c55e30; color: #22c55e;
+            border-radius: 8px; font-size: 9px;
+        }
+        .lcd-tag {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 2px 6px;
+            background: #f59e0b30; color: #f59e0b;
+            border-radius: 8px; font-size: 9px;
+            cursor: pointer;
+        }
+        .lcd-tag:hover { background: #f59e0b50; }
+        .child-list { display: flex; flex-direction: column; gap: 3px; }
+        .child-item {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 8px;
+            background: var(--bg-primary);
+            border-radius: 3px; font-size: 11px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .child-item:hover { border-color: var(--accent-color); }
+        .child-item.initial { border-left: 2px solid #22c55e; }
+        .transition-item {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 8px;
+            background: var(--bg-primary);
+            border-radius: 3px; font-size: 10px;
+        }
+        .transition-item .event { color: #3b82f6; font-weight: 600; }
+        .transition-item .arrow { color: var(--text-muted); }
+        .transition-item .target { color: #22c55e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <h1>🔄 GD303-MINI 状态机 V2</h1>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div style="flex:1;"></div>
+            <button class="btn" onclick="HSM.resetView()">🔄 重置</button>
+            <button class="btn" onclick="HSM.exportJSON()">📤 导出</button>
+        </div>
+        
+        <div class="left-panel">
+            <div class="panel-header">📊 层级</div>
+            <div class="panel-content">
+                <div class="level-indicator" id="level-indicator">
+                    <div class="level-dot l0 active" data-level="0" onclick="HSM.navigateToLevel(0)" title="L0系统">0</div>
+                    <div class="level-dot l1" data-level="1" onclick="HSM.navigateToLevel(1)" title="L1开关机">1</div>
+                    <div class="level-dot l2" data-level="2" onclick="HSM.navigateToLevel(2)" title="L2功能">2</div>
+                    <div class="level-dot l3" data-level="3" onclick="HSM.navigateToLevel(3)" title="L3子状态">3</div>
+                    <div class="level-dot l4" data-level="4" onclick="HSM.navigateToLevel(4)" title="L4步骤">4</div>
+                </div>
+            </div>
+            <div class="panel-header">🌳 状态树</div>
+            <div class="panel-content" id="tree"></div>
+        </div>
+        
+        <div class="canvas-area" id="canvas-area">
+            <canvas id="canvas"></canvas>
+            <div class="canvas-tools">
+                <button class="tool-btn active" data-tool="select" onclick="HSM.setTool('select')">↖</button>
+                <button class="tool-btn" data-tool="pan" onclick="HSM.setTool('pan')">✋</button>
+            </div>
+            <div class="level-hint" id="level-hint">
+                <div class="hint-icon" style="background:#ef444430;color:#ef4444;">L0</div>
+                <span>系统层</span>
+            </div>
+            <div class="shortcuts"><kbd>双击</kbd> 进入 | <kbd>Esc</kbd> 返回</div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="panel-header">📺 LCD预览 <span id="lcd-count" style="font-size:10px;color:var(--text-muted);"></span></div>
+            <div class="lcd-preview" id="lcd-preview">
+                <span class="lcd-preview-label">LCD Display</span>
+                <canvas id="lcd-canvas"></canvas>
+                <span class="lcd-elements-hint" id="lcd-elements-hint"></span>
+            </div>
+            <div class="panel-header">⚙️ 属性 <span id="props-type" style="font-size:10px;color:var(--text-muted);"></span></div>
+            <div class="panel-content" id="props">
+                <div class="props-empty">
+                    <div class="props-empty-icon">🔄</div>
+                    <div style="font-size:11px;">选择状态查看属性</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // GD303-MINI 层级状态机编辑器 V2 - 增强版 (显示动作/期望/LCD元素)
+    const HSM = {
+        machine: null,
+        lcdConfig: null,
+        currentPath: ['ROOT'],
+        currentLevel: 0,
+        canvas: null, ctx: null,
+        lcdCanvas: null, lcdCtx: null,
+        zoom: 1,
+        offset: { x: 0, y: 0 },
+        tool: 'select',
+        isDragging: false,
+        isPanning: false,
+        dragStart: { x: 0, y: 0 },
+        dragNodeStart: null,
+        selectedNode: null,
+        hoveredNode: null,
+        nodePositions: {},
+        NODE_W: 200,  // 加宽节点以显示更多信息
+        NODE_H: 110,  // 加高节点
+        NODE_R: 8,
+        LEVEL_COLORS: {
+            0: { bg: '#ef444420', border: '#ef4444', text: '#ef4444', name: '系统' },
+            1: { bg: '#f59e0b20', border: '#f59e0b', text: '#f59e0b', name: '开关机' },
+            2: { bg: '#3b82f620', border: '#3b82f6', text: '#3b82f6', name: '功能' },
+            3: { bg: '#22c55e20', border: '#22c55e', text: '#22c55e', name: '子状态' },
+            4: { bg: '#8b5cf620', border: '#8b5cf6', text: '#8b5cf6', name: '步骤' },
+        },
+        init() {
+            console.log('[HSM V2] 初始化...');
+            this.canvas = document.getElementById('canvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.lcdCanvas = document.getElementById('lcd-canvas');
+            this.lcdCtx = this.lcdCanvas.getContext('2d');
+            this.loadStateMachine();
+            this.loadLcdConfig();
+            this.bindEvents();
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+            this.updateBreadcrumb();
+            this.updateLevelIndicator();
+            this.renderTree();
+            this.render();
+            this.renderLcdPreview();
+            console.log('[HSM V2] 初始化完成');
+        },
+
+        loadStateMachine() {
+            // 完整的GD303-MINI状态机配置
+            this.machine = {
+                device: 'gd303_mini',
+                name: 'GD303-MINI 层级状态机',
+                events: {
+                    'K1_SHORT': { category: 'key', label: 'K1短按', action: 'K1短按' },
+                    'K1_LONG': { category: 'key', label: 'K1长按', action: 'K1长按' },
+                    'K1_XLONG': { category: 'key', label: 'K1超长按', action: 'K1超长按' },
+                    'K2_SHORT': { category: 'key', label: 'K2短按', action: 'K2短按' },
+                    'K2_LONG': { category: 'key', label: 'K2长按', action: 'K2长按' },
+                    'K3_SHORT': { category: 'key', label: 'K3短按', action: 'K3短按' },
+                    'K3_XLONG': { category: 'key', label: 'K3超长按', action: 'K3超长按' },
+                    'MEASURE_OK': { category: 'measure', label: '测距成功', action: '模拟测距成功' },
+                    'MEASURE_FAIL': { category: 'measure', label: '测距失败', action: '模拟测距失败' },
+                    'TIMEOUT': { category: 'timer', label: '超时' }
+                },
+                hierarchy: {
+                    ROOT: {
+                        id: 'ROOT', label: '系统', type: 'compound', level: 0, initial: 'OFF',
+                        children: {
+                            OFF: {
+                                id: 'OFF', label: '关机', type: 'atomic', level: 1,
+                                description: '设备关机，等待K1超长按开机',
+                                entryActions: [],
+                                display: { lcdOff: ['ALL'] }
+                            },
+                            ON: {
+                                id: 'ON', label: '开机', type: 'compound', level: 1, initial: 'IDLE',
+                                description: '设备开机状态',
+                                entryActions: ['重置'],
+                                display: { 
+                                    expects: ['电池满'],
+                                    lcdElements: ['Battery_Frame', 'Battery_Grid1', 'Battery_Grid2', 'Battery_Grid3']
+                                },
+                                children: {
+                                    IDLE: {
+                                        id: 'IDLE', label: '待机', type: 'atomic', level: 2,
+                                        description: '等待用户操作',
+                                        entryActions: ['获取状态'],
+                                        display: { 
+                                            expects: ['激光关', '显示-----', '模式单次'],
+                                            lcdElements: ['Line4_D1', 'Line4_D2', 'Line4_D3', 'Line4_D4', 'Line4_D5']
+                                        }
+                                    },
+                                    MEASURING: {
+                                        id: 'MEASURING', label: '测量流程', type: 'compound', level: 2, initial: 'LASER_ON',
+                                        description: '测量相关子状态',
+                                        children: {
+                                            LASER_ON: {
+                                                id: 'LASER_ON', label: '激光开启', type: 'atomic', level: 3,
+                                                description: '激光已开启，等待测量',
+                                                entryActions: ['K1短按'],
+                                                display: { expects: ['激光开', '步骤奇数'], lcdElements: ['Line4_D1', 'Line4_D2', 'Line4_D3', 'Line4_D4', 'Line4_D5'] }
+                                            },
+                                            RANGING: {
+                                                id: 'RANGING', label: '测距中', type: 'atomic', level: 3,
+                                                description: '正在测距',
+                                                entryActions: ['K1短按'],
+                                                display: { expects: ['激光开'] }
+                                            },
+                                            RESULT: {
+                                                id: 'RESULT', label: '显示结果', type: 'atomic', level: 3,
+                                                description: '显示测量结果',
+                                                entryActions: ['获取状态'],
+                                                display: { expects: ['激光关', '步骤偶数'], lcdElements: ['Line4_D1', 'Line4_D2', 'Line4_D3', 'Line4_D4', 'Line4_D5', 'Line4_Unit'] }
+                                            },
+                                            ERROR: {
+                                                id: 'ERROR', label: '错误', type: 'atomic', level: 3,
+                                                description: '测量失败',
+                                                entryActions: ['获取状态'],
+                                                display: { expects: ['显示Error', '激光关'], lcdElements: ['Line4_D1', 'Line4_D2', 'Line4_D3', 'Line4_D4', 'Line4_D5'] }
+                                            }
+                                        }
+                                    },
+                                    MODE_SELECT: {
+                                        id: 'MODE_SELECT', label: '模式选择', type: 'compound', level: 2, initial: 'SINGLE',
+                                        description: '选择测量模式',
+                                        children: {
+                                            SINGLE: { id: 'SINGLE', label: '单次测距', type: 'atomic', level: 3, display: { expects: ['模式单次'], lcdElements: ['Mode_s_1_w', 'Mode_s_1_x', 'Mode_s_1_y', 'Mode_s_1_z'] } },
+                                            AREA: {
+                                                id: 'AREA', label: '面积测量', type: 'compound', level: 3, initial: 'AREA_STEP1',
+                                                display: { expects: ['模式面积'], lcdElements: ['Mode_s_2_w', 'Mode_s_2_x', 'Mode_s_2_y', 'Mode_s_2_z', 'Mode_s_2_h'] },
+                                                children: {
+                                                    AREA_STEP1: { id: 'AREA_STEP1', label: '测量长度', type: 'atomic', level: 4, entryActions: ['K1短按'], display: { expects: ['激光开'] } },
+                                                    AREA_STEP2: { id: 'AREA_STEP2', label: '测量宽度', type: 'atomic', level: 4, entryActions: ['K1短按'], display: { expects: ['激光开'] } },
+                                                    AREA_RESULT: { id: 'AREA_RESULT', label: '显示面积', type: 'atomic', level: 4, display: { expects: ['激光关'] } }
+                                                }
+                                            },
+                                            VOLUME: {
+                                                id: 'VOLUME', label: '体积测量', type: 'compound', level: 3, initial: 'VOL_STEP1',
+                                                display: { expects: ['模式体积'], lcdElements: ['Mode_s_3_w', 'Mode_s_3_x', 'Mode_s_3_y1', 'Mode_s_3_y2', 'Mode_s_3_z', 'Mode_s_3_h'] },
+                                                children: {
+                                                    VOL_STEP1: { id: 'VOL_STEP1', label: '测量长度', type: 'atomic', level: 4, entryActions: ['K1短按'] },
+                                                    VOL_STEP2: { id: 'VOL_STEP2', label: '测量宽度', type: 'atomic', level: 4, entryActions: ['K1短按'] },
+                                                    VOL_STEP3: { id: 'VOL_STEP3', label: '测量高度', type: 'atomic', level: 4, entryActions: ['K1短按'] },
+                                                    VOL_RESULT: { id: 'VOL_RESULT', label: '显示体积', type: 'atomic', level: 4, display: { expects: ['激光关'] } }
+                                                }
+                                            },
+                                            PYTHAGORAS: { id: 'PYTHAGORAS', label: '勾股测量', type: 'atomic', level: 3, display: { expects: ['模式勾股1'], lcdElements: ['Mode_s_q'] } },
+                                            CONTINUOUS: { id: 'CONTINUOUS', label: '连续测距', type: 'atomic', level: 3, display: { expects: ['模式连续'] } }
+                                        }
+                                    },
+                                    UNIT_SELECT: {
+                                        id: 'UNIT_SELECT', label: '单位选择', type: 'compound', level: 2, initial: 'METER',
+                                        children: {
+                                            METER: { id: 'METER', label: '米', type: 'atomic', level: 3, entryActions: ['设置单位米'], display: { expects: ['单位米'], lcdElements: ['Line4_Unit'] } },
+                                            FEET: { id: 'FEET', label: '英尺', type: 'atomic', level: 3, entryActions: ['设置单位英尺'], display: { expects: ['单位英尺'], lcdElements: ['Line4_Unit'] } },
+                                            INCH: { id: 'INCH', label: '英寸', type: 'atomic', level: 3, entryActions: ['设置单位英寸'], display: { expects: ['单位英寸'], lcdElements: ['Line4_Unit'] } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                transitions: [
+                    { from: 'OFF', to: 'ON', event: 'K1_XLONG' },
+                    { from: 'ON', to: 'OFF', event: 'K3_XLONG' },
+                    { from: 'IDLE', to: 'MEASURING', event: 'K1_SHORT' },
+                    { from: 'IDLE', to: 'MODE_SELECT', event: 'K2_SHORT' },
+                    { from: 'LASER_ON', to: 'RANGING', event: 'K1_SHORT' },
+                    { from: 'LASER_ON', to: 'IDLE', event: 'K3_SHORT' },
+                    { from: 'RANGING', to: 'RESULT', event: 'MEASURE_OK' },
+                    { from: 'RANGING', to: 'ERROR', event: 'MEASURE_FAIL' },
+                    { from: 'RESULT', to: 'LASER_ON', event: 'K1_SHORT' },
+                    { from: 'RESULT', to: 'IDLE', event: 'K3_SHORT' },
+                    { from: 'ERROR', to: 'IDLE', event: 'K3_SHORT' },
+                    { from: 'SINGLE', to: 'AREA', event: 'K2_SHORT' },
+                    { from: 'AREA', to: 'VOLUME', event: 'K2_SHORT' },
+                    { from: 'VOLUME', to: 'PYTHAGORAS', event: 'K2_SHORT' },
+                    { from: 'PYTHAGORAS', to: 'CONTINUOUS', event: 'K2_SHORT' },
+                    { from: 'CONTINUOUS', to: 'SINGLE', event: 'K2_SHORT' },
+                    { from: 'AREA_STEP1', to: 'AREA_STEP2', event: 'MEASURE_OK' },
+                    { from: 'AREA_STEP2', to: 'AREA_RESULT', event: 'MEASURE_OK' }
+                ],
+                nodePositions: {
+                    'ROOT': { 'OFF': { x: 200, y: 220 }, 'ON': { x: 550, y: 220 } },
+                    'ROOT/ON': { 'IDLE': { x: 200, y: 150 }, 'MEASURING': { x: 520, y: 150 }, 'MODE_SELECT': { x: 200, y: 340 }, 'UNIT_SELECT': { x: 520, y: 340 } },
+                    'ROOT/ON/MEASURING': { 'LASER_ON': { x: 160, y: 150 }, 'RANGING': { x: 420, y: 150 }, 'RESULT': { x: 420, y: 320 }, 'ERROR': { x: 160, y: 320 } },
+                    'ROOT/ON/MODE_SELECT': { 'SINGLE': { x: 140, y: 150 }, 'AREA': { x: 360, y: 150 }, 'VOLUME': { x: 580, y: 150 }, 'PYTHAGORAS': { x: 250, y: 320 }, 'CONTINUOUS': { x: 470, y: 320 } },
+                    'ROOT/ON/MODE_SELECT/AREA': { 'AREA_STEP1': { x: 160, y: 170 }, 'AREA_STEP2': { x: 380, y: 170 }, 'AREA_RESULT': { x: 270, y: 320 } },
+                    'ROOT/ON/MODE_SELECT/VOLUME': { 'VOL_STEP1': { x: 140, y: 170 }, 'VOL_STEP2': { x: 310, y: 170 }, 'VOL_STEP3': { x: 480, y: 170 }, 'VOL_RESULT': { x: 310, y: 320 } },
+                    'ROOT/ON/UNIT_SELECT': { 'METER': { x: 160, y: 200 }, 'FEET': { x: 340, y: 200 }, 'INCH': { x: 520, y: 200 } }
+                }
+            };
+            this.nodePositions = JSON.parse(JSON.stringify(this.machine.nodePositions));
+        },
+
+        loadLcdConfig() {
+            // LCD元素配置用于预览
+            this.lcdConfig = {
+                width: 340,
+                height: 170,
+                bgColor: '#0a1a0a',
+                elements: [
+                    // 第4行数字 (主显示)
+                    { name: 'Line4_D1', x: 30, y: 95, w: 36, h: 50, type: 'digit' },
+                    { name: 'Line4_D2', x: 72, y: 95, w: 36, h: 50, type: 'digit' },
+                    { name: 'Line4_D3', x: 114, y: 95, w: 36, h: 50, type: 'digit' },
+                    { name: 'Line4_D4', x: 156, y: 95, w: 36, h: 50, type: 'digit' },
+                    { name: 'Line4_D5', x: 198, y: 95, w: 36, h: 50, type: 'digit' },
+                    { name: 'Line4_Unit', x: 245, y: 115, w: 30, h: 25, type: 'unit' },
+                    // 模式图标
+                    { name: 'Mode_s_1_w', x: 30, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_1_x', x: 30, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_1_y', x: 30, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_1_z', x: 30, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_2_w', x: 58, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_2_x', x: 58, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_2_y', x: 58, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_2_z', x: 58, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_2_h', x: 58, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_3_w', x: 86, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_3_x', x: 86, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_3_y1', x: 86, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_3_y2', x: 86, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_3_z', x: 86, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_3_h', x: 86, y: 20, w: 22, h: 22, type: 'icon' },
+                    { name: 'Mode_s_q', x: 114, y: 20, w: 22, h: 22, type: 'icon' },
+                    // 电池图标
+                    { name: 'Battery_Frame', x: 280, y: 15, w: 40, h: 20, type: 'icon' },
+                    { name: 'Battery_Grid1', x: 284, y: 18, w: 10, h: 14, type: 'icon' },
+                    { name: 'Battery_Grid2', x: 296, y: 18, w: 10, h: 14, type: 'icon' },
+                    { name: 'Battery_Grid3', x: 308, y: 18, w: 10, h: 14, type: 'icon' },
+                    // 第3行数字
+                    { name: 'Line3_D1', x: 30, y: 55, w: 28, h: 35, type: 'digit' },
+                    { name: 'Line3_D2', x: 62, y: 55, w: 28, h: 35, type: 'digit' },
+                    { name: 'Line3_D3', x: 94, y: 55, w: 28, h: 35, type: 'digit' },
+                    { name: 'Line3_D4', x: 126, y: 55, w: 28, h: 35, type: 'digit' },
+                    { name: 'Line3_D5', x: 158, y: 55, w: 28, h: 35, type: 'digit' },
+                    { name: 'Line3_Unit', x: 195, y: 70, w: 25, h: 18, type: 'unit' }
+                ]
+            };
+        },
+
+        bindEvents() {
+            this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+            this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+            this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+            this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
+            this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
+            this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            document.addEventListener('keydown', (e) => this.onKeyDown(e));
+        },
+
+        resizeCanvas() {
+            const area = document.getElementById('canvas-area');
+            const rect = area.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            this.canvas.width = rect.width * dpr;
+            this.canvas.height = rect.height * dpr;
+            this.canvas.style.width = rect.width + 'px';
+            this.canvas.style.height = rect.height + 'px';
+            this.ctx.scale(dpr, dpr);
+            // LCD Canvas
+            const lcdRect = document.getElementById('lcd-preview').getBoundingClientRect();
+            this.lcdCanvas.width = lcdRect.width * dpr;
+            this.lcdCanvas.height = lcdRect.height * dpr;
+            this.lcdCanvas.style.width = lcdRect.width + 'px';
+            this.lcdCanvas.style.height = lcdRect.height + 'px';
+            this.lcdCtx.scale(dpr, dpr);
+            this.render();
+            this.renderLcdPreview();
+        },
+
+        // 层级导航
+        getCurrentLevelStates() {
+            if (!this.machine?.hierarchy) return {};
+            let current = this.machine.hierarchy.ROOT;
+            if (this.currentPath.length === 1) return current?.children || {};
+            for (let i = 1; i < this.currentPath.length; i++) {
+                const key = this.currentPath[i];
+                if (current?.children?.[key]) current = current.children[key];
+                else return {};
+            }
+            return current?.children || {};
+        },
+
+        getCurrentParent() {
+            if (!this.machine?.hierarchy) return null;
+            if (this.currentPath.length === 1) return this.machine.hierarchy.ROOT;
+            let current = this.machine.hierarchy.ROOT;
+            for (let i = 1; i < this.currentPath.length; i++) {
+                const key = this.currentPath[i];
+                if (current?.children?.[key]) current = current.children[key];
+                else return null;
+            }
+            return current;
+        },
+
+        getStateByPath(path) {
+            if (!this.machine?.hierarchy) return null;
+            if (path.length === 1) return this.machine.hierarchy.ROOT;
+            let current = this.machine.hierarchy.ROOT;
+            for (let i = 1; i < path.length; i++) {
+                if (current.children?.[path[i]]) current = current.children[path[i]];
+                else return null;
+            }
+            return current;
+        },
+
+        drillDown(stateId) {
+            const states = this.getCurrentLevelStates();
+            const state = states[stateId];
+            if (state?.type === 'compound' && state.children && Object.keys(state.children).length > 0) {
+                this.currentPath.push(stateId);
+                this.currentLevel = this.currentPath.length - 1;
+                this.selectedNode = null;
+                const pathKey = this.currentPath.join('/');
+                if (!this.nodePositions[pathKey]) this.autoLayout();
+                this.updateBreadcrumb();
+                this.updateLevelIndicator();
+                this.renderTree();
+                this.showEmptyProperties();
+                this.render();
+                this.renderLcdPreview();
+                return true;
+            }
+            return false;
+        },
+
+        drillUp() {
+            if (this.currentPath.length > 1) {
+                this.currentPath.pop();
+                this.currentLevel = this.currentPath.length - 1;
+                this.selectedNode = null;
+                this.updateBreadcrumb();
+                this.updateLevelIndicator();
+                this.renderTree();
+                this.showEmptyProperties();
+                this.render();
+                this.renderLcdPreview();
+            }
+        },
+
+        navigateToLevel(level) {
+            if (level >= this.currentLevel) {
+                if (level > this.currentLevel) alert('请双击复合状态进入下一层级');
+                return;
+            }
+            while (this.currentPath.length - 1 > level && this.currentPath.length > 1) this.currentPath.pop();
+            this.currentLevel = this.currentPath.length - 1;
+            this.selectedNode = null;
+            this.updateBreadcrumb();
+            this.updateLevelIndicator();
+            this.renderTree();
+            this.showEmptyProperties();
+            this.render();
+            this.renderLcdPreview();
+        },
+
+        navigateToPath(pathIndex) {
+            this.currentPath = this.currentPath.slice(0, pathIndex + 1);
+            this.currentLevel = this.currentPath.length - 1;
+            this.selectedNode = null;
+            this.updateBreadcrumb();
+            this.updateLevelIndicator();
+            this.renderTree();
+            this.showEmptyProperties();
+            this.render();
+            this.renderLcdPreview();
+        },
+
+        autoLayout() {
+            const states = this.getCurrentLevelStates();
+            const keys = Object.keys(states);
+            const cols = Math.ceil(Math.sqrt(keys.length));
+            const spacing = { x: 260, y: 180 };
+            const pathKey = this.currentPath.join('/');
+            if (!this.nodePositions[pathKey]) this.nodePositions[pathKey] = {};
+            keys.forEach((id, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                this.nodePositions[pathKey][id] = { x: 200 + col * spacing.x, y: 180 + row * spacing.y };
+            });
+        },
+
+        updateBreadcrumb() {
+            const container = document.getElementById('breadcrumb');
+            container.innerHTML = this.currentPath.map((p, i) => {
+                const isLast = i === this.currentPath.length - 1;
+                const state = this.getStateByPath(this.currentPath.slice(0, i + 1));
+                const label = state?.label || p;
+                return `${i > 0 ? '<span class="breadcrumb-sep">›</span>' : ''}<span class="breadcrumb-item ${isLast ? 'current' : ''}" onclick="HSM.navigateToPath(${i})">${label}</span>`;
+            }).join('');
+        },
+
+        updateLevelIndicator() {
+            document.querySelectorAll('.level-dot').forEach(dot => {
+                const level = parseInt(dot.dataset.level);
+                dot.classList.toggle('active', level === this.currentLevel);
+            });
+            const hint = document.getElementById('level-hint');
+            const colors = this.LEVEL_COLORS[this.currentLevel] || this.LEVEL_COLORS[4];
+            const levelNames = ['系统层', '开关机', '功能模块', '子状态', '详细步骤'];
+            hint.innerHTML = `<div class="hint-icon" style="background:${colors.bg};color:${colors.text};">L${this.currentLevel}</div><span>${levelNames[this.currentLevel] || '子层级'}</span>`;
+        },
+
+        renderTree() {
+            const container = document.getElementById('tree');
+            const renderNode = (state, path, depth = 0) => {
+                const isCompound = state.type === 'compound' && state.children;
+                const childCount = isCompound ? Object.keys(state.children).length : 0;
+                const isSelected = this.selectedNode?.id === state.id;
+                const isInCurrentPath = this.currentPath.includes(state.id);
+                const parent = this.getStateByPath(path.slice(0, -1));
+                const isInitial = parent?.initial === state.id;
+                let html = `<div class="tree-node"><div class="tree-header ${isCompound ? 'compound' : ''} ${isSelected ? 'selected' : ''} ${isInCurrentPath ? 'current-level' : ''}" onclick="HSM.onTreeNodeClick('${state.id}', ${JSON.stringify(path).replace(/"/g, '&quot;')})" ondblclick="HSM.onTreeNodeDblClick('${state.id}')"><span class="tree-expand ${isCompound ? (isInCurrentPath ? 'expanded' : '') : 'empty'}">▶</span><span class="tree-icon">${isCompound ? '📁' : '📄'}</span><span class="tree-name">${state.label || state.id}</span>${isInitial ? '<span class="tree-badge initial">初始</span>' : ''}${isCompound ? `<span class="tree-badge compound">+${childCount}</span>` : ''}</div>`;
+                if (isCompound && isInCurrentPath) {
+                    html += `<div class="tree-children expanded">`;
+                    for (const [childId, child] of Object.entries(state.children)) html += renderNode(child, [...path, childId], depth + 1);
+                    html += `</div>`;
+                }
+                html += `</div>`;
+                return html;
+            };
+            container.innerHTML = renderNode(this.machine.hierarchy.ROOT, ['ROOT']);
+        },
+
+        onTreeNodeClick(stateId, path) {
+            const state = this.getStateByPath(path);
+            if (state) { 
+                this.selectedNode = state; 
+                this.showProperties(state); 
+                this.render(); 
+                this.renderLcdPreview();
+            }
+        },
+
+        onTreeNodeDblClick(stateId) { this.drillDown(stateId); },
+
+        // 渲染主画布
+        render() {
+            if (!this.ctx) return;
+            const ctx = this.ctx;
+            const rect = this.canvas.getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
+            ctx.save();
+            ctx.translate(this.offset.x, this.offset.y);
+            ctx.scale(this.zoom, this.zoom);
+            const states = this.getCurrentLevelStates();
+            if (Object.keys(states).length > 0) {
+                this.renderTransitions(ctx);
+                this.renderStates(ctx, states);
+            }
+            ctx.restore();
+        },
+
+        // 渲染状态节点 - 增强版：显示动作、期望、LCD元素
+        renderStates(ctx, states) {
+            const pathKey = this.currentPath.join('/');
+            const positions = this.nodePositions[pathKey] || {};
+            const parent = this.getCurrentParent();
+            const initialState = parent?.initial;
+
+            for (const [id, state] of Object.entries(states)) {
+                const pos = positions[id];
+                if (!pos) continue;
+                const isSelected = this.selectedNode?.id === id;
+                const isHovered = this.hoveredNode?.id === id;
+                const isInitial = id === initialState;
+                const isCompound = state.type === 'compound';
+                const level = state.level || this.currentLevel + 1;
+                const colors = this.LEVEL_COLORS[level] || this.LEVEL_COLORS[4];
+
+                // 获取状态信息
+                const entryActions = state.entryActions || [];
+                const display = state.display || {};
+                const expects = display.expects || [];
+                const lcdElements = display.lcdElements || [];
+
+                // 计算节点高度 (根据内容动态调整)
+                let nodeH = 70;
+                if (entryActions.length > 0) nodeH += 18;
+                if (expects.length > 0) nodeH += 18;
+                if (lcdElements.length > 0) nodeH += 18;
+                const w = isCompound ? this.NODE_W + 20 : this.NODE_W;
+                const h = Math.max(nodeH, isCompound ? 90 : 70);
+                const x = pos.x - w / 2;
+                const y = pos.y - h / 2;
+
+                // 阴影
+                if (isSelected || isHovered) {
+                    ctx.shadowColor = isSelected ? colors.border : 'rgba(0,0,0,0.3)';
+                    ctx.shadowBlur = isSelected ? 15 : 8;
+                }
+
+                // 背景
+                ctx.fillStyle = isSelected ? colors.bg : '#2d3748';
+                this.roundRect(ctx, x, y, w, h, this.NODE_R);
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+
+                // 边框
+                ctx.strokeStyle = isInitial ? '#22c55e' : (isSelected ? colors.border : '#4b5563');
+                ctx.lineWidth = isInitial ? 3 : (isSelected ? 2 : 1);
+                if (isCompound) ctx.setLineDash([4, 2]);
+                this.roundRect(ctx, x, y, w, h, this.NODE_R);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 复合状态子状态数量标记
+                if (isCompound) {
+                    const childCount = Object.keys(state.children || {}).length;
+                    ctx.fillStyle = colors.bg;
+                    ctx.fillRect(x + w - 32, y + 4, 28, 14);
+                    ctx.strokeStyle = colors.border;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x + w - 32, y + 4, 28, 14);
+                    ctx.fillStyle = colors.text;
+                    ctx.font = '9px system-ui';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`+${childCount}`, x + w - 18, y + 14);
+                }
+
+                // 初始状态标记
+                if (isInitial) {
+                    ctx.fillStyle = '#22c55e';
+                    ctx.beginPath();
+                    ctx.arc(x - 12, pos.y, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 15, pos.y - 4);
+                    ctx.lineTo(x - 15, pos.y + 4);
+                    ctx.lineTo(x - 9, pos.y);
+                    ctx.fill();
+                }
+
+                // 层级标签
+                ctx.fillStyle = colors.bg;
+                ctx.fillRect(x + 4, y + 4, 22, 12);
+                ctx.fillStyle = colors.text;
+                ctx.font = 'bold 8px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText(`L${level}`, x + 15, y + 12);
+
+                // 状态名称
+                ctx.fillStyle = '#f3f4f6';
+                ctx.font = 'bold 12px system-ui';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                let textY = y + 22;
+                ctx.fillText(state.label || id, pos.x, textY);
+
+                // 状态ID
+                ctx.fillStyle = '#9ca3af';
+                ctx.font = '9px system-ui';
+                textY += 14;
+                ctx.fillText(id, pos.x, textY);
+
+                // 进入动作 (蓝色)
+                if (entryActions.length > 0) {
+                    textY += 14;
+                    ctx.fillStyle = '#3b82f6';
+                    ctx.font = '9px system-ui';
+                    const actionText = '▶ ' + entryActions.slice(0, 2).join(', ') + (entryActions.length > 2 ? '...' : '');
+                    ctx.fillText(actionText, pos.x, textY);
+                }
+
+                // 期望状态 (绿色)
+                if (expects.length > 0) {
+                    textY += 14;
+                    ctx.fillStyle = '#22c55e';
+                    ctx.font = '9px system-ui';
+                    const expectText = '✓ ' + expects.slice(0, 2).join(', ') + (expects.length > 2 ? '...' : '');
+                    ctx.fillText(expectText, pos.x, textY);
+                }
+
+                // LCD元素 (橙色)
+                if (lcdElements.length > 0) {
+                    textY += 14;
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.font = '9px system-ui';
+                    const lcdText = '📺 ' + lcdElements.length + '个元素';
+                    ctx.fillText(lcdText, pos.x, textY);
+                }
+
+                // 双击提示
+                if (isCompound && isHovered) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.font = '9px system-ui';
+                    ctx.fillText('双击进入 →', pos.x, y + h - 8);
+                }
+            }
+        },
+
+        renderTransitions(ctx) {
+            const transitions = this.machine?.transitions || [];
+            const pathKey = this.currentPath.join('/');
+            const positions = this.nodePositions[pathKey] || {};
+            const states = this.getCurrentLevelStates();
+            const events = this.machine?.events || {};
+
+            for (const t of transitions) {
+                if (!states[t.from] || !states[t.to]) continue;
+                const fromPos = positions[t.from];
+                const toPos = positions[t.to];
+                if (!fromPos || !toPos) continue;
+
+                const angle = Math.atan2(toPos.y - fromPos.y, toPos.x - fromPos.x);
+                const startX = fromPos.x + Math.cos(angle) * (this.NODE_W / 2);
+                const startY = fromPos.y + Math.sin(angle) * 35;
+                const endX = toPos.x - Math.cos(angle) * (this.NODE_W / 2 + 10);
+                const endY = toPos.y - Math.sin(angle) * 35;
+
+                const evt = events[t.event] || {};
+                const color = this.getEventColor(evt.category);
+
+                // 线条
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                // 箭头
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX - 10 * Math.cos(angle - 0.3), endY - 10 * Math.sin(angle - 0.3));
+                ctx.lineTo(endX - 10 * Math.cos(angle + 0.3), endY - 10 * Math.sin(angle + 0.3));
+                ctx.closePath();
+                ctx.fill();
+
+                // 标签
+                const midX = (startX + endX) / 2;
+                const midY = (startY + endY) / 2 - 10;
+                const label = evt.label || t.event;
+                const labelW = ctx.measureText(label).width + 10;
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(midX - labelW / 2, midY - 7, labelW, 14);
+                ctx.fillStyle = color;
+                ctx.font = '9px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, midX, midY + 3);
+            }
+        },
+
+        getEventColor(category) {
+            const colors = { key: '#3b82f6', measure: '#22c55e', system: '#ef4444', timer: '#f59e0b' };
+            return colors[category] || '#6b7280';
+        },
+
+        roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        },
+
+        // LCD预览渲染
+        renderLcdPreview() {
+            if (!this.lcdCtx || !this.lcdConfig) return;
+            const ctx = this.lcdCtx;
+            const rect = document.getElementById('lcd-preview').getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            // 背景
+            ctx.fillStyle = '#0a1a0a';
+            ctx.fillRect(0, 0, rect.width, rect.height);
+
+            // 获取当前选中状态的LCD元素
+            let activeElements = [];
+            if (this.selectedNode) {
+                const display = this.selectedNode.display || {};
+                activeElements = display.lcdElements || [];
+            }
+
+            // 计算缩放
+            const scale = Math.min(rect.width / this.lcdConfig.width, rect.height / this.lcdConfig.height) * 0.9;
+            const offsetX = (rect.width - this.lcdConfig.width * scale) / 2;
+            const offsetY = (rect.height - this.lcdConfig.height * scale) / 2;
+
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+
+            // LCD边框
+            ctx.strokeStyle = '#1a3a1a';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, this.lcdConfig.width, this.lcdConfig.height);
+
+            // 渲染所有元素
+            for (const elem of this.lcdConfig.elements) {
+                const isActive = activeElements.includes(elem.name);
+                
+                if (isActive) {
+                    // 高亮显示
+                    ctx.fillStyle = '#00ff88';
+                    ctx.globalAlpha = 0.8;
+                } else {
+                    // 暗淡显示
+                    ctx.fillStyle = '#1a3a1a';
+                    ctx.globalAlpha = 0.3;
+                }
+
+                ctx.fillRect(elem.x, elem.y, elem.w, elem.h);
+                ctx.globalAlpha = 1;
+
+                // 元素边框
+                if (isActive) {
+                    ctx.strokeStyle = '#00ff88';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(elem.x, elem.y, elem.w, elem.h);
+                }
+            }
+
+            ctx.restore();
+
+            // 更新元素计数
+            document.getElementById('lcd-count').textContent = activeElements.length > 0 ? `(${activeElements.length}个)` : '';
+            document.getElementById('lcd-elements-hint').textContent = activeElements.length > 0 ? activeElements.slice(0, 3).join(', ') + (activeElements.length > 3 ? '...' : '') : '选择状态查看LCD';
+        },
+
+        // 交互事件
+        screenToCanvas(x, y) {
+            const rect = this.canvas.getBoundingClientRect();
+            return { x: (x - rect.left - this.offset.x) / this.zoom, y: (y - rect.top - this.offset.y) / this.zoom };
+        },
+
+        hitTest(pos) {
+            const states = this.getCurrentLevelStates();
+            const pathKey = this.currentPath.join('/');
+            const positions = this.nodePositions[pathKey] || {};
+            for (const [id, state] of Object.entries(states)) {
+                const nodePos = positions[id];
+                if (!nodePos) continue;
+                const isCompound = state.type === 'compound';
+                const w = isCompound ? this.NODE_W + 20 : this.NODE_W;
+                const h = 100; // 固定检测高度
+                if (pos.x >= nodePos.x - w/2 && pos.x <= nodePos.x + w/2 && pos.y >= nodePos.y - h/2 && pos.y <= nodePos.y + h/2) return state;
+            }
+            return null;
+        },
+
+        onMouseDown(e) {
+            const pos = this.screenToCanvas(e.clientX, e.clientY);
+            this.dragStart = { x: e.clientX, y: e.clientY };
+            if (this.tool === 'pan' || e.button === 1 || e.shiftKey) {
+                this.isPanning = true;
+                this.canvas.style.cursor = 'grabbing';
+                return;
+            }
+            const node = this.hitTest(pos);
+            if (node) {
+                this.selectedNode = node;
+                this.isDragging = true;
+                const pathKey = this.currentPath.join('/');
+                this.dragNodeStart = { ...this.nodePositions[pathKey]?.[node.id] };
+                this.showProperties(node);
+                this.renderTree();
+                this.renderLcdPreview();
+            } else {
+                this.selectedNode = null;
+                this.showEmptyProperties();
+                this.renderTree();
+                this.renderLcdPreview();
+            }
+            this.render();
+        },
+
+        onMouseMove(e) {
+            const pos = this.screenToCanvas(e.clientX, e.clientY);
+            if (this.isPanning) {
+                this.offset.x += e.clientX - this.dragStart.x;
+                this.offset.y += e.clientY - this.dragStart.y;
+                this.dragStart = { x: e.clientX, y: e.clientY };
+                this.render();
+                return;
+            }
+            if (this.isDragging && this.selectedNode && this.dragNodeStart) {
+                const dx = (e.clientX - this.dragStart.x) / this.zoom;
+                const dy = (e.clientY - this.dragStart.y) / this.zoom;
+                const pathKey = this.currentPath.join('/');
+                if (!this.nodePositions[pathKey]) this.nodePositions[pathKey] = {};
+                this.nodePositions[pathKey][this.selectedNode.id] = { x: this.dragNodeStart.x + dx, y: this.dragNodeStart.y + dy };
+                this.render();
+                return;
+            }
+            const node = this.hitTest(pos);
+            if (node?.id !== this.hoveredNode?.id) {
+                this.hoveredNode = node;
+                this.canvas.style.cursor = node ? 'pointer' : 'default';
+                this.render();
+            }
+        },
+
+        onMouseUp(e) {
+            this.isPanning = false;
+            this.isDragging = false;
+            this.dragNodeStart = null;
+            this.canvas.style.cursor = this.tool === 'pan' ? 'grab' : 'default';
+            this.render();
+        },
+
+        onDoubleClick(e) {
+            const pos = this.screenToCanvas(e.clientX, e.clientY);
+            const node = this.hitTest(pos);
+            if (node) this.drillDown(node.id);
+        },
+
+        onWheel(e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newZoom = Math.max(0.3, Math.min(3, this.zoom * delta));
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            this.offset.x = mouseX - (mouseX - this.offset.x) * (newZoom / this.zoom);
+            this.offset.y = mouseY - (mouseY - this.offset.y) * (newZoom / this.zoom);
+            this.zoom = newZoom;
+            this.render();
+        },
+
+        onKeyDown(e) {
+            if (e.key === 'Escape') this.drillUp();
+        },
+
+        setTool(tool) {
+            this.tool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tool === tool));
+            this.canvas.style.cursor = tool === 'pan' ? 'grab' : 'default';
+        },
+
+        // 属性面板
+        showProperties(state) {
+            const container = document.getElementById('props');
+            const typeSpan = document.getElementById('props-type');
+            typeSpan.textContent = state.type === 'compound' ? '复合状态' : '原子状态';
+            const isCompound = state.type === 'compound';
+            const entryActions = state.entryActions || [];
+            const display = state.display || {};
+            const expects = display.expects || [];
+            const lcdElements = display.lcdElements || [];
+
+            let html = `
+                <div class="form-group"><label>状态ID</label><input type="text" value="${state.id}" readonly style="opacity:0.6;"></div>
+                <div class="form-group"><label>显示名称</label><input type="text" value="${state.label || ''}" onchange="HSM.updateStateLabel('${state.id}', this.value)"></div>
+                <div class="form-group"><label>描述</label><textarea onchange="HSM.updateStateDesc('${state.id}', this.value)">${state.description || ''}</textarea></div>
+                <div class="form-group"><label>层级</label><input type="text" value="L${state.level || 0} - ${this.LEVEL_COLORS[state.level]?.name || '子层级'}" readonly style="opacity:0.6;"></div>
+            `;
+
+            if (entryActions.length > 0) {
+                html += `<div class="section-title">进入动作 (${entryActions.length})</div><div class="tag-list">${entryActions.map(a => `<span class="action-tag">▶ ${a}</span>`).join('')}</div>`;
+            }
+
+            if (expects.length > 0) {
+                html += `<div class="section-title">期望状态 (${expects.length})</div><div class="tag-list">${expects.map(e => `<span class="expect-tag">✓ ${e}</span>`).join('')}</div>`;
+            }
+
+            if (lcdElements.length > 0) {
+                html += `<div class="section-title">LCD元素 (${lcdElements.length})</div><div class="tag-list">${lcdElements.map(e => `<span class="lcd-tag" onclick="HSM.highlightLcdElement('${e}')">📺 ${e}</span>`).join('')}</div>`;
+            }
+
+            // 获取相关转换
+            const transitions = this.machine?.transitions?.filter(t => t.from === state.id || t.to === state.id) || [];
+            if (transitions.length > 0) {
+                html += `<div class="section-title">相关转换 (${transitions.length})</div><div class="child-list">`;
+                transitions.forEach(t => {
+                    const evt = this.machine.events?.[t.event] || {};
+                    const isOutgoing = t.from === state.id;
+                    html += `<div class="transition-item"><span class="event">${evt.label || t.event}</span><span class="arrow">${isOutgoing ? '→' : '←'}</span><span class="target">${isOutgoing ? t.to : t.from}</span></div>`;
+                });
+                html += `</div>`;
+            }
+
+            if (isCompound) {
+                const children = state.children || {};
+                const childKeys = Object.keys(children);
+                html += `<div class="section-title">子状态 (${childKeys.length})</div><div class="child-list">${childKeys.map(key => {
+                    const child = children[key];
+                    const isInitial = state.initial === key;
+                    return `<div class="child-item ${isInitial ? 'initial' : ''}" onclick="HSM.drillDown('${state.id}')"><span>${child.type === 'compound' ? '📁' : '📄'}</span><span style="flex:1;">${child.label || key}</span>${isInitial ? '<span class="tree-badge initial">初始</span>' : ''}</div>`;
+                }).join('')}</div><button class="btn" style="width:100%;margin-top:10px;" onclick="HSM.drillDown('${state.id}')">进入子层级 →</button>`;
+            }
+
+            container.innerHTML = html;
+        },
+
+        showEmptyProperties() {
+            const container = document.getElementById('props');
+            document.getElementById('props-type').textContent = '';
+            container.innerHTML = `<div class="props-empty"><div class="props-empty-icon">🔄</div><div>选择状态查看属性<br><br><span style="font-size:10px;color:var(--text-muted);">💡 双击复合状态进入子层<br>按 Esc 返回上一层</span></div></div>`;
+        },
+
+        updateStateLabel(stateId, value) {
+            const state = this.findState(stateId);
+            if (state) { state.label = value; this.renderTree(); this.render(); }
+        },
+
+        updateStateDesc(stateId, value) {
+            const state = this.findState(stateId);
+            if (state) state.description = value;
+        },
+
+        findState(stateId, node = null) {
+            if (!node) node = this.machine.hierarchy.ROOT;
+            if (node.id === stateId) return node;
+            if (node.children) {
+                for (const child of Object.values(node.children)) {
+                    const found = this.findState(stateId, child);
+                    if (found) return found;
+                }
+            }
+            return null;
+        },
+
+        highlightLcdElement(elemName) {
+            console.log('[HSM] 高亮LCD元素:', elemName);
+            // 可以在这里添加更多交互
+        },
+
+        resetView() {
+            this.zoom = 1;
+            this.offset = { x: 0, y: 0 };
+            this.render();
+        },
+
+        exportJSON() {
+            const data = JSON.stringify(this.machine, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gd303_mini_state_machine.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => HSM.init());
+    </script>
+</body>
+</html>
+</html>

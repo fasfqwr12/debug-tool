@@ -1,0 +1,219 @@
+<div class="page-container" style="display:flex; flex-direction:column; height:calc(100vh - var(--topbar-h, 32px) - 40px); overflow:hidden;">
+    <div class="page-header" style="flex-shrink:0;">
+        <h1>🏭 固件烧录</h1>
+        <button class="help-btn" onclick="switchPage('help_prod')" title="使用说明">❓</button>
+    </div>
+
+    <div class="prod-layout" style="flex:1; min-height:0;">
+        <!-- 左侧：可用固件 -->
+        <div class="panel firmware-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <div class="panel-header">
+                <span>📦 可用固件</span>
+                <span class="badge" id="firmware-count">0</span>
+            </div>
+            <div class="firmware-list" id="firmware-list" style="flex:1; overflow-y:auto;"></div>
+        </div>
+
+        <!-- 中间：烧录操作 -->
+        <div class="panel flash-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <div class="panel-header">
+                <span>⚡ 烧录操作</span>
+            </div>
+            <div class="flash-content" id="flash-content" style="flex:1; overflow-y:auto;">
+                <div class="empty-state">选择左侧固件开始烧录</div>
+            </div>
+            
+            <!-- 固定操作岛 -->
+            <div class="flash-action-island" id="flash-island" style="display:none;">
+                <div class="island-status">
+                    <span class="status-icon" id="flash-status-icon">⏳</span>
+                    <span class="status-text" id="flash-status-text">就绪</span>
+                </div>
+                <div class="island-progress" id="flash-progress-bar" style="display:none;">
+                    <div class="progress-fill" id="flash-progress-fill"></div>
+                </div>
+                <button class="flash-main-btn" id="flash-main-btn" onclick="ProdFlashPage.startFlash()">
+                    🔥 开始烧录
+                </button>
+            </div>
+        </div>
+
+        <!-- 右侧：追溯信息 -->
+        <div class="panel trace-panel" style="display:flex; flex-direction:column; min-height:0;">
+            <div class="panel-header">
+                <span>📋 版本追溯</span>
+                <button class="mini-btn" onclick="ProdFlashPage.exportTrace()" title="导出">📤</button>
+            </div>
+            <div style="padding:12px 12px 0 12px;">
+                <div style="border:1px solid rgba(148,163,184,.25); border-radius:10px; padding:10px; background:rgba(0,0,0,.18);">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                        <div style="font-weight:700;">🔒 生产锁定（Release）</div>
+                        <button class="mini-btn" onclick="ProdFlashPage.refreshReleaseStatus()" title="刷新">🔄</button>
+                    </div>
+                    <div style="margin-top:8px; font-size:12px; line-height:1.6; opacity:.9;">
+                        <div>状态: <span id="prod-release-loaded">-</span></div>
+                        <div>版本: <span id="prod-release-version">-</span></div>
+                        <div>机型: <span id="prod-release-model">-</span></div>
+                        <div>固件CRC: <span id="prod-release-app-crc">-</span></div>
+                        <div>协议CRC: <span id="prod-release-proto-crc">-</span></div>
+                        <div>校验: <span id="prod-release-check">-</span></div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:8px;">
+                        <button class="mini-btn" onclick="ProdFlashPage.updateReleaseFromDevice()">一键锁定当前设备</button>
+                        <button class="mini-btn" onclick="ProdFlashPage.disableRelease()">解除锁定</button>
+                    </div>
+                    <div style="margin-top:6px; font-size:11px; opacity:.7;">说明：锁定后，后续测试会按机型+CRC强校验，防止错刷/错测。</div>
+                </div>
+            </div>
+            <div class="trace-info" id="trace-info" style="flex:1; overflow-y:auto;">
+                <div class="empty-state">选择固件查看追溯</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.prod-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 16px;
+    height: calc(100vh - 140px);
+}
+
+.panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: var(--input-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600; font-size: 13px;
+}
+
+/* 固件列表 */
+.firmware-list { flex: 1; overflow-y: auto; padding: 8px; }
+
+.firmware-item {
+    padding: 14px; border-radius: 8px; cursor: pointer;
+    margin-bottom: 6px; border-left: 3px solid transparent;
+}
+.firmware-item:hover { background: var(--input-bg); }
+.firmware-item.active {
+    background: var(--accent-dim);
+    border-left-color: var(--accent);
+}
+
+.firmware-item .product { font-size: 14px; font-weight: 500; }
+.firmware-item .version { font-size: 16px; color: var(--primary-color); margin-top: 4px; }
+.firmware-item .date { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.firmware-item .active-badge {
+    display: inline-block; background: var(--primary-color); color: var(--text-on-accent);
+    padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;
+}
+
+/* 烧录内容 */
+.flash-content { flex: 1; overflow-y: auto; padding: 24px; }
+
+.flash-header { margin-bottom: 24px; text-align: center; }
+.flash-header h2 { margin: 0; font-size: 24px; }
+.flash-header p { color: var(--text-muted); font-size: 13px; margin-top: 8px; }
+
+.flash-config { margin-bottom: 24px; }
+.config-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+}
+.config-row label { width: 100px; font-size: 13px; color: var(--text-muted); }
+.config-row select, .config-row input {
+    flex: 1; padding: 10px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); font-size: 13px;
+}
+.config-row .mini-btn {
+    padding: 10px 16px; background: var(--input-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-color); font-size: 12px; cursor: pointer;
+}
+.config-row .mini-btn:hover { border-color: var(--primary-color); }
+
+.flash-btn {
+    width: 100%; padding: 20px; border-radius: 12px;
+    background: var(--primary-color); border: none;
+    color: var(--text-on-accent); font-size: 18px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.flash-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px var(--glow-color); }
+
+.flash-progress {
+    margin-top: 24px; display: none;
+}
+.progress-bar { height: 12px; background: var(--input-bg); border-radius: 6px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--primary-color); width: 0; transition: width 0.3s; }
+.progress-text { text-align: center; margin-top: 12px; font-size: 14px; color: var(--text-muted); }
+
+.recent-flash { margin-top: 24px; }
+.recent-flash h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+.flash-log { max-height: 200px; overflow-y: auto; }
+.log-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px; border-radius: 6px; margin-bottom: 4px;
+    font-size: 12px;
+}
+.log-item.success { background: var(--accent-dim); }
+.log-item.error { background: rgba(239, 68, 68, 0.1); }
+.log-item .time { color: var(--text-muted); width: 70px; }
+.log-item .sn { flex: 1; font-family: monospace; }
+.log-item .status { font-weight: 500; }
+.log-item.success .status { color: var(--color-success, var(--primary-color)); }
+.log-item.error .status { color: var(--color-danger, #ef4444); }
+
+/* 追溯信息 */
+.trace-info { flex: 1; overflow-y: auto; padding: 16px; }
+
+.trace-card {
+    padding: 16px; background: var(--input-bg); border-radius: 8px;
+    margin-bottom: 16px;
+}
+.trace-card h4 { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+.trace-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
+.trace-row .label { color: var(--text-muted); }
+
+.trace-timeline { margin-top: 16px; }
+.timeline-item {
+    display: flex; gap: 12px; padding: 10px 0;
+    border-left: 2px solid var(--border-color); margin-left: 8px; padding-left: 16px;
+    position: relative;
+}
+.timeline-item::before {
+    content: ''; position: absolute; left: -5px; top: 14px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--primary-color);
+}
+.timeline-item .time { font-size: 11px; color: var(--text-muted); width: 80px; }
+.timeline-item .event { font-size: 12px; }
+
+.link-btn {
+    display: block; width: 100%; padding: 10px; margin-top: 12px;
+    background: transparent; border: 1px solid var(--border-color);
+    border-radius: 6px; color: var(--text-color); font-size: 12px;
+    cursor: pointer; text-align: center;
+}
+.link-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+.empty-state { color: var(--text-muted); text-align: center; padding: 40px; font-size: 13px; }
+
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-header h1 { margin: 0; font-size: 22px; }
+.help-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    color: var(--text-muted); cursor: pointer; font-size: 14px;
+}
+.help-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+</style>

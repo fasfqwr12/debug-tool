@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIStore v2.0 演示 - 傻瓜式状态管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #81d4fa;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 320px 1fr 380px;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #0f346 #0f3460;
+            padding-bottom: 10px;
+        }
+        
+        .panel h3 {
+            color: #81d4fa;
+            margin: 15px 0 10px;
+            font-size: 14px;
+        }
+        
+        /* 变量控制 */
+        .var-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #0f3460;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .var-item label {
+            font-size: 13px;
+            color: #b0bec5;
+        }
+        
+        .var-item .var-name {
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        
+        .var-item select, .var-item input[type="number"] {
+            background: #1a1a2e;
+            border: 1px solid #4fc3f7;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .var-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .var-item .value-display {
+            font-family: monospace;
+            color: #4caf50;
+            font-size: 14px;
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        /* LCD预览 */
+        .lcd-preview {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lcd-canvas-container {
+            position: relative;
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        #lcdCanvas {
+            display: block;
+        }
+        
+        /* 绑定关系 */
+        .binding-item {
+            background: #0f3460;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .binding-var {
+            color: #4fc3f7;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .binding-targets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .binding-target {
+            background: #1a1a2e;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #81d4fa;
+        }
+        
+        /* 日志 */
+        .log-panel {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        
+        .log-item.state { color: #4caf50; }
+        .log-item.binding { color: #ff9800; }
+        .log-item.hardware { color: #f44336; }
+        
+        /* 组件状态 */
+        .comp-state {
+            background: #0f3460;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .comp-state .comp-name {
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+        
+        .comp-state .comp-value {
+            color: #4caf50;
+            font-family: monospace;
+        }
+        
+        /* 按钮 */
+        .btn {
+            background: #4fc3f7;
+            color: #1a1a2e;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .btn:hover {
+            background: #81d4fa;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        /* 预设快捷按钮 */
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .preset-btn {
+            background: #0f3460;
+            color: #81d4fa;
+            border: 1px solid #4fc3f7;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .preset-btn:hover {
+            background: #4fc3f7;
+            color: #1a1a2e;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎛️ UIStore 状态管理演示</h1>
+    
+    <div class="container">
+        <!-- 左侧：变量控制 -->
+        <div class="panel">
+            <h2>📊 变量控制</h2>
+            
+            <h3>全局状态</h3>
+            <div id="globalsControl"></div>
+            
+            <h3>业务数据</h3>
+            <div id="dataControl"></div>
+            
+            <div class="preset-buttons">
+                <button class="preset-btn" onclick="simulateMeasure()">模拟测量</button>
+                <button class="preset-btn" onclick="simulateContinuous()">连续测量</button>
+                <button class="preset-btn" onclick="UIStore.reset()">重置</button>
+            </div>
+        </div>
+        
+        <!-- 中间：LCD预览 -->
+        <div class="panel">
+            <h2>📺 LCD预览</h2>
+            <div class="lcd-preview">
+                <div class="lcd-canvas-container">
+                    <canvas id="lcdCanvas" width="400" height="200"></canvas>
+                </div>
+            </div>
+            
+            <h3>组件状态</h3>
+            <div id="compStates" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+        
+        <!-- 右侧：绑定关系和日志 -->
+        <div class="panel">
+            <h2>🔗 绑定关系</h2>
+            <div id="bindingList"></div>
+            
+            <h3>📝 操作日志</h3>
+            <div class="log-panel" id="logPanel"></div>
+        </div>
+    </div>
+
+    <!-- 加载依赖 -->
+    <script src="../js/device_config_manager.js"></script>
+    <script src="../js/lcd_runtime.js"></script>
+    <script src="../js/ui_store.js"></script>
+    
+    <script>
+        // ========== 初始化 ==========
+        async function init() {
+            // 初始化 UIStore
+            await UIStore.init('gd303_mini');
+            
+            // 初始化 LcdRuntime
+            if (typeof LcdRuntime !== 'undefined') {
+                await LcdRuntime.init('gd303_mini');
+            }
+            
+            // 渲染UI
+            renderGlobalsControl();
+            renderDataControl();
+            renderBindingList();
+            renderCompStates();
+            
+            // 监听事件
+            UIStore.on('onStateChange', (e) => {
+                addLog('state', `${e.name} = ${e.value}`);
+                renderCompStates();
+                updateLcdPreview();
+            });
+            
+            UIStore.on('onBindingUpdate', (e) => {
+                addLog('binding', `${e.varName} → ${e.compId}`);
+            });
+            
+            UIStore.on('onHardware', (e) => {
+                addLog('hardware', `${e.type}(${e.value})`);
+            });
+            
+            // 初始渲染LCD
+            updateLcdPreview();
+        }
+        
+        // ========== 渲染全局状态控制 ==========
+        function renderGlobalsControl() {
+            const container = document.getElementById('globalsControl');
+            const defs = UIStore.getVariableDefs().globals;
+            
+            let html = '';
+            for (const [name, def] of Object.entries(defs)) {
+                const value = UIStore.get(name);
+                
+                if (def.type === 'bool') {
+                    html += `
+                        <div class="var-item">
+                            <label><span class="var-name">${name}</span><br>${def.description}</label>
+                            <input type="checkbox" ${value ? 'checked' : ''} 
+                                   onchange="UIStore.set('${name}', this.checked)">
+                        </div>
+                    `;
+                } else if (def.options) {
+                    html += `
+                        <div class="var-item">
+                            <label><span class="var-name">${name}</span><br>${def.description}</label>
+                            <select onchange="UIStore.set('${name}', parseInt(this.value))">
+                                ${def.options.map(opt => 
+                                    `<option value="${opt.value}" ${value === opt.value ? 'selected' : ''}>${opt.label}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="var-item">
+                            <label><span class="var-name">${name}</span><br>${def.description}</label>
+                            <input type="number" value="${value}" min="${def.min || 0}" max="${def.max || 100}"
+                                   style="width: 80px;"
+                                   onchange="UIStore.set('${name}', parseInt(this.value))">
+                        </div>
+                    `;
+                }
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // ========== 渲染业务数据控制 ==========
+        function renderDataControl() {
+            const container = document.getElementById('dataControl');
+            const defs = UIStore.getVariableDefs().data;
+            
+            let html = '';
+            for (const [name, def] of Object.entries(defs)) {
+                const value = UIStore.get(name);
+                
+                html += `
+                    <div class="var-item">
+                        <label><span class="var-name">${name}</span></label>
+                        <input type="number" value="${value}" step="0.001"
+                               style="width: 100px;"
+                               onchange="UIStore.set('${name}', parseFloat(this.value))">
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // ========== 渲染绑定关系 ==========
+        function renderBindingList() {
+            const container = document.getElementById('bindingList');
+            const bindings = UIStore.getBindingIndex();
+            
+            let html = '';
+            for (const [varName, targets] of Object.entries(bindings)) {
+                html += `
+                    <div class="binding-item">
+                        <div class="binding-var">${varName}</div>
+                        <div class="binding-targets">
+                            ${targets.map(t => `<span class="binding-target">${t}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (!html) {
+                html = '<div style="color: #666; font-size: 13px;">暂无绑定关系<br>请在组件编辑器中配置</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // ========== 渲染组件状态 ==========
+        function renderCompStates() {
+            const container = document.getElementById('compStates');
+            
+            if (typeof LcdRuntime === 'undefined') {
+                container.innerHTML = '<div style="color: #666;">LcdRuntime 未加载</div>';
+                return;
+            }
+            
+            const states = LcdRuntime.state.componentStates;
+            let html = '';
+            
+            for (const [compId, state] of Object.entries(states)) {
+                const stateStr = JSON.stringify(state);
+                html += `
+                    <div class="comp-state">
+                        <span class="comp-name">${compId}</span>: 
+                        <span class="comp-value">${stateStr}</span>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html || '<div style="color: #666;">无组件状态</div>';
+        }
+        
+        // ========== 更新LCD预览 ==========
+        function updateLcdPreview() {
+            const canvas = document.getElementById('lcdCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清空
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 简单文字显示当前状态
+            ctx.fillStyle = '#4fc3f7';
+            ctx.font = '14px monospace';
+            
+            const globals = UIStore.getGlobals();
+            const data = UIStore.getData();
+            
+            let y = 30;
+            ctx.fillText('=== 全局状态 ===', 20, y); y += 20;
+            ctx.fillStyle = '#4caf50';
+            ctx.fillText(`unit: ${['m', 'ft', 'in'][globals.unit]}`, 20, y); y += 18;
+            ctx.fillText(`laser: ${globals.laser_on ? 'ON' : 'OFF'}`, 20, y); y += 18;
+            ctx.fillText(`backlight: ${globals.backlight_on ? 'ON' : 'OFF'}`, 20, y); y += 18;
+            ctx.fillText(`base: ${globals.base_back ? '后基准' : '前基准'}`, 20, y); y += 18;
+            ctx.fillText(`beep: ${globals.beep_enable ? 'ON' : 'OFF'}`, 20, y); y += 18;
+            ctx.fillText(`battery: ${globals.battery}`, 20, y); y += 30;
+            
+            ctx.fillStyle = '#4fc3f7';
+            ctx.fillText('=== 业务数据 ===', 20, y); y += 20;
+            ctx.fillStyle = '#ff9800';
+            ctx.fillText(`distance: ${data.distance.toFixed(3)}`, 20, y); y += 18;
+            ctx.fillText(`line4: ${data.line4_data.toFixed(3)}`, 20, y); y += 18;
+            ctx.fillText(`line3: ${data.line3_data.toFixed(3)}`, 20, y); y += 18;
+            ctx.fillText(`max: ${data.max_data.toFixed(3)}`, 200, 100);
+            ctx.fillText(`min: ${data.min_data.toFixed(3)}`, 200, 118);
+        }
+        
+        // ========== 日志 ==========
+        function addLog(type, msg) {
+            const panel = document.getElementById('logPanel');
+            const time = new Date().toLocaleTimeString();
+            panel.innerHTML = `<div class="log-item ${type}">[${time}] ${msg}</div>` + panel.innerHTML;
+            
+            // 限制日志数量
+            while (panel.children.length > 50) {
+                panel.removeChild(panel.lastChild);
+            }
+        }
+        
+        // ========== 模拟操作 ==========
+        function simulateMeasure() {
+            const dist = (Math.random() * 30 + 1).toFixed(3);
+            UIStore.set('laser_on', true);
+            
+            setTimeout(() => {
+                UIStore.set('distance', parseFloat(dist));
+                UIStore.set('line4_data', parseFloat(dist));
+                UIStore.set('laser_on', false);
+                addLog('state', `测量完成: ${dist}m`);
+            }, 500);
+        }
+        
+        function simulateContinuous() {
+            UIStore.set('laser_on', true);
+            UIStore.set('max_data', -1);
+            UIStore.set('min_data', -1);
+            
+            let count = 0;
+            const interval = setInterval(() => {
+                const dist = (Math.random() * 10 + 5).toFixed(3);
+                const distNum = parseFloat(dist);
+                
+                UIStore.set('distance', distNum);
+                UIStore.set('line4_data', distNum);
+                
+                const max = UIStore.get('max_data');
+                const min = UIStore.get('min_data');
+                
+                if (max < 0 || distNum > max) UIStore.set('max_data', distNum);
+                if (min < 0 || distNum < min) UIStore.set('min_data', distNum);
+                
+                count++;
+                if (count >= 10) {
+                    clearInterval(interval);
+                    UIStore.set('laser_on', false);
+                    addLog('state', '连续测量结束');
+                }
+            }, 300);
+        }
+        
+        // 启动
+        init();
+    </script>
+</body>
+</html>

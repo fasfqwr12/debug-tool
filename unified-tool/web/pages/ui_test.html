@@ -1,0 +1,3034 @@
+<!-- UI自动化测试页面 - 从测试模板加载并执行 -->
+<div class="uit-page">
+<style>
+/* ===== UI测试页面样式 ===== */
+.uit-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 12px;
+    gap: 10px;
+}
+
+/* 工具栏 */
+.uit-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.uit-toolbar-left { display: flex; align-items: center; gap: 8px; }
+.uit-toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+.uit-status { font-size: 12px; color: var(--text-muted); }
+.uit-status.connected { color: var(--accent); }
+.uit-device-model {
+    font-weight: 600; color: var(--accent);
+    padding: 4px 8px; background: rgba(0,255,136,0.1);
+    border-radius: 4px; font-size: 13px;
+}
+.uit-progress { font-size: 12px; color: var(--text-muted); margin-left: 12px; }
+.uit-progress .pass { color: var(--color-success, #00ff88); }
+.uit-progress .fail { color: var(--color-danger, #ff6b6b); }
+</style>
+
+<style>
+/* 主内容区 */
+.uit-main { display: flex; gap: 10px; flex: 1; min-height: 0; }
+
+/* 面板通用样式 */
+.uit-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex; flex-direction: column; overflow: hidden;
+}
+.uit-panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-bottom: 1px solid var(--border-color);
+    font-size: 13px; font-weight: 500; color: var(--text-color); flex-shrink: 0;
+}
+
+/* 左侧：分组列表 */
+.uit-groups { width: 220px; flex-shrink: 0; }
+.uit-group-list { flex: 1; overflow-y: auto; padding: 6px; }
+.uit-group-item {
+    padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 12px; margin-bottom: 4px; transition: background 0.2s;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.uit-group-item:hover { background: var(--input-bg); }
+.uit-group-item.selected { background: rgba(0,255,136,0.1); border: 1px solid var(--accent); }
+.uit-group-item .name { flex: 1; color: var(--text-color); }
+.uit-group-item .stats { font-size: 11px; color: var(--text-muted); }
+.uit-group-item .stats .pass { color: var(--color-success, #00ff88); }
+.uit-group-item .stats .fail { color: var(--color-danger, #ff6b6b); }
+
+/* 中间：测试项列表 */
+.uit-items { flex: 1; min-width: 300px; }
+.uit-item-list { flex: 1; overflow-y: auto; padding: 6px; }
+.uit-item {
+    padding: 8px 10px; margin-bottom: 6px; background: var(--input-bg);
+    border-radius: 6px; border-left: 3px solid var(--border-color);
+    display: flex; align-items: center; gap: 8px;
+}
+.uit-item.passed { border-left-color: var(--color-success, #00ff88); }
+.uit-item.failed { border-left-color: var(--color-danger, #ff6b6b); }
+.uit-item.running { border-left-color: var(--color-warning, #ffa500); background: rgba(255,165,0,0.1); }
+.uit-item .check { flex-shrink: 0; }
+.uit-item .info { flex: 1; min-width: 0; }
+.uit-item .name { font-size: 13px; color: var(--text-color); font-weight: 500; }
+.uit-item .desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.uit-item .auto-badge {
+    font-size: 10px; color: var(--accent); background: rgba(0,255,136,0.1);
+    padding: 2px 6px; border-radius: 4px; margin-left: 6px;
+}
+.uit-item .actions { display: flex; gap: 4px; flex-shrink: 0; }
+.uit-item .result { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.uit-item .result.error { color: var(--color-danger, #ff6b6b); }
+
+/* 右侧：设备状态 + 手动控制 */
+.uit-control { width: 420px; flex-shrink: 0; overflow-y: auto; }
+.uit-lcd-container { 
+    padding: 16px; 
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(145deg, #0d1117, #161b22);
+    border-radius: 8px;
+    margin: 8px;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+    min-height: 280px;
+    overflow: auto;
+}
+.uit-lcd-container canvas {
+    border: 3px solid #2a3a4a;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,230,118,0.1);
+    /* 移除max-width限制，让canvas按实际大小显示 */
+}
+.uit-device-status-detail { padding: 0 12px 8px; font-size: 12px; }
+.uit-device-status { padding: 8px 12px; font-size: 12px; }
+.uit-status-row {
+    display: flex; justify-content: space-between; padding: 3px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.uit-status-row:last-child { border-bottom: none; }
+.uit-status-row span:first-child { color: var(--text-muted); }
+.uit-status-row span:last-child { color: var(--text-color); font-family: var(--font-mono, monospace); }
+.uit-status-row.highlight span:last-child { color: var(--accent); font-weight: 600; }
+
+.uit-manual-ctrl { padding: 10px; }
+.uit-key-group { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.uit-key-label { font-size: 11px; color: var(--text-muted); width: 50px; flex-shrink: 0; }
+.uit-sim-group, .uit-unit-group { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.uit-sim-group label, .uit-unit-group label { font-size: 12px; color: var(--text-muted); }
+.uit-sim-group input { width: 70px; }
+
+/* 底部：执行日志 */
+.uit-log { height: 160px; flex-shrink: 0; }
+.uit-log-content {
+    flex: 1; overflow-y: auto; padding: 6px 10px;
+    font-family: var(--font-mono, 'Consolas', monospace);
+    font-size: 11px; line-height: 1.5;
+    user-select: text; /* 允许选择复制 */
+    cursor: text;
+}
+.uit-log-item { margin-bottom: 2px; user-select: text; }
+.uit-log-item.tx { color: #00d4ff; }
+.uit-log-item.rx { color: #a78bfa; }
+.uit-log-item.pass { color: var(--color-success, #00ff88); }
+.uit-log-item.fail { color: var(--color-danger, #ff6b6b); }
+.uit-log-item.info { color: var(--text-muted); }
+.uit-log-item.step { color: var(--color-warning, #ffa500); }
+.uit-log-time { color: var(--text-dim); margin-right: 6px; }
+.uit-log-raw { color: #888; font-size: 10px; margin-left: 20px; word-break: break-all; }
+
+/* 步骤预览面板 - 按测试项分组 */
+.uit-steps-preview { 
+    height: 280px; 
+    flex-shrink: 0; 
+    display: none; /* 默认隐藏 */
+    flex-direction: column;
+}
+.uit-steps-preview.visible { display: flex; }
+.uit-steps-list {
+    flex: 1; overflow-x: auto; overflow-y: hidden;
+    padding: 10px; display: flex; gap: 16px;
+    background: var(--input-bg);
+}
+
+/* 测试项分组容器 */
+.uit-case-group {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-width: 280px;
+    max-width: 400px;
+}
+.uit-case-group.approved { border-color: var(--color-success, #00ff88); }
+.uit-case-group.rejected { border-color: var(--color-danger, #ff6b6b); }
+.uit-case-group-header {
+    padding: 8px 12px;
+    background: var(--input-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+}
+.uit-case-group-header .case-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.uit-case-group-header .case-stats {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: 8px;
+}
+.uit-case-group-header .case-judge {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+}
+.uit-case-group-header .judge-btn {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: transparent;
+}
+.uit-case-group-header .judge-btn.pass { color: var(--color-success); border-color: var(--color-success); }
+.uit-case-group-header .judge-btn.fail { color: var(--color-danger); border-color: var(--color-danger); }
+.uit-case-group-header .judge-btn.pass:hover, .uit-case-group-header .judge-btn.pass.active { background: var(--color-success); color: #000; }
+.uit-case-group-header .judge-btn.fail:hover, .uit-case-group-header .judge-btn.fail.active { background: var(--color-danger); color: #fff; }
+
+/* 分组内的步骤列表 - 横向滚动 */
+.uit-case-steps {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    overflow-x: auto;
+    flex: 1;
+}
+
+/* 分组内的步骤卡片 - 更紧凑 */
+.uit-step-card {
+    flex-shrink: 0; width: 160px; background: var(--card-bg);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    overflow: hidden; display: flex; flex-direction: column;
+    cursor: pointer; transition: transform 0.2s;
+}
+.uit-step-card:hover { transform: scale(1.02); }
+.uit-step-card.current { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,255,136,0.3); }
+.uit-step-card.success { border-left: 3px solid var(--color-success, #00ff88); }
+.uit-step-card.fail { border-left: 3px solid var(--color-danger, #ff6b6b); }
+.uit-step-header {
+    padding: 4px 8px; background: var(--input-bg);
+    font-size: 10px; font-weight: 600; color: var(--text-color);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.uit-step-header .cmd { font-family: var(--font-mono); color: var(--accent); font-size: 10px; }
+.uit-step-header .time { font-size: 9px; color: var(--text-muted); font-weight: normal; }
+.uit-step-lcd {
+    height: 80px; display: flex; justify-content: center; align-items: center;
+    background: #0c1821; padding: 4px;
+}
+.uit-step-lcd img { max-width: 100%; max-height: 100%; border-radius: 4px; }
+/* 步骤评判状态 */
+.uit-step-judge {
+    padding: 4px 10px; font-size: 11px; text-align: center;
+    background: var(--input-bg); border-top: 1px solid var(--border-color);
+}
+.uit-step-judge[data-judge="pass"] { background: rgba(0,255,136,0.15); color: var(--color-success, #00ff88); }
+.uit-step-judge[data-judge="fail"] { background: rgba(255,107,107,0.15); color: var(--color-danger, #ff6b6b); }
+.uit-step-judge[data-judge="pending"] { color: var(--text-muted); }
+.uit-step-data {
+    padding: 6px 10px; font-size: 10px; color: var(--text-muted);
+    flex: 1; overflow: hidden;
+}
+.uit-step-data .tx, .uit-step-data .rx {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+.uit-step-data .tx { color: #00d4ff; }
+.uit-step-data .rx { color: #a78bfa; }
+
+/* 人工评判面板 */
+.uit-step-judge-panel {
+    background: var(--input-bg); border-radius: 8px;
+    padding: 16px; margin-bottom: 16px; text-align: center;
+}
+.uit-step-judge-panel .judge-title {
+    font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-color);
+}
+.uit-step-judge-panel .judge-buttons {
+    display: flex; gap: 12px; justify-content: center; margin-bottom: 10px;
+}
+.uit-step-judge-panel .judge-btn {
+    padding: 10px 24px; border-radius: 6px; font-size: 14px;
+    cursor: pointer; border: 2px solid var(--border-color);
+    background: transparent; color: var(--text-muted);
+    transition: all 0.2s;
+}
+.uit-step-judge-panel .judge-btn.pass { border-color: var(--color-success, #00ff88); color: var(--color-success, #00ff88); }
+.uit-step-judge-panel .judge-btn.fail { border-color: var(--color-danger, #ff6b6b); color: var(--color-danger, #ff6b6b); }
+.uit-step-judge-panel .judge-btn.pass:hover { background: rgba(0,255,136,0.2); }
+.uit-step-judge-panel .judge-btn.fail:hover { background: rgba(255,107,107,0.2); }
+.uit-step-judge-panel .judge-btn.pass.active { background: var(--color-success, #00ff88); color: #000; }
+.uit-step-judge-panel .judge-btn.fail.active { background: var(--color-danger, #ff6b6b); color: #fff; }
+.uit-step-judge-panel .judge-status {
+    font-size: 12px; color: var(--text-muted);
+}
+
+/* 评判统计 */
+#uit-judge-stats {
+    display: flex; gap: 16px; justify-content: center; padding: 8px;
+    background: var(--input-bg); border-radius: 6px; margin-top: 8px;
+}
+#uit-judge-stats .stat-item { font-size: 12px; color: var(--text-muted); }
+#uit-judge-stats .stat-item.pass { color: var(--color-success, #00ff88); }
+#uit-judge-stats .stat-item.fail { color: var(--color-danger, #ff6b6b); }
+#uit-judge-stats .stat-item.pending { color: var(--text-muted); }
+
+/* 步骤详情弹窗 */
+.uit-step-modal {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8); z-index: 1000;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px;
+}
+.uit-step-modal-content {
+    background: var(--card-bg); border-radius: 12px;
+    max-width: 800px; width: 100%; max-height: 90vh;
+    overflow: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.uit-step-modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.uit-step-modal-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+.uit-step-modal-close {
+    background: none; border: none; font-size: 24px;
+    color: var(--text-muted); cursor: pointer;
+}
+.uit-step-modal-close:hover { color: var(--text-color); }
+.uit-step-modal-body { padding: 20px; }
+.uit-step-modal-lcd {
+    text-align: center; margin-bottom: 20px;
+    background: #0c1821; padding: 20px; border-radius: 8px;
+}
+.uit-step-modal-lcd img { max-width: 100%; border-radius: 8px; }
+.uit-step-modal-data { font-size: 13px; }
+.uit-step-modal-data .row {
+    display: flex; padding: 8px 0; border-bottom: 1px solid var(--border-color);
+}
+.uit-step-modal-data .row:last-child { border-bottom: none; }
+.uit-step-modal-data .label { width: 80px; color: var(--text-muted); flex-shrink: 0; }
+.uit-step-modal-data .value { flex: 1; color: var(--text-color); word-break: break-all; font-family: var(--font-mono); }
+.uit-step-modal-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; margin-bottom: 12px; border-bottom: 1px solid var(--border-color);
+}
+.uit-step-modal-nav .uit-btn { min-width: 100px; }
+
+/* 按钮样式 */
+.uit-btn {
+    padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border-color);
+    background: var(--card-bg); color: var(--text-color); cursor: pointer;
+    font-size: 11px; transition: all 0.2s;
+}
+.uit-btn:hover { border-color: var(--accent); color: var(--accent); }
+.uit-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--text-on-accent, #000); }
+.uit-btn.danger { border-color: var(--color-danger, #ff6b6b); color: var(--color-danger, #ff6b6b); }
+.uit-btn.success { border-color: var(--color-success, #00ff88); color: var(--color-success, #00ff88); }
+.uit-btn.sm { padding: 3px 6px; font-size: 10px; }
+.uit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 输入框 */
+.uit-input, .uit-select {
+    padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px;
+    background: var(--input-bg); color: var(--text-color); font-size: 12px;
+}
+.uit-input:focus, .uit-select:focus { outline: none; border-color: var(--accent); }
+
+/* 空状态 */
+.uit-empty { text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 12px; }
+</style>
+
+<!-- 工具栏 -->
+<div class="uit-toolbar">
+    <div class="uit-toolbar-left">
+        <!-- 设备选择器 -->
+        <div id="uit-device-selector" class="device-selector-container" style="min-width: 180px;"></div>
+        <span class="uit-status" id="uit-serial-status">⚪ 未连接</span>
+        <span class="uit-progress" id="uit-progress"></span>
+    </div>
+    <div class="uit-toolbar-right">
+        <button class="uit-btn" onclick="UITestPage.refreshStatus()">🔄 刷新状态</button>
+        <button class="uit-btn primary" onclick="UITestPage.runSelected()" id="btn-run">▶ 运行选中</button>
+        <button class="uit-btn primary" onclick="UITestPage.runAll()" id="btn-run-all">▶▶ 运行全部</button>
+        <button class="uit-btn danger" onclick="UITestPage.stop()" id="btn-stop" disabled>⏹ 停止</button>
+        <button class="uit-btn" onclick="UITestPage.exportReport()">📄 导出HTML</button>
+        <button class="uit-btn" onclick="UITestPage.exportDocReport()" style="background:var(--accent);color:#000;">📝 导出DOC</button>
+        <button class="uit-btn" onclick="UITestPage.toggleDelaySettings()" title="延时设置">⚙️</button>
+    </div>
+</div>
+
+<!-- 延时设置面板 -->
+<div id="uit-delay-settings" style="display:none; padding:10px 14px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <span style="font-size:12px; color:var(--text-muted); font-weight:500;">⏱️ 延时设置(ms):</span>
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+            调试模式后: <input type="number" id="delay-afterDebugMode" value="30" min="0" max="500" style="width:50px;" onchange="UITestPage.updateDelays()">
+        </label>
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+            清除后: <input type="number" id="delay-afterKeyClear" value="50" min="0" max="500" style="width:50px;" onchange="UITestPage.updateDelays()">
+        </label>
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+            验证前: <input type="number" id="delay-beforeVerify" value="80" min="0" max="500" style="width:50px;" onchange="UITestPage.updateDelays()">
+        </label>
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+            按键后: <input type="number" id="delay-afterKeyCmd" value="100" min="0" max="500" style="width:50px;" onchange="UITestPage.updateDelays()">
+        </label>
+        <button class="uit-btn sm" onclick="UITestPage.resetDelays()" style="font-size:11px;">重置默认</button>
+    </div>
+</div>
+
+<div class="uit-main">
+    <!-- 左侧：分组列表 -->
+    <div class="uit-panel uit-groups">
+        <div class="uit-panel-header">
+            <span>📁 测试分组</span>
+            <label style="font-size:11px;color:var(--text-muted)">
+                <input type="checkbox" id="uit-check-all" onchange="UITestPage.toggleAll()"> 全选
+            </label>
+        </div>
+        <div class="uit-group-list" id="uit-group-list">
+            <div class="uit-empty">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 中间：测试项列表 -->
+    <div class="uit-panel uit-items">
+        <div class="uit-panel-header">
+            <span id="uit-items-title">📋 测试项</span>
+            <span id="uit-items-stats" style="font-size:11px;color:var(--text-muted)"></span>
+        </div>
+        <div class="uit-item-list" id="uit-item-list">
+            <div class="uit-empty">选择一个分组查看测试项</div>
+        </div>
+    </div>
+
+    <!-- 右侧：LCD模拟 + 设备状态 + 手动控制 -->
+    <div class="uit-panel uit-control">
+        <div class="uit-panel-header"><span>📺 LCD模拟</span>
+            <div style="display:flex;gap:4px;">
+                <button class="uit-btn sm" onclick="UITestPage.zoomLcd(-0.1)" title="缩小">➖</button>
+                <button class="uit-btn sm" onclick="UITestPage.zoomLcd(0.1)" title="放大">➕</button>
+                <button class="uit-btn sm" onclick="UITestPage.zoomLcd(0)" title="重置">🔄</button>
+            </div>
+        </div>
+        <div class="uit-lcd-container">
+            <canvas id="lcd-canvas"></canvas>
+        </div>
+        
+        <div class="uit-panel-header" style="margin-top:6px"><span>📡 设备状态</span>
+            <button class="uit-btn sm" onclick="UITestPage.toggleStatusDetail()" id="btn-toggle-status">展开</button>
+        </div>
+        <div class="uit-device-status" id="uit-device-status">
+            <div class="uit-status-row"><span>state</span><span id="ds-state">-</span></div>
+            <div class="uit-status-row"><span>mode</span><span id="ds-mode">-</span></div>
+            <div class="uit-status-row"><span>base</span><span id="ds-base">-</span></div>
+            <div class="uit-status-row"><span>unit</span><span id="ds-unit">-</span></div>
+            <div class="uit-status-row"><span>laser</span><span id="ds-laser">-</span></div>
+            <div class="uit-status-row highlight"><span>line4</span><span id="ds-line4">-</span></div>
+        </div>
+        <div class="uit-device-status-detail" id="uit-device-status-detail" style="display:none">
+            <div class="uit-status-row"><span>backlight</span><span id="ds-backlight">-</span></div>
+            <div class="uit-status-row"><span>beep</span><span id="ds-beep">-</span></div>
+            <div class="uit-status-row"><span>runstep</span><span id="ds-runstep">-</span></div>
+            <div class="uit-status-row"><span>last_step</span><span id="ds-last_step">-</span></div>
+            <div class="uit-status-row"><span>idle</span><span id="ds-idle">-</span></div>
+            <div class="uit-status-row"><span>max</span><span id="ds-max">-</span></div>
+            <div class="uit-status-row"><span>min</span><span id="ds-min">-</span></div>
+            <div class="uit-status-row"><span>line3</span><span id="ds-line3">-</span></div>
+            <div class="uit-status-row"><span>line2</span><span id="ds-line2">-</span></div>
+            <div class="uit-status-row"><span>line1</span><span id="ds-line1">-</span></div>
+        </div>
+
+        <div class="uit-panel-header" style="margin-top:6px"><span>🎮 手动控制</span>
+            <select id="uit-keymap-type" class="uit-select" style="font-size:11px;padding:2px 6px;" onchange="UITestPage.loadKeymap()">
+                <option value="auto">自动检测</option>
+                <option value="default">Mini 3键</option>
+                <option value="gd303">GD303 7键</option>
+            </select>
+        </div>
+        <div class="uit-manual-ctrl">
+            <!-- 动态生成的按键区域 -->
+            <div id="uit-keymap-buttons" style="margin-bottom:8px;">
+                <!-- 按键按钮将由 JavaScript 动态生成 -->
+            </div>
+            <div class="uit-sim-group">
+                <label>模拟:</label>
+                <input type="number" id="uit-sim-dist" class="uit-input" value="5000" style="width:65px">
+                <span style="font-size:10px;color:var(--text-muted)">mm</span>
+                <button class="uit-btn sm success" onclick="UITestPage.simOk()">✅OK</button>
+                <button class="uit-btn sm danger" onclick="UITestPage.simErr()">❌ERR</button>
+            </div>
+            <div class="uit-unit-group">
+                <label>单位:</label>
+                <button class="uit-btn sm" onclick="UITestPage.setUnit(0)">m</button>
+                <button class="uit-btn sm" onclick="UITestPage.setUnit(1)">ft</button>
+                <button class="uit-btn sm" onclick="UITestPage.setUnit(2)">in</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 步骤预览面板 -->
+<div class="uit-panel uit-steps-preview" id="uit-steps-preview">
+    <div class="uit-panel-header">
+        <span>📸 步骤记录</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:11px;color:var(--text-muted);">批量评判:</span>
+            <button class="uit-btn sm" style="color:var(--color-success);" onclick="UITestPage.judgeAllPending('pass')">✅ 全部通过</button>
+            <button class="uit-btn sm" style="color:var(--color-danger);" onclick="UITestPage.judgeAllPending('fail')">❌ 全部不通过</button>
+            <button class="uit-btn sm" onclick="UITestPage.clearSteps()">清空</button>
+            <button class="uit-btn sm" onclick="UITestPage.toggleStepsPreview()">收起</button>
+        </div>
+    </div>
+    <div id="uit-judge-stats"></div>
+    <div class="uit-steps-list" id="uit-steps-list">
+        <div class="uit-empty" style="width:100%;text-align:center;padding:40px;">运行测试后显示每步记录，点击卡片可预览和评判</div>
+    </div>
+</div>
+
+<!-- 底部：执行日志 -->
+<div class="uit-panel uit-log">
+    <div class="uit-panel-header">
+        <span>📜 执行日志</span>
+        <div>
+            <button class="uit-btn sm" onclick="UITestPage.toggleStepsPreview()">📸 步骤</button>
+            <button class="uit-btn sm" onclick="UITestPage.clearLog()">清空</button>
+        </div>
+    </div>
+    <div class="uit-log-content" id="uit-log"></div>
+</div>
+</div><!-- /uit-page -->
+
+<!-- 注意: lcd_simulator_page.js, gd303_mini_suite.js, ui_test_lib.js 已在 index.html 中全局加载 -->
+<script>
+/**
+ * UI自动化测试模块 - 从 gd303_mini_suite.js 加载测试用例
+ * 
+ * 数据源: window.GD303MiniTestSuite (统一测试套件)
+ * 动作库: window.UITestLib (动作和期望定义)
+ * LCD模拟器: LcdSimulatorPage (像素级渲染)
+ */
+const UITestPage = {
+    template: null,      // 测试模板
+    groups: [],          // 分组列表 (从suite转换)
+    selectedGroup: null, // 当前选中分组
+    results: {},         // 测试结果 { itemKey: { passed, actual, error } }
+    running: false,      // 是否正在运行
+    aborted: false,      // 是否中止
+    statusDetailVisible: false, // 状态详情是否展开
+    lcdSimulator: null,  // LCD模拟器实例引用
+    
+    // 延时配置 (毫秒) - 可根据固件响应速度调整
+    delays: {
+        afterDebugMode: 30,    // 进入调试模式后
+        afterKeyClear: 50,     // K3清除后
+        beforeVerify: 80,      // 验证前等待状态稳定
+        afterKeyCmd: 100,      // 按键命令后等待固件处理
+        afterLcdRead: 50,      // 读取LCD状态后
+    },
+    
+    // 测试报告数据
+    testReport: {
+        startTime: null,
+        endTime: null,
+        device: 'GD303 Mini',
+        firmwareVersion: '',
+        steps: [],  // 每一步的详细记录
+        testCases: [],
+    },
+    
+    // 内存管理配置
+    memoryConfig: {
+        maxSteps: 100,           // 最大保留步骤数
+        imageQuality: 0.6,       // 截图质量 (0-1)
+        imageMaxWidth: 300,      // 截图最大宽度
+        enablePersistence: true, // 启用持久化
+    },
+    
+    async init() {
+        console.log('UITestPage init');
+        this.updateSerialStatus();
+        
+        // 加载保存的延时设置
+        this.loadDelaySettings();
+        
+        // 恢复上次的测试数据（如果有）
+        this.loadPersistedData();
+        
+        // 初始化设备配置管理器
+        await this.initDeviceManager();
+        
+        // 加载按键映射
+        await this.loadKeymap();
+        
+        // 延迟初始化LCD模拟器，确保Canvas已渲染且外部脚本已加载
+        setTimeout(() => {
+            this.initLcdSimulator();
+        }, 200);
+        
+        // 监听串口状态
+        if (window.DeviceHub) {
+            DeviceHub.onStatusChange(() => this.updateSerialStatus());
+        }
+        
+        // 加载测试用例
+        await this.loadTestSuite();
+    },
+    
+    // 当前按键映射缓存
+    currentKeymap: null,
+    
+    // 加载按键映射
+    async loadKeymap() {
+        const keymapType = document.getElementById('uit-keymap-type')?.value || 'auto';
+        let deviceId = keymapType;
+        
+        // 自动检测：根据当前设备选择
+        if (keymapType === 'auto') {
+            deviceId = DeviceConfigManager?.getCurrentDevice() || 'default';
+        }
+        
+        try {
+            // 调用后端 API 获取按键映射
+            const result = await API.call('event_inject_get_keymap', deviceId);
+            
+            if (result.success && result.mappings) {
+                this.currentKeymap = result.mappings;
+                this.renderKeymapButtons(result.mappings);
+                this.log('info', `加载按键映射: ${deviceId}, ${result.mappings.length} 个按键`);
+            } else {
+                // 使用默认映射
+                this.renderDefaultButtons();
+                this.log('info', '使用默认按键映射');
+            }
+        } catch (e) {
+            console.warn('[UITest] 加载按键映射失败:', e);
+            this.renderDefaultButtons();
+        }
+    },
+    
+    // 渲染按键映射按钮
+    renderKeymapButtons(mappings) {
+        const container = document.getElementById('uit-keymap-buttons');
+        if (!container) return;
+        
+        // 按按键分组
+        const keyGroups = {};
+        for (const m of mappings) {
+            if (!keyGroups[m.key]) {
+                keyGroups[m.key] = [];
+            }
+            keyGroups[m.key].push(m);
+        }
+        
+        // 生成 HTML
+        let html = '';
+        for (const [key, buttons] of Object.entries(keyGroups)) {
+            html += `<div class="uit-key-group">
+                <span class="uit-key-label">${key}:</span>`;
+            
+            for (const btn of buttons) {
+                const isDanger = btn.action === 'POWER_OFF';
+                const btnClass = isDanger ? 'uit-btn sm danger' : 'uit-btn sm';
+                html += `<button class="${btnClass}" 
+                    onclick="UITestPage.sendEventInject(${btn.action_id}, ${btn.trigger_id})"
+                    title="${btn.trigger}">${btn.icon}${btn.label.replace(/^[^(]+\(/, '').replace(/\)$/, '')}</button>`;
+            }
+            
+            html += `</div>`;
+        }
+        
+        container.innerHTML = html;
+    },
+    
+    // 渲染默认按钮（备用）
+    renderDefaultButtons() {
+        const container = document.getElementById('uit-keymap-buttons');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="uit-key-group">
+                <span class="uit-key-label">K1中间:</span>
+                <button class="uit-btn sm" onclick="UITestPage.sendCmd('key_measure')">📏测量</button>
+                <button class="uit-btn sm" onclick="UITestPage.sendCmd('key_measure_long')">🔁连续</button>
+            </div>
+            <div class="uit-key-group">
+                <span class="uit-key-label">K2左边:</span>
+                <button class="uit-btn sm" onclick="UITestPage.sendCmd('key_mode')">🔄模式</button>
+                <button class="uit-btn sm" onclick="UITestPage.sendCmd('key_base')">📐基准</button>
+            </div>
+            <div class="uit-key-group">
+                <span class="uit-key-label">K3右边:</span>
+                <button class="uit-btn sm" onclick="UITestPage.sendCmd('key_clear')">🗑️清除</button>
+                <button class="uit-btn sm" onclick="UITestPage.sendCmd('key_backlight')">💡背光</button>
+                <button class="uit-btn sm danger" onclick="UITestPage.sendCmd('key_power_off')">⏻关机</button>
+            </div>
+        `;
+    },
+    
+    // 发送事件注入命令 (新的 0xD0 命令)
+    async sendEventInject(actionId, triggerId) {
+        if (!this.checkSerial()) return;
+        
+        try {
+            const result = await API.call('event_inject_send', 0, actionId, triggerId, 0);
+            
+            if (result.success) {
+                this.log('tx', `📤 TX: D0 事件注入 (action=${actionId}, trigger=${triggerId})`);
+                if (result.response) {
+                    this.log('rx', `📥 RX: ${result.response.replace(/\r\n/g, ' ')}`);
+                }
+                // 读取LCD状态更新显示
+                await this.sleep(100);
+                await this.readLcdStatus();
+            } else {
+                this.log('fail', `事件注入失败: ${result.error}`);
+            }
+        } catch (e) {
+            this.log('fail', `事件注入异常: ${e.message}`);
+        }
+    },
+    
+    // 加载持久化的测试数据
+    loadPersistedData() {
+        try {
+            const saved = localStorage.getItem('ui_test_report');
+            if (saved) {
+                const data = JSON.parse(saved);
+                // 只恢复最近的数据（1小时内）
+                if (data.endTime && (Date.now() - new Date(data.endTime).getTime()) < 3600000) {
+                    this.testReport = data;
+                    console.log('[UITest] 恢复上次测试数据:', data.steps?.length || 0, '步');
+                    this.renderStepsGrouped();
+                }
+            }
+        } catch (e) {
+            console.warn('[UITest] 加载持久化数据失败:', e);
+        }
+    },
+    
+    // 持久化测试数据
+    persistData() {
+        if (!this.memoryConfig.enablePersistence) return;
+        try {
+            // 只保存最近的步骤，避免localStorage溢出
+            // 注意：排除 lcdImage 以节省空间，图片只保留在内存中
+            const stepsToSave = this.testReport.steps.slice(-this.memoryConfig.maxSteps).map(step => {
+                const { lcdImage, ...stepWithoutImage } = step;
+                return stepWithoutImage;
+            });
+            const dataToSave = {
+                ...this.testReport,
+                steps: stepsToSave
+            };
+            localStorage.setItem('ui_test_report', JSON.stringify(dataToSave));
+        } catch (e) {
+            console.warn('[UITest] 持久化数据失败:', e);
+            // 如果存储满了，清理旧数据
+            if (e.name === 'QuotaExceededError') {
+                this.cleanupOldSteps();
+            }
+        }
+    },
+    
+    // 清理旧步骤释放内存
+    cleanupOldSteps() {
+        const maxSteps = this.memoryConfig.maxSteps;
+        if (this.testReport.steps.length > maxSteps) {
+            const removed = this.testReport.steps.length - maxSteps;
+            this.testReport.steps = this.testReport.steps.slice(-maxSteps);
+            console.log(`[UITest] 清理了 ${removed} 个旧步骤，释放内存`);
+            this.renderStepsGrouped();
+        }
+    },
+    
+    // 压缩截图
+    compressImage(dataUrl) {
+        return new Promise((resolve) => {
+            if (!dataUrl || !dataUrl.startsWith('data:image')) {
+                resolve(dataUrl);
+                return;
+            }
+            
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxWidth = this.memoryConfig.imageMaxWidth;
+                const scale = Math.min(1, maxWidth / img.width);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                const compressed = canvas.toDataURL('image/jpeg', this.memoryConfig.imageQuality);
+                resolve(compressed);
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    },
+    
+    // 页面停用时调用 - 停止正在运行的测试
+    async deactivate() {
+        console.log('UITestPage deactivate');
+        if (this.running) {
+            this.aborted = true;
+            this.log('info', '页面切换，测试已中止');
+        }
+    },
+    
+    // 初始化设备配置管理器
+    async initDeviceManager() {
+        if (typeof DeviceConfigManager !== 'undefined') {
+            await DeviceConfigManager.init();
+            
+            // 创建设备选择器
+            createDeviceSelector('uit-device-selector', {
+                onChange: (deviceId) => this.onDeviceChanged(deviceId),
+                showAdd: false,  // 测试页面不需要新建设备
+                showManage: true
+            });
+            
+            // 订阅设备变化事件
+            DeviceConfigManager.subscribe('device-changed', (e) => this.onDeviceChanged(e.newDevice));
+            DeviceConfigManager.subscribe('tests-updated', (e) => {
+                // 测试脚本编辑器更新了测试用例，重新加载
+                if (e.deviceId === DeviceConfigManager.getCurrentDevice()) {
+                    this.log('info', '检测到测试用例更新，重新加载...');
+                    this.loadTestSuite();
+                }
+            });
+            
+            console.log('[UITestPage] DeviceConfigManager 集成完成');
+        } else {
+            console.warn('[UITestPage] DeviceConfigManager 不可用');
+        }
+    },
+    
+    async onDeviceChanged(deviceId) {
+        this.log('info', `切换设备: ${deviceId}`);
+        this.groups = [];
+        this.selectedGroup = null;
+        this.results = {};
+        await this.loadTestSuite();
+        // 重新加载按键映射
+        await this.loadKeymap();
+        // 重新加载LCD配置
+        if (this.lcdSimulator) {
+            await this.lcdSimulator.loadConfig();
+        }
+    },
+    
+    // 加载测试套件
+    async loadTestSuite() {
+        const deviceId = DeviceConfigManager?.getCurrentDevice();
+        
+        // 优先使用 DeviceConfigManager 加载
+        if (typeof DeviceConfigManager !== 'undefined' && deviceId) {
+            try {
+                const testSuiteContent = await DeviceConfigManager.loadTestSuite();
+                if (testSuiteContent) {
+                    // 如果是字符串（JS文件内容），需要解析
+                    if (typeof testSuiteContent === 'string') {
+                        // 尝试从JS内容中提取测试套件对象
+                        const suite = this.parseJsSuite(testSuiteContent);
+                        if (suite && suite.categories) {
+                            this.loadFromSuiteData(suite);
+                            return;
+                        }
+                    } else if (testSuiteContent.categories) {
+                        // 已经是JSON对象
+                        this.loadFromSuiteData(testSuiteContent);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn('[UITestPage] DeviceConfigManager加载失败:', err);
+            }
+        }
+        
+        // 降级：从全局变量加载
+        this.loadFromSuite();
+    },
+    
+    // 解析JS格式的测试套件
+    parseJsSuite(jsContent) {
+        try {
+            // 尝试提取 window.XXXTestSuite = {...} 格式
+            const match = jsContent.match(/window\.(\w+TestSuite)\s*=\s*(\{[\s\S]*\});?\s*$/);
+            if (match) {
+                // 使用 Function 构造器安全地解析
+                const fn = new Function(`return ${match[2]}`);
+                return fn();
+            }
+            
+            // 尝试提取 const XXX = {...} 格式
+            const constMatch = jsContent.match(/(?:const|let|var)\s+\w+\s*=\s*(\{[\s\S]*\});?\s*$/);
+            if (constMatch) {
+                const fn = new Function(`return ${constMatch[1]}`);
+                return fn();
+            }
+            
+            return null;
+        } catch (err) {
+            console.error('[UITestPage] 解析JS测试套件失败:', err);
+            return null;
+        }
+    },
+    
+    // 从测试套件数据加载
+    loadFromSuiteData(suite) {
+        this.log('info', `加载测试套件: ${suite.name} v${suite.version}`);
+        
+        this.groups = [];
+        
+        for (const category of suite.categories) {
+            for (const testCase of category.cases) {
+                const group = {
+                    name: `${category.id}. ${category.name} - ${testCase.id} ${testCase.name}`,
+                    items: []
+                };
+                
+                for (const subcase of (testCase.subcases || [])) {
+                    const item = {
+                        key: subcase.id,
+                        name: subcase.name,
+                        desc: subcase.desc || '',
+                        autoScript: this.convertStepsToScript(subcase.steps, subcase.initial)
+                    };
+                    group.items.push(item);
+                }
+                
+                if (group.items.length > 0) {
+                    this.groups.push(group);
+                }
+            }
+        }
+        
+        this.log('info', `已加载 ${this.groups.length} 个分组`);
+        this.renderGroups();
+        
+        if (this.groups.length > 0) {
+            this.selectGroup(0);
+        }
+    },
+    
+    // 初始化LCD模拟器 - 使用像素级LCD模拟器
+    async initLcdSimulator() {
+        const canvas = document.getElementById('lcd-canvas');
+        if (!canvas) {
+            console.warn('LCD Canvas not found, retrying in 300ms...');
+            setTimeout(() => this.initLcdSimulator(), 300);
+            return;
+        }
+        
+        // 使用像素级LCD模拟器 (LcdSimulatorPage)
+        if (typeof LcdSimulatorPage === 'undefined') {
+            console.warn('LcdSimulatorPage not loaded yet, retrying in 300ms...');
+            setTimeout(() => this.initLcdSimulator(), 300);
+            return;
+        }
+        
+        // 将canvas ID改为LcdSimulatorPage期望的ID
+        canvas.id = 'sim-lcd-canvas';
+        
+        // 初始化像素级LCD模拟器
+        LcdSimulatorPage.canvas = canvas;
+        LcdSimulatorPage.ctx = canvas.getContext('2d', { alpha: true });
+        
+        // 设置较大的默认缩放比例，确保LCD清晰可见
+        // 容器宽度约400px，LCD全显图通常800px左右，设置0.45-0.5的缩放
+        LcdSimulatorPage.state.zoom = 0.5;
+        
+        // 【修复】加载保存的样式设置，确保UI测试页面使用用户设置的样式
+        if (LcdSimulatorPage.loadStyleSettings) {
+            LcdSimulatorPage.loadStyleSettings();
+        }
+        
+        // 加载配置
+        await LcdSimulatorPage.loadConfig();
+        
+        // 测试执行时关闭标签显示（标签是给编辑器用的）
+        LcdSimulatorPage.state.showLabels = false;
+        
+        console.log('LCD Pixel Simulator initialized successfully');
+        this.lcdSimulator = LcdSimulatorPage;
+        
+        // 初始渲染
+        LcdSimulatorPage.render();
+    },
+    
+    destroy() {
+        console.log('UITestPage destroy');
+        this.aborted = true;
+    },
+    
+    // 切换状态详情显示
+    toggleStatusDetail() {
+        this.statusDetailVisible = !this.statusDetailVisible;
+        const detail = document.getElementById('uit-device-status-detail');
+        const btn = document.getElementById('btn-toggle-status');
+        if (detail) {
+            detail.style.display = this.statusDetailVisible ? 'block' : 'none';
+        }
+        if (btn) {
+            btn.textContent = this.statusDetailVisible ? '收起' : '展开';
+        }
+    },
+    
+    // LCD缩放控制
+    // delta > 0 放大, delta < 0 缩小, delta = 0 重置
+    zoomLcd(delta) {
+        if (typeof LcdSimulatorPage === 'undefined') return;
+        
+        if (delta === 0) {
+            // 重置为默认缩放
+            LcdSimulatorPage.state.zoom = 0.5;
+        } else {
+            // 调整缩放，限制范围 0.2 ~ 2.0
+            let newZoom = LcdSimulatorPage.state.zoom + delta;
+            newZoom = Math.max(0.2, Math.min(2.0, newZoom));
+            LcdSimulatorPage.state.zoom = newZoom;
+        }
+        
+        // 重新调整画布大小并渲染
+        LcdSimulatorPage.resizeCanvas();
+        LcdSimulatorPage.render();
+        
+        this.log('info', `LCD缩放: ${(LcdSimulatorPage.state.zoom * 100).toFixed(0)}%`);
+    },
+
+    // 从 gd303_mini_suite.js 加载测试用例
+    loadFromSuite() {
+        const suite = window.GD303MiniTestSuite;
+        if (!suite) {
+            this.log('fail', '测试套件未加载: GD303MiniTestSuite');
+            return;
+        }
+        
+        this.log('info', `加载测试套件: ${suite.name} v${suite.version}`);
+        
+        // 将 suite.categories 转换为 groups 格式
+        // suite格式: categories[{id, name, cases[{id, name, subcases[{id, name, steps}]}]}]
+        // groups格式: [{name, items[{key, name, desc, autoScript}]}]
+        this.groups = [];
+        
+        for (const category of suite.categories) {
+            for (const testCase of category.cases) {
+                // 每个 case 作为一个分组
+                const group = {
+                    name: `${category.id}. ${category.name} - ${testCase.id} ${testCase.name}`,
+                    items: []
+                };
+                
+                // 每个 subcase 作为一个测试项
+                for (const subcase of (testCase.subcases || [])) {
+                    const item = {
+                        key: subcase.id,
+                        name: subcase.name,
+                        desc: subcase.desc || '',
+                        // 将 steps 转换为 autoScript 格式
+                        autoScript: this.convertStepsToScript(subcase.steps, subcase.initial)
+                    };
+                    group.items.push(item);
+                }
+                
+                if (group.items.length > 0) {
+                    this.groups.push(group);
+                }
+            }
+        }
+        
+        this.log('info', `已加载 ${this.groups.length} 个分组`);
+        this.renderGroups();
+        
+        // 默认选中第一个分组
+        if (this.groups.length > 0) {
+            this.selectGroup(0);
+        }
+    },
+    
+    // 将 suite 的 steps 格式转换为 autoScript 格式
+    // steps格式: [{action: "K1短按", expect: {laser: "ON"}}]
+    // autoScript格式: {setup: [], steps: [{cmd, param}], expect: {}}
+    convertStepsToScript(steps, initial) {
+        if (!steps || steps.length === 0) return null;
+        
+        const script = {
+            setup: [],
+            steps: [],
+            expect: {}
+        };
+        
+        // 解析每个步骤
+        for (const step of steps) {
+            const parsed = this.parseAction(step.action);
+            if (parsed) {
+                script.steps.push({
+                    cmd: parsed.cmd,
+                    param: parsed.param,
+                    expect: step.expect  // 保留每步的期望值
+                });
+            }
+        }
+        
+        // 最后一步的期望值作为整体期望
+        if (steps.length > 0 && steps[steps.length - 1].expect) {
+            script.expect = steps[steps.length - 1].expect;
+        }
+        
+        return script;
+    },
+    
+    // 解析动作字符串，返回 {cmd, param}
+    // 使用 UITestLib 的解析函数
+    parseAction(actionStr) {
+        if (window.UITestLib) {
+            return UITestLib.parseAction(actionStr);
+        }
+        
+        // 备用解析逻辑
+        const actionMap = {
+            'K1短按': { cmd: 'key_measure' },
+            'K1长按': { cmd: 'key_measure_long' },
+            'K2短按': { cmd: 'key_mode' },
+            'K2长按': { cmd: 'key_base' },
+            'K3短按': { cmd: 'key_clear' },
+            'K3长按': { cmd: 'key_backlight' },
+            'K3超长按': { cmd: 'key_power_off' },
+            '获取状态': { cmd: 'get_status' },
+            '重置': { cmd: 'reset' },
+        };
+        
+        // 检查是否有参数
+        const match = actionStr.match(/^(.+?)\((.+)\)$/);
+        if (match) {
+            const name = match[1];
+            const paramsStr = match[2];
+            
+            if (name === '模拟测距成功') {
+                const [dist, signal] = paramsStr.split(',').map(s => parseInt(s.trim()));
+                return { cmd: 'sim_ok', param: { distance: dist, signal: signal || 3 } };
+            }
+            if (name === '模拟测距失败') {
+                return { cmd: 'sim_err', param: parseInt(paramsStr) };
+            }
+            if (name === '设置单位') {
+                return { cmd: 'set_unit', param: parseInt(paramsStr) };
+            }
+            if (name === '等待') {
+                return { cmd: 'wait', param: parseInt(paramsStr) };
+            }
+        }
+        
+        return actionMap[actionStr] || null;
+    },
+    
+    // 更新串口状态
+    updateSerialStatus() {
+        const el = document.getElementById('uit-serial-status');
+        if (!el) return;
+        const connected = window.DeviceHub && DeviceHub.isSerialConnected();
+        el.textContent = connected ? '🟢 已连接' : '⚪ 未连接';
+        el.className = 'uit-status' + (connected ? ' connected' : '');
+    },
+
+    // 渲染分组列表
+    renderGroups() {
+        const container = document.getElementById('uit-group-list');
+        if (!container || !this.groups.length) {
+            container.innerHTML = '<div class="uit-empty">暂无测试分组</div>';
+            return;
+        }
+        
+        container.innerHTML = this.groups.map((g, idx) => {
+            const items = g.items || [];
+            const autoCount = items.filter(i => i.autoScript).length;
+            const passCount = items.filter(i => this.results[i.key]?.passed === true).length;
+            const failCount = items.filter(i => this.results[i.key]?.passed === false).length;
+            
+            return `
+                <div class="uit-group-item ${this.selectedGroup === idx ? 'selected' : ''}"
+                     onclick="UITestPage.selectGroup(${idx})">
+                    <span class="name">${g.name}</span>
+                    <span class="stats">
+                        ${autoCount > 0 ? `🤖${autoCount}` : ''}
+                        ${passCount > 0 ? `<span class="pass">✓${passCount}</span>` : ''}
+                        ${failCount > 0 ? `<span class="fail">✗${failCount}</span>` : ''}
+                    </span>
+                </div>
+            `;
+        }).join('');
+        
+        this.updateProgress();
+    },
+    
+    // 选择分组
+    selectGroup(idx) {
+        this.selectedGroup = idx;
+        this.renderGroups();
+        this.renderItems();
+    },
+
+    // 渲染测试项列表
+    renderItems() {
+        const container = document.getElementById('uit-item-list');
+        const title = document.getElementById('uit-items-title');
+        const stats = document.getElementById('uit-items-stats');
+        
+        if (this.selectedGroup === null || !this.groups[this.selectedGroup]) {
+            container.innerHTML = '<div class="uit-empty">选择一个分组查看测试项</div>';
+            return;
+        }
+        
+        const group = this.groups[this.selectedGroup];
+        const items = group.items || [];
+        
+        if (title) title.textContent = `📋 ${group.name}`;
+        
+        const autoCount = items.filter(i => i.autoScript).length;
+        if (stats) stats.textContent = `共${items.length}项, 可自动${autoCount}项`;
+        
+        container.innerHTML = items.map(item => {
+            const r = this.results[item.key];
+            const status = r?.passed === true ? 'passed' : r?.passed === false ? 'failed' : '';
+            const hasAuto = !!item.autoScript;
+            
+            return `
+                <div class="uit-item ${status}" data-key="${item.key}">
+                    <input type="checkbox" class="check" data-key="${item.key}" 
+                           ${hasAuto ? 'checked' : ''} ${!hasAuto ? 'disabled' : ''}>
+                    <div class="info">
+                        <div class="name">
+                            ${item.name}
+                            ${hasAuto ? '<span class="auto-badge">🤖自动</span>' : ''}
+                        </div>
+                        <div class="desc">${item.desc || ''}</div>
+                        ${r?.error ? `<div class="result error">❌ ${r.error}</div>` : ''}
+                        ${r?.actual ? `<div class="result">实际: ${JSON.stringify(r.actual)}</div>` : ''}
+                    </div>
+                    <div class="actions">
+                        ${hasAuto ? `<button class="uit-btn sm" onclick="UITestPage.runItem('${item.key}')">▶</button>` : ''}
+                        <button class="uit-btn sm success" onclick="UITestPage.markPass('${item.key}')">✓</button>
+                        <button class="uit-btn sm danger" onclick="UITestPage.markFail('${item.key}')">✗</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    // 更新进度
+    updateProgress() {
+        const el = document.getElementById('uit-progress');
+        if (!el) return;
+        
+        let total = 0, pass = 0, fail = 0;
+        this.groups.forEach(g => {
+            (g.items || []).forEach(item => {
+                if (item.autoScript) {
+                    total++;
+                    const r = this.results[item.key];
+                    if (r?.passed === true) pass++;
+                    else if (r?.passed === false) fail++;
+                }
+            });
+        });
+        
+        if (total === 0) {
+            el.textContent = '';
+        } else {
+            el.innerHTML = `进度: <span class="pass">${pass}</span>/<span class="fail">${fail}</span>/${total}`;
+        }
+    },
+    
+    // 全选/取消全选
+    toggleAll() {
+        const checked = document.getElementById('uit-check-all')?.checked;
+        document.querySelectorAll('.uit-item .check:not(:disabled)').forEach(cb => {
+            cb.checked = checked;
+        });
+    },
+    
+    // 手动标记通过
+    markPass(key) {
+        this.results[key] = { passed: true };
+        this.renderGroups();
+        this.renderItems();
+        this.log('pass', `[${key}] 手动标记通过`);
+    },
+    
+    // 手动标记失败
+    markFail(key) {
+        const reason = prompt('失败原因(可选):');
+        this.results[key] = { passed: false, error: reason || '手动标记失败' };
+        this.renderGroups();
+        this.renderItems();
+        this.log('fail', `[${key}] 手动标记失败: ${reason || ''}`);
+    },
+
+    // ==================== 测试执行 ====================
+    
+    // 运行选中的测试项
+    async runSelected() {
+        if (!this.checkSerial()) return;
+        
+        // 获取选中的测试项
+        const checkedKeys = [];
+        document.querySelectorAll('.uit-item .check:checked').forEach(cb => {
+            checkedKeys.push(cb.dataset.key);
+        });
+        
+        if (checkedKeys.length === 0) {
+            Utils.toast('请选择要运行的测试项', 'warning');
+            return;
+        }
+        
+        await this.runItems(checkedKeys);
+    },
+    
+    // 运行全部自动化测试
+    async runAll() {
+        if (!this.checkSerial()) return;
+        
+        const allKeys = [];
+        this.groups.forEach(g => {
+            (g.items || []).forEach(item => {
+                if (item.autoScript) allKeys.push(item.key);
+            });
+        });
+        
+        if (allKeys.length === 0) {
+            Utils.toast('没有可自动执行的测试项', 'warning');
+            return;
+        }
+        
+        await this.runItems(allKeys);
+    },
+    
+    // 运行单个测试项
+    async runItem(key) {
+        if (!this.checkSerial()) return;
+        await this.runItems([key]);
+    },
+    
+    checkSerial() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) {
+            Utils.toast('请先连接串口', 'warning');
+            return false;
+        }
+        return true;
+    },
+
+    // 运行测试项列表
+    async runItems(keys) {
+        this.running = true;
+        this.aborted = false;
+        this.setRunning(true);
+        
+        // 初始化测试报告
+        const deviceId = DeviceConfigManager?.getCurrentDevice() || 'unknown';
+        const deviceInfo = DeviceConfigManager?.getCurrentDeviceInfo() || {};
+        this.testReport = {
+            startTime: new Date().toISOString(),
+            endTime: null,
+            device: deviceInfo.name || deviceId,
+            deviceId: deviceId,
+            firmwareVersion: deviceInfo.firmwareVersion || '',
+            steps: [],
+            testCases: [],
+        };
+        
+        // 清空步骤预览
+        this.clearSteps();
+        
+        this.log('info', `开始运行 ${keys.length} 个测试项...`);
+        
+        for (const key of keys) {
+            if (this.aborted) {
+                this.log('info', '测试已中止');
+                break;
+            }
+            
+            // 找到测试项
+            let item = null;
+            for (const g of this.groups) {
+                item = (g.items || []).find(i => i.key === key);
+                if (item) break;
+            }
+            
+            if (!item || !item.autoScript) {
+                this.log('info', `[${key}] 跳过(无自动脚本)`);
+                continue;
+            }
+            
+            // 高亮当前项
+            this.highlightItem(key, 'running');
+            
+            // 记录测试用例开始
+            const caseRecord = {
+                key: key,
+                name: item.name,
+                desc: item.desc,
+                startTime: new Date().toISOString(),
+                endTime: null,
+                passed: null,
+                error: null,
+            };
+            
+            try {
+                // 每个测试用例开始前进入调试模式 (CA 01)
+                this.log('info', `  🔧 进入调试模式...`);
+                await API.call('ui_test_send_cmd', 'debug_mode', 1);
+                await this.sleep(this.delays.afterDebugMode);
+                
+                await this.executeScript(item);
+                caseRecord.passed = this.results[key]?.passed;
+                caseRecord.error = this.results[key]?.error;
+            } catch (e) {
+                this.results[key] = { passed: false, error: e.message };
+                caseRecord.passed = false;
+                caseRecord.error = e.message;
+                this.log('fail', `[${key}] 执行异常: ${e.message}`);
+            }
+            
+            caseRecord.endTime = new Date().toISOString();
+            this.testReport.testCases.push(caseRecord);
+            
+            // 更新显示
+            this.highlightItem(key, this.results[key]?.passed ? 'passed' : 'failed');
+            this.renderGroups();
+        }
+        
+        // 完成测试报告
+        this.testReport.endTime = new Date().toISOString();
+        
+        // 持久化最终数据
+        this.persistData();
+        
+        this.running = false;
+        this.setRunning(false);
+        this.log('info', '测试执行完成');
+        this.renderItems();
+        
+        // 提示生成报告
+        const passed = this.testReport.testCases.filter(c => c.passed).length;
+        const failed = this.testReport.testCases.filter(c => !c.passed).length;
+        this.log('info', `结果: ${passed} 通过, ${failed} 失败`);
+        this.log('info', `内存: ${this.testReport.steps.length} 步记录`);
+        
+        if (this.testReport.testCases.length > 0) {
+            this.log('info', '点击"导出报告"按钮生成HTML测试报告');
+        }
+    },
+
+    // 执行单个测试脚本
+    // 跳过验证开关 - 设为true时只执行动作，不验证期望值，人眼判断
+    skipVerification: true,
+    
+    async executeScript(item) {
+        const script = item.autoScript;
+        const key = item.key;
+        
+        this.log('step', `[${key}] ${item.name}`);
+        
+        // 1. 执行 setup
+        if (script.setup && script.setup.length > 0) {
+            this.log('info', `  setup: ${script.setup.length} 步`);
+            for (const action of script.setup) {
+                if (this.aborted) return;
+                await this.executeAction(action, key);
+            }
+        }
+        
+        // 2. 执行 steps (每步都有期望值验证)
+        if (script.steps && script.steps.length > 0) {
+            this.log('info', `  steps: ${script.steps.length} 步`);
+            let allPassed = true;
+            let lastError = null;
+            
+            for (let i = 0; i < script.steps.length; i++) {
+                if (this.aborted) return;
+                const step = script.steps[i];
+                
+                // 判断是否需要截图：
+                // - 有期望值的步骤需要截图
+                // - 模拟测距成功/失败需要截图
+                // - 有desc描述的步骤需要截图
+                // - 准备步骤（进入调试模式、设置单位、清除等）不需要截图
+                const needScreenshot = this.shouldScreenshot(step);
+                
+                // 处理复合动作（如"重置"）
+                if (step.cmd === 'reset') {
+                    this.log('info', `    [${i+1}] 重置 (4次K3清除)`);
+                    for (let j = 0; j < 4; j++) {
+                        await this.executeActionSimple({ cmd: 'key_clear' }, key, true); // 全部跳过截图
+                        await this.sleep(this.delays.afterKeyClear);
+                    }
+                } else {
+                    this.log('info', `    [${i+1}] ${step.cmd} ${step.param ? JSON.stringify(step.param) : ''}`);
+                    await this.executeActionSimple(step, key, !needScreenshot);
+                }
+                
+                // 每步验证期望值 (如果跳过验证则直接通过)
+                if (this.skipVerification) {
+                    // 跳过验证，人眼判断
+                    this.log('info', `      ⏭️ 跳过验证(人眼判断)`);
+                } else if (step.expect && Object.keys(step.expect).length > 0) {
+                    await this.sleep(this.delays.beforeVerify); // 等待设备状态稳定
+                    const result = await this.verifyExpect(step.expect);
+                    
+                    if (result.passed) {
+                        this.log('pass', `      ✓ 步骤${i+1}验证通过`);
+                    } else {
+                        this.log('fail', `      ✗ 步骤${i+1}验证失败: ${result.error}`);
+                        allPassed = false;
+                        lastError = result.error;
+                        // 继续执行后续步骤，但记录失败
+                    }
+                }
+            }
+            
+            // 记录整体结果 (跳过验证时默认通过)
+            if (this.skipVerification) {
+                this.results[key] = { passed: true, error: null };
+                this.log('info', `  ✅ 执行完成(跳过验证)`);
+            } else {
+                this.results[key] = {
+                    passed: allPassed,
+                    error: lastError
+                };
+                
+                if (allPassed) {
+                    this.log('pass', `  ✓ 测试通过`);
+                } else {
+                    this.log('fail', `  ✗ 测试失败: ${lastError}`);
+                }
+            }
+            return;
+        }
+        
+        // 3. 如果没有steps，验证整体 expect
+        if (this.skipVerification) {
+            // 跳过验证，人眼判断
+            this.results[key] = { passed: true };
+            this.log('info', `  ✅ 执行完成(跳过验证)`);
+        } else if (script.expect && Object.keys(script.expect).length > 0) {
+            await this.sleep(this.delays.beforeVerify); // 等待设备状态稳定
+            const result = await this.verifyExpect(script.expect);
+            this.results[key] = result;
+            
+            if (result.passed) {
+                this.log('pass', `  ✓ 验证通过`);
+            } else {
+                this.log('fail', `  ✗ 验证失败: ${result.error}`);
+            }
+        } else {
+            // 无期望值，默认通过
+            this.results[key] = { passed: true };
+            this.log('pass', `  ✓ 执行完成(无验证)`);
+        }
+    },
+
+    // 执行单个动作 - 配置化LCD渲染流程:
+    // 1. 发送命令 → 等待固件响应
+    // 2. 发送0xBC读取LCD缓冲区(54字节)
+    // 3. LCD仿真器根据配置+缓冲区自动渲染
+    // 4. 截图
+    async executeAction(action, testKey = '') {
+        return await this.executeActionSimple(action, testKey, false);
+    },
+    
+    // 判断步骤是否需要截图
+    shouldScreenshot(step) {
+        // 不需要截图的命令（准备步骤）
+        const skipCommands = [
+            'debug_enter', 'debug_exit',  // 调试模式
+            'set_unit',                    // 设置单位
+            'wait',                        // 等待
+        ];
+        
+        // 检查命令是否在跳过列表中
+        if (skipCommands.includes(step.cmd)) {
+            return false;
+        }
+        
+        // 有期望值的步骤需要截图
+        if (step.expect && Object.keys(step.expect).length > 0) {
+            return true;
+        }
+        
+        // 有描述的步骤需要截图（通常是关键步骤）
+        if (step.desc) {
+            return true;
+        }
+        
+        // 模拟测距命令需要截图
+        if (step.cmd === 'sim_ok' || step.cmd === 'sim_err') {
+            return true;
+        }
+        
+        // 默认不截图（清除、模式切换等准备步骤）
+        return false;
+    },
+    
+    // 简化版执行动作 - 可选择是否跳过截图
+    async executeActionSimple(action, testKey = '', skipScreenshot = false) {
+        const cmd = action.cmd;
+        const param = action.param;
+        
+        // 等待命令 - 直接sleep
+        if (cmd === 'wait') {
+            await this.sleep(param || 100);
+            return;
+        }
+        
+        // 详细日志：显示命令和参数
+        const paramStr = param ? JSON.stringify(param) : '';
+        if (!skipScreenshot) {
+            this.log('info', `    ⏳ 动作开始: ${cmd} ${paramStr}`);
+        }
+        
+        // 记录步骤开始
+        const stepRecord = {
+            time: new Date().toISOString(),
+            testKey: testKey,
+            cmd: cmd,
+            param: param,
+            txHex: '',
+            rxText: '',
+            lcdBuffer: null,
+            lcdStatus: null,
+            lcdImage: null,
+            success: false,
+        };
+        
+        // 发送命令并等待完整响应
+        try {
+            // 步骤1: 发送命令，等待固件响应
+            if (!skipScreenshot) {
+                this.log('info', `    📡 发送命令...`);
+            }
+            const result = await API.call('ui_test_send_cmd', cmd, param);
+            
+            if (result.success) {
+                stepRecord.txHex = result.hex || '';
+                stepRecord.rxText = result.response_text || result.response_hex || '';
+                stepRecord.success = true;
+                
+                // 显示TX
+                if (result.hex && !skipScreenshot) {
+                    this.log('tx', `    📤 TX: ${result.hex}`);
+                }
+                // 显示RX
+                if (result.response_text && !skipScreenshot) {
+                    this.log('rx', `    📥 RX: ${result.response_text.replace(/\r\n/g, ' ')}`);
+                }
+                
+                // 等待固件处理完成 (UI更新需要时间)
+                // 按键命令需要更长时间处理状态机和LCD刷新
+                await this.sleep(this.delays.afterKeyCmd);
+                
+                // 步骤2: 读取LCD（如果不跳过截图）
+                if (!skipScreenshot) {
+                    this.log('info', `    📺 读取LCD缓冲区...`);
+                    const lcdResult = await this.readLcdBufferAndRender();
+                    
+                    if (lcdResult) {
+                        stepRecord.lcdBuffer = lcdResult.buffer;
+                        stepRecord.lcdStatus = lcdResult.status;
+                        stepRecord.lcdImage = lcdResult.image;
+                        
+                        this.log('info', `    ✅ LCD渲染完成: line4=${lcdResult.status?.line4 || '-'}`);
+                        
+                        // 更新设备状态显示
+                        this.updateDeviceStatus(lcdResult.status);
+                    } else {
+                        this.log('info', `    ⚠️ LCD读取失败，尝试从响应解析...`);
+                        // 备用方案: 从响应中解析UI状态
+                        const uiStatus = this.parseUiStatusFromResponse(result.response_text);
+                        if (uiStatus) {
+                            stepRecord.lcdStatus = uiStatus;
+                            const image = await this.updateLcdAndCapture(uiStatus);
+                            stepRecord.lcdImage = image;
+                            this.updateDeviceStatus(uiStatus);
+                        }
+                    }
+                }
+            } else {
+                stepRecord.success = false;
+                stepRecord.error = result.error;
+                if (!skipScreenshot) {
+                    this.log('fail', `    命令失败: ${result.error}`);
+                }
+            }
+        } catch (e) {
+            stepRecord.success = false;
+            stepRecord.error = e.message;
+            if (!skipScreenshot) {
+                this.log('fail', `    命令异常: ${e.message}`);
+            }
+        }
+        
+        if (!skipScreenshot) {
+            this.log('info', `    ✅ 动作完成: ${cmd}`);
+            
+            // 压缩截图以节省内存
+            if (stepRecord.lcdImage) {
+                stepRecord.lcdImage = await this.compressImage(stepRecord.lcdImage);
+            }
+            
+            // 保存步骤记录
+            this.testReport.steps.push(stepRecord);
+            
+            // 定期清理旧步骤
+            if (this.testReport.steps.length > this.memoryConfig.maxSteps * 1.5) {
+                this.cleanupOldSteps();
+            }
+            
+            // 持久化数据（每10步保存一次）
+            if (this.testReport.steps.length % 10 === 0) {
+                this.persistData();
+            }
+            
+            // 更新步骤预览
+            this.addStepCard(stepRecord);
+        }
+    },
+    
+    // 读取LCD缓冲区并渲染 - 配置化流程
+    // 1. 发送0xBC命令读取54字节缓冲区
+    // 2. LCD仿真器根据配置文件解析缓冲区
+    // 3. 渲染完成后截图
+    async readLcdBufferAndRender() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) {
+            console.warn('[LCD] 串口未连接，跳过LCD读取');
+            return null;
+        }
+        
+        try {
+            // 发送0xBC命令读取LCD缓冲区
+            // 使用 ui_test_send_cmd 发送 lcd_dump 命令，然后解析响应
+            const result = await API.call('lcd_dump');
+            
+            console.log('[LCD] lcd_dump 响应:', result);
+            
+            if (!result.success) {
+                console.warn('[LCD] lcd_dump 失败:', result.error || '未知错误');
+                return null;
+            }
+            
+            if (!result.buffer || result.buffer.length < 54) {
+                console.warn('[LCD] 缓冲区数据不完整:', result.buffer?.length || 0, '字节');
+                return null;
+            }
+            
+            const buffer = result.buffer;
+            this.log('info', `    📦 缓冲区: ${buffer.slice(0, 10).map(b => b.toString(16).padStart(2, '0')).join(' ')}...`);
+            
+            // 使用像素级LCD模拟器渲染
+            if (typeof LcdSimulatorPage !== 'undefined' && LcdSimulatorPage.canvas) {
+                // 更新缓冲区
+                LcdSimulatorPage.state.buffer = new Uint8Array(buffer);
+                
+                // 渲染
+                LcdSimulatorPage.render();
+                
+                // 等待渲染完成 (给浏览器一点时间完成绑定)
+                await new Promise(r => setTimeout(r, 50));
+                
+                // 截图
+                const image = LcdSimulatorPage.canvas.toDataURL('image/png');
+                console.log('[LCD] 截图完成, 长度:', image?.length || 0);
+                
+                // 解析状态 (从缓冲区解析基本状态用于验证)
+                const status = this.parseBufferToStatus(buffer);
+                
+                return {
+                    buffer: buffer,
+                    status: status,
+                    image: image
+                };
+            } else {
+                console.warn('[LCD] 像素级模拟器未初始化');
+                return null;
+            }
+        } catch (e) {
+            console.error('[LCD] 读取缓冲区异常:', e);
+            return null;
+        }
+    },
+    
+    // 从缓冲区解析基本状态 (用于期望值验证)
+    // 这是一个简化版本，主要解析line4等关键字段
+    parseBufferToStatus(buffer) {
+        // 默认状态
+        const status = {
+            battery: 3,
+            signal: 3,
+            beep: true,
+            laser: false,
+            mode: 0,
+            base: 1,
+            unit: 0,
+            line1: 0,
+            line2: 0,
+            line3: 0,
+            line4: 0,
+            runstep: 0,
+            state: 0,
+        };
+        
+        // TODO: 根据配置解析缓冲区到状态
+        // 这需要与固件的LCD映射一致
+        // 暂时返回默认状态，实际验证通过0xBF命令获取
+        
+        return status;
+    },
+    
+    // 从固件响应中解析UI状态
+    // 响应格式: xxx.s;error: 0;state: IDLE;mode: SINGLE;base: BACK;runstep: 0;laser: OFF;xxx.e
+    // 或扩展格式: bd.s;error: 0;dist: 0.050;signal: 3;state: RESULT;mode: SINGLE;runstep: 2;line4: 0.118;bd.e
+    parseUiStatusFromResponse(responseText) {
+        if (!responseText) {
+            console.log('[parseUI] 响应为空');
+            return null;
+        }
+        
+        try {
+            // 查找 xxx.s 和 xxx.e 之间的内容
+            const match = responseText.match(/(\w+)\.s;(.+?)\1\.e/);
+            if (!match) {
+                console.log('[parseUI] 未匹配到 xxx.s...xxx.e 格式');
+                return null;
+            }
+            
+            const cmdTag = match[1];
+            const content = match[2];
+            console.log(`[parseUI] 匹配到 ${cmdTag}.s, 内容: ${content}`);
+            
+            const status = {};
+            
+            // 解析键值对
+            const parts = content.split(';');
+            for (const part of parts) {
+                const colonIdx = part.indexOf(':');
+                if (colonIdx < 0) continue;
+                
+                const key = part.substring(0, colonIdx).trim().toLowerCase();
+                const value = part.substring(colonIdx + 1).trim();
+                
+                // 转换值类型
+                if (key === 'state') {
+                    const stateMap = {'idle': 0, 'laser_on': 1, 'result': 2, 'error': 3, 'menu': 4};
+                    const mapped = stateMap[value.toLowerCase()];
+                    status.state = mapped !== undefined ? mapped : (parseInt(value) || 0);
+                } else if (key === 'mode') {
+                    const modeMap = {'single': 0, 'area': 1, 'volume': 2, 'pyth1': 3, 'pyth2': 4, 'pyth3': 5, 'continuous': 6};
+                    const mapped = modeMap[value.toLowerCase()];
+                    status.mode = mapped !== undefined ? mapped : (parseInt(value) || 0);
+                } else if (key === 'base') {
+                    const baseMap = {'front': 0, 'back': 1};
+                    const mapped = baseMap[value.toLowerCase()];
+                    status.base = mapped !== undefined ? mapped : (parseInt(value) || 0);
+                } else if (key === 'laser') {
+                    status.laser = value.toLowerCase() === 'on' || value === '1';
+                } else if (key === 'runstep') {
+                    status.runstep = parseInt(value) || 0;
+                } else if (key === 'line1' || key === 'line2' || key === 'line3' || key === 'line4') {
+                    status[key] = parseFloat(value) || 0;
+                } else if (key === 'unit') {
+                    const unitMap = {'m': 0, 'ft': 1, 'in': 2};
+                    const mapped = unitMap[value.toLowerCase()];
+                    status.unit = mapped !== undefined ? mapped : (parseInt(value) || 0);
+                } else if (key === 'dist' || key === 'distance') {
+                    status.dist = parseFloat(value) || 0;
+                } else if (key === 'signal') {
+                    status.signal = parseInt(value) || 0;
+                } else if (key === 'error') {
+                    status.error = parseInt(value) || 0;
+                }
+            }
+            
+            console.log('[parseUI] 解析结果:', status);
+            
+            // 如果有state或line4数据，说明是有效的UI状态
+            if (status.state !== undefined || status.line4 !== undefined) {
+                // 补充默认值
+                if (status.battery === undefined) status.battery = 3;
+                if (status.beep === undefined) status.beep = true;
+                if (status.line1 === undefined) status.line1 = 0;
+                if (status.line2 === undefined) status.line2 = 0;
+                if (status.line3 === undefined) status.line3 = 0;
+                if (status.line4 === undefined) status.line4 = 0;
+                return status;
+            }
+            
+            console.log('[parseUI] 无有效UI状态');
+            return null;
+        } catch (e) {
+            console.error('[parseUI] 解析UI状态失败:', e);
+            return null;
+        }
+    },
+    
+    // 更新LCD模拟器并等待渲染完成后截图
+    // 返回 Promise<string> - 截图的 dataURL
+    async updateLcdAndCapture(status) {
+        console.log('[updateLcd] 开始更新LCD, status:', status);
+        
+        // 使用像素级LCD模拟器
+        if (typeof LcdSimulatorPage !== 'undefined' && LcdSimulatorPage.canvas) {
+            // 像素级模拟器需要从缓冲区渲染，这里先尝试同步
+            const lcdResult = await this.readLcdBufferAndRender();
+            if (lcdResult) {
+                return lcdResult.image;
+            }
+        }
+        
+        // 备用: 更新设备状态显示
+        this.updateDeviceStatus(status);
+        return null;
+    },
+
+    // 读取LCD状态并在渲染完成后截图 (通过0xBC命令)
+    async readLcdAndCapture() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) return null;
+        
+        try {
+            // 使用缓冲区模式
+            const lcdResult = await this.readLcdBufferAndRender();
+            if (lcdResult) {
+                this.updateDeviceStatus(lcdResult.status);
+                return { status: lcdResult.status, image: lcdResult.image };
+            }
+            
+            // 备用: 使用旧的状态API
+            const result = await API.call('ui_test_get_lcd_status');
+            if (!result.success || !result.lcd) return null;
+            
+            const status = result.lcd;
+            this.updateDeviceStatus(status);
+            
+            return { status, image: null };
+        } catch (e) {
+            console.error('读取LCD状态失败:', e);
+            return null;
+        }
+    },
+    
+    // 验证期望值
+    async verifyExpect(expect) {
+        // 获取设备状态
+        const statusResult = await API.call('ui_test_get_device_status');
+        
+        // 显示接收响应
+        if (statusResult.response_text) {
+            this.log('rx', `    📥 RX: ${statusResult.response_text.replace(/\r\n/g, ' ').substring(0, 200)}`);
+        } else if (statusResult.response_hex) {
+            this.log('rx', `    📥 RX: ${statusResult.response_hex}`);
+        }
+        
+        if (!statusResult.success || !statusResult.status) {
+            this.log('fail', `    📥 状态获取失败: ${statusResult.error || '无响应'}`);
+            return { passed: false, error: '无法获取设备状态', actual: {} };
+        }
+        
+        const status = statusResult.status;
+        // 显示解析结果
+        this.logParsedStatus(status);
+        // 更新设备状态显示
+        this.updateDeviceStatus(status);
+        
+        const actual = {};
+        const errors = [];
+        const tolerance = expect.tolerance || 0;
+        
+        for (const [key, expected] of Object.entries(expect)) {
+            if (key === 'tolerance') continue;
+            
+            const actualValue = status[key];
+            actual[key] = actualValue;
+            
+            if (actualValue === undefined || actualValue === null) {
+                errors.push(`${key}: 未获取到值`);
+                continue;
+            }
+            
+            // 数值比较（带容差）
+            if (typeof expected === 'number' && typeof actualValue === 'number') {
+                if (Math.abs(actualValue - expected) > tolerance) {
+                    errors.push(`${key}: 期望${expected}±${tolerance}, 实际${actualValue}`);
+                }
+            } else if (actualValue !== expected) {
+                errors.push(`${key}: 期望${expected}, 实际${actualValue}`);
+            }
+        }
+        
+        return {
+            passed: errors.length === 0,
+            actual,
+            error: errors.join('; ')
+        };
+    },
+    
+    // 显示解析后的状态
+    logParsedStatus(status) {
+        const stateNames = ['IDLE', 'LASER_ON', 'RESULT', 'ERROR', 'MENU'];
+        const modeNames = ['单次', '面积', '体积', '勾股1', '勾股2', '勾股3', '连续'];
+        const baseNames = ['前基准', '后基准'];
+        const unitNames = ['m', 'ft', 'in'];
+        
+        const parts = [];
+        parts.push(`state=${stateNames[status.state] || status.state}`);
+        parts.push(`mode=${modeNames[status.mode] || status.mode}`);
+        parts.push(`base=${baseNames[status.base] || status.base}`);
+        parts.push(`unit=${unitNames[status.unit] || status.unit}`);
+        parts.push(`laser=${status.laser ? 'ON' : 'OFF'}`);
+        parts.push(`runstep=${status.runstep}`);
+        if (status.line4 !== undefined) parts.push(`line4=${status.line4?.toFixed(3)}`);
+        if (status.line3 !== undefined) parts.push(`line3=${status.line3?.toFixed(3)}`);
+        
+        this.log('info', `    📊 解析: ${parts.join(', ')}`);
+    },
+
+    // 停止测试
+    stop() {
+        this.aborted = true;
+        this.log('info', '正在停止测试...');
+    },
+    
+    // 设置运行状态
+    setRunning(running) {
+        document.getElementById('btn-run').disabled = running;
+        document.getElementById('btn-run-all').disabled = running;
+        document.getElementById('btn-stop').disabled = !running;
+    },
+    
+    // 高亮测试项
+    highlightItem(key, status) {
+        const el = document.querySelector(`.uit-item[data-key="${key}"]`);
+        if (el) {
+            el.classList.remove('passed', 'failed', 'running');
+            if (status) el.classList.add(status);
+        }
+    },
+    
+    // ==================== 手动控制 ====================
+    
+    async sendCmd(cmd) {
+        if (!this.checkSerial()) return;
+        try {
+            const result = await API.call('ui_test_send_cmd', cmd);
+            if (result.success) {
+                this.log('tx', `📤 TX: ${result.hex || '--'}`);
+                // 显示接收到的响应
+                if (result.response_text) {
+                    this.log('rx', `📥 RX: ${result.response_text.replace(/\r\n/g, ' ')}`);
+                } else if (result.response_hex) {
+                    this.log('rx', `📥 RX: ${result.response_hex}`);
+                }
+                // 读取LCD状态更新显示
+                await this.sleep(100);
+                await this.readLcdStatus();
+            } else {
+                this.log('fail', `发送失败: ${result.error}`);
+            }
+        } catch (e) {
+            this.log('fail', `发送异常: ${e.message}`);
+        }
+    },
+    
+    async simOk() {
+        if (!this.checkSerial()) return;
+        const dist = parseInt(document.getElementById('uit-sim-dist')?.value) || 5000;
+        try {
+            const result = await API.call('ui_test_send_cmd', 'sim_ok', {distance: dist, signal: 3});
+            if (result.success) {
+                this.log('tx', `📤 TX: ${result.hex || '--'} (dist=${dist}mm)`);
+                if (result.response_text) {
+                    this.log('rx', `📥 RX: ${result.response_text.replace(/\r\n/g, ' ')}`);
+                }
+                // 读取LCD状态更新显示
+                await this.sleep(100);
+                await this.readLcdStatus();
+            } else {
+                this.log('fail', `模拟失败: ${result.error}`);
+            }
+        } catch (e) {
+            this.log('fail', `模拟异常: ${e.message}`);
+        }
+    },
+    
+    async simErr() {
+        if (!this.checkSerial()) return;
+        try {
+            const result = await API.call('ui_test_send_cmd', 'sim_err', 1);
+            if (result.success) {
+                this.log('tx', `📤 TX: ${result.hex || '--'}`);
+                if (result.response_text) {
+                    this.log('rx', `📥 RX: ${result.response_text.replace(/\r\n/g, ' ')}`);
+                }
+                // 读取LCD状态更新显示
+                await this.sleep(100);
+                await this.readLcdStatus();
+            } else {
+                this.log('fail', `模拟失败: ${result.error}`);
+            }
+        } catch (e) {
+            this.log('fail', `模拟异常: ${e.message}`);
+        }
+    },
+    
+    async setUnit(unit) {
+        if (!this.checkSerial()) return;
+        const unitNames = ['m', 'ft', 'in'];
+        try {
+            const result = await API.call('ui_test_send_cmd', 'set_unit', unit);
+            if (result.success) {
+                this.log('tx', `📤 TX: ${result.hex || '--'} (unit=${unitNames[unit] || unit})`);
+                if (result.response_text) {
+                    this.log('rx', `📥 RX: ${result.response_text.replace(/\r\n/g, ' ')}`);
+                }
+                // 读取LCD状态更新显示
+                await this.sleep(100);
+                await this.readLcdStatus();
+            } else {
+                this.log('fail', `设置失败: ${result.error}`);
+            }
+        } catch (e) {
+            this.log('fail', `设置异常: ${e.message}`);
+        }
+    },
+    
+    // 刷新状态并记录日志
+    async refreshStatusWithLog() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) return;
+        
+        try {
+            const result = await API.call('ui_test_get_device_status');
+            if (result.response_text) {
+                this.log('rx', `📥 RX: ${result.response_text.replace(/\r\n/g, ' ').substring(0, 200)}`);
+            } else if (result.response_hex) {
+                this.log('rx', `📥 RX: ${result.response_hex}`);
+            }
+            
+            if (result.success && result.status) {
+                this.logParsedStatus(result.status);
+                this.updateDeviceStatus(result.status);
+            } else {
+                this.log('fail', `状态获取失败: ${result.error || '无响应'}`);
+            }
+        } catch (e) {
+            this.log('fail', `获取状态异常: ${e.message}`);
+        }
+    },
+
+    // 刷新设备状态
+    async refreshStatus() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) return;
+        
+        try {
+            const result = await API.call('ui_test_get_device_status');
+            if (result.success && result.status) {
+                this.updateDeviceStatus(result.status);
+            }
+        } catch (e) {
+            console.error('获取状态失败:', e);
+        }
+    },
+    
+    // 读取LCD状态 (通过0xBC命令读取缓冲区，配置化渲染)
+    // 返回 Promise，在 LCD 模拟器渲染完成后 resolve
+    async readLcdStatus() {
+        if (!window.DeviceHub || !DeviceHub.isSerialConnected()) return null;
+        
+        try {
+            // 优先使用缓冲区模式 (像素级LCD模拟器)
+            const lcdResult = await this.readLcdBufferAndRender();
+            if (lcdResult) {
+                this.updateDeviceStatus(lcdResult.status);
+                return lcdResult.status;
+            }
+            
+            // 备用: 使用旧的状态API
+            const result = await API.call('ui_test_get_lcd_status');
+            if (result.success && result.lcd) {
+                this.updateDeviceStatus(result.lcd);
+                return result.lcd;
+            }
+            return null;
+        } catch (e) {
+            console.error('读取LCD状态失败:', e);
+            return null;
+        }
+    },
+    
+    // 更新设备状态显示
+    updateDeviceStatus(status) {
+        const stateNames = ['IDLE', 'LASER_ON', 'RESULT', 'ERROR', 'MENU'];
+        const modeNames = ['单次', '面积', '体积', '勾股1', '勾股2', '勾股3', '连续'];
+        const baseNames = ['前基准', '后基准'];
+        const unitNames = ['m', 'ft', 'in'];
+        
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val !== undefined && val !== null ? val : '-';
+        };
+        
+        set('ds-state', stateNames[status.state] || status.state);
+        set('ds-mode', modeNames[status.mode] || status.mode);
+        set('ds-base', baseNames[status.base] || status.base);
+        set('ds-unit', unitNames[status.unit] || status.unit);
+        set('ds-laser', status.laser ? 'ON' : 'OFF');
+        set('ds-backlight', status.backlight ? 'ON' : 'OFF');
+        set('ds-beep', status.beep ? 'ON' : 'OFF');
+        set('ds-runstep', status.runstep);
+        set('ds-last_step', status.last_step);
+        set('ds-idle', status.idle);
+        set('ds-max', status.max?.toFixed(3));
+        set('ds-min', status.min?.toFixed(3));
+        set('ds-line4', status.line4?.toFixed(3));
+        set('ds-line3', status.line3?.toFixed(3));
+        set('ds-line2', status.line2?.toFixed(3));
+        set('ds-line1', status.line1?.toFixed(3));
+        
+        // 像素级LCD模拟器不需要从状态更新，它从缓冲区渲染
+        // 如果需要强制刷新，调用 readLcdBufferAndRender()
+    },
+    
+    // ==================== 工具函数 ====================
+    
+    log(type, msg) {
+        const container = document.getElementById('uit-log');
+        if (!container) return;
+        
+        const time = new Date().toLocaleTimeString();
+        const div = document.createElement('div');
+        div.className = `uit-log-item ${type}`;
+        div.innerHTML = `<span class="uit-log-time">${time}</span>${msg}`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    },
+    
+    clearLog() {
+        const container = document.getElementById('uit-log');
+        if (container) container.innerHTML = '';
+    },
+    
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
+    
+    // ==================== 延时设置 ====================
+    
+    toggleDelaySettings() {
+        const panel = document.getElementById('uit-delay-settings');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            // 同步当前值到输入框
+            if (panel.style.display !== 'none') {
+                this.syncDelayInputs();
+            }
+        }
+    },
+    
+    syncDelayInputs() {
+        document.getElementById('delay-afterDebugMode').value = this.delays.afterDebugMode;
+        document.getElementById('delay-afterKeyClear').value = this.delays.afterKeyClear;
+        document.getElementById('delay-beforeVerify').value = this.delays.beforeVerify;
+        document.getElementById('delay-afterKeyCmd').value = this.delays.afterKeyCmd;
+    },
+    
+    updateDelays() {
+        this.delays.afterDebugMode = parseInt(document.getElementById('delay-afterDebugMode').value) || 30;
+        this.delays.afterKeyClear = parseInt(document.getElementById('delay-afterKeyClear').value) || 50;
+        this.delays.beforeVerify = parseInt(document.getElementById('delay-beforeVerify').value) || 80;
+        this.delays.afterKeyCmd = parseInt(document.getElementById('delay-afterKeyCmd').value) || 100;
+        
+        // 保存到 localStorage
+        localStorage.setItem('ui_test_delays', JSON.stringify(this.delays));
+        this.log('info', `⚙️ 延时设置已更新: 调试${this.delays.afterDebugMode}ms, 清除${this.delays.afterKeyClear}ms, 验证${this.delays.beforeVerify}ms, 按键${this.delays.afterKeyCmd}ms`);
+    },
+    
+    resetDelays() {
+        this.delays = {
+            afterDebugMode: 30,
+            afterKeyClear: 50,
+            beforeVerify: 80,
+            afterKeyCmd: 100,
+        };
+        this.syncDelayInputs();
+        localStorage.removeItem('ui_test_delays');
+        this.log('info', '⚙️ 延时设置已重置为默认值');
+    },
+    
+    loadDelaySettings() {
+        try {
+            const saved = localStorage.getItem('ui_test_delays');
+            if (saved) {
+                const delays = JSON.parse(saved);
+                this.delays = { ...this.delays, ...delays };
+                console.log('[UITest] 已加载延时设置:', this.delays);
+            }
+        } catch (e) {
+            console.warn('[UITest] 加载延时设置失败:', e);
+        }
+    },
+
+    // ==================== 步骤预览 ====================
+    
+    // 切换步骤预览面板显示
+    toggleStepsPreview() {
+        const panel = document.getElementById('uit-steps-preview');
+        if (panel) {
+            panel.classList.toggle('visible');
+        }
+    },
+    
+    // 清空步骤记录
+    clearSteps() {
+        this.testReport.steps = [];
+        this.testReport.testCases = [];
+        // 清理持久化数据
+        try {
+            localStorage.removeItem('ui_test_report');
+        } catch (e) {}
+        this.renderStepsGrouped();
+        this.log('info', '已清空步骤记录');
+    },
+    
+    // 按测试项分组渲染步骤
+    renderStepsGrouped() {
+        const list = document.getElementById('uit-steps-list');
+        if (!list) return;
+        
+        const steps = this.testReport.steps || [];
+        if (steps.length === 0) {
+            list.innerHTML = '<div class="uit-empty" style="width:100%;text-align:center;padding:40px;">运行测试后显示每步记录，按测试项分组</div>';
+            return;
+        }
+        
+        // 按 testKey 分组
+        const grouped = {};
+        steps.forEach((step, idx) => {
+            const key = step.testKey || 'unknown';
+            if (!grouped[key]) {
+                grouped[key] = { steps: [], name: this.getTestCaseName(key) };
+            }
+            grouped[key].steps.push({ ...step, globalIndex: idx });
+        });
+        
+        // 渲染分组
+        list.innerHTML = Object.entries(grouped).map(([key, group]) => {
+            const approvedCount = group.steps.filter(s => s.judgeResult === 'pass').length;
+            const rejectedCount = group.steps.filter(s => s.judgeResult === 'fail').length;
+            const totalCount = group.steps.length;
+            const groupStatus = rejectedCount > 0 ? 'rejected' : (approvedCount === totalCount ? 'approved' : '');
+            
+            const stepsHtml = group.steps.map((step, idx) => {
+                const cmdName = this.getCmdDisplayName(step.cmd);
+                const judgeStatus = step.judgeResult || 'pending';
+                return `
+                    <div class="uit-step-card ${step.success ? 'success' : 'fail'}" 
+                         data-step-index="${step.globalIndex}" onclick="UITestPage.showStepDetail(${step.globalIndex})">
+                        <div class="uit-step-header">
+                            <span class="cmd">${idx + 1}. ${cmdName}</span>
+                        </div>
+                        <div class="uit-step-lcd">
+                            ${step.lcdImage ? `<img src="${step.lcdImage}" alt="LCD">` : '<span style="color:#666;font-size:10px;">无截图</span>'}
+                        </div>
+                        <div class="uit-step-judge" data-judge="${judgeStatus}">
+                            ${judgeStatus === 'pass' ? '✅' : judgeStatus === 'fail' ? '❌' : '⏳'}
+                        </div>
+                    </div>`;
+            }).join('');
+            
+            return `
+                <div class="uit-case-group ${groupStatus}" data-case-key="${key}">
+                    <div class="uit-case-group-header">
+                        <span class="case-name" title="${group.name}">${group.name}</span>
+                        <span class="case-stats">${approvedCount}/${totalCount}</span>
+                        <div class="case-judge">
+                            <button class="judge-btn pass ${groupStatus === 'approved' ? 'active' : ''}" 
+                                    onclick="event.stopPropagation(); UITestPage.judgeCaseAll('${key}', 'pass')">✓</button>
+                            <button class="judge-btn fail ${groupStatus === 'rejected' ? 'active' : ''}"
+                                    onclick="event.stopPropagation(); UITestPage.judgeCaseAll('${key}', 'fail')">✗</button>
+                        </div>
+                    </div>
+                    <div class="uit-case-steps">${stepsHtml}</div>
+                </div>`;
+        }).join('');
+        
+        this.updateJudgeStats();
+    },
+    
+    // 获取测试用例名称
+    getTestCaseName(key) {
+        // 从 testReport.testCases 中查找
+        const tc = (this.testReport.testCases || []).find(c => c.key === key);
+        if (tc) return tc.name;
+        // 从 groups 中查找
+        for (const g of this.groups) {
+            const item = (g.items || []).find(i => i.key === key);
+            if (item) return item.name;
+        }
+        return key;
+    },
+    
+    // 整个测试用例批量评判
+    judgeCaseAll(caseKey, result) {
+        const steps = this.testReport.steps || [];
+        steps.forEach((step, idx) => {
+            if (step.testKey === caseKey) {
+                step.judgeResult = result;
+            }
+        });
+        this.renderStepsGrouped();
+        this.log('info', `${this.getTestCaseName(caseKey)} 全部评判为 ${result === 'pass' ? '✅ 通过' : '❌ 不通过'}`);
+    },
+    
+    // 添加步骤卡片 - 改为触发重新渲染
+    addStepCard(step) {
+        const panel = document.getElementById('uit-steps-preview');
+        if (panel && !panel.classList.contains('visible')) {
+            panel.classList.add('visible');
+        }
+        
+        // 初始化步骤评判状态
+        if (!step.judgeResult) step.judgeResult = null;
+        
+        // 重新渲染分组视图
+        this.renderStepsGrouped();
+        
+        // 滚动到最新的分组
+        const list = document.getElementById('uit-steps-list');
+        if (list) {
+            list.scrollLeft = list.scrollWidth;
+        }
+    },
+    
+    // 显示步骤详情弹窗 (带人工评判和备注功能)
+    showStepDetail(index) {
+        const step = this.testReport.steps[index];
+        if (!step) return;
+        
+        const cmdName = this.getCmdDisplayName(step.cmd);
+        const time = new Date(step.time).toLocaleString();
+        const total = this.testReport.steps.length;
+        const judgeResult = step.judgeResult || 'pending';
+        const caseName = this.getTestCaseName(step.testKey);
+        
+        // 创建弹窗
+        const modal = document.createElement('div');
+        modal.className = 'uit-step-modal';
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        
+        modal.innerHTML = `
+            <div class="uit-step-modal-content">
+                <div class="uit-step-modal-header">
+                    <h3>步骤 ${index + 1}/${total}: ${cmdName}</h3>
+                    <button class="uit-step-modal-close" onclick="this.closest('.uit-step-modal').remove()">×</button>
+                </div>
+                <div class="uit-step-modal-body">
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+                        📋 测试项: <strong style="color:var(--text-color)">${caseName}</strong>
+                    </div>
+                    
+                    <div class="uit-step-modal-lcd">
+                        ${step.lcdImage ? `<img src="${step.lcdImage}" alt="LCD截图">` : '<div style="color:#666;padding:40px;">无LCD截图</div>'}
+                    </div>
+                    
+                    <!-- 人工评判区域 -->
+                    <div class="uit-step-judge-panel">
+                        <div class="judge-title">🔍 人工评判</div>
+                        <div class="judge-buttons">
+                            <button class="judge-btn pass ${judgeResult === 'pass' ? 'active' : ''}" 
+                                    onclick="UITestPage.judgeStep(${index}, 'pass')">
+                                ✅ 通过
+                            </button>
+                            <button class="judge-btn fail ${judgeResult === 'fail' ? 'active' : ''}"
+                                    onclick="UITestPage.judgeStep(${index}, 'fail')">
+                                ❌ 不通过
+                            </button>
+                        </div>
+                        <div class="judge-status" id="judge-status-${index}">
+                            ${judgeResult === 'pass' ? '已评判: ✅ 通过' : judgeResult === 'fail' ? '已评判: ❌ 不通过' : '待评判'}
+                        </div>
+                    </div>
+                    
+                    <!-- 备注区域 -->
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;">📝 备注</label>
+                        <textarea id="step-note-${index}" 
+                                  style="width:100%;min-height:60px;padding:10px;border:1px solid var(--border-color);border-radius:6px;background:var(--input-bg);color:var(--text-color);font-size:12px;resize:vertical;"
+                                  placeholder="添加备注说明（可选）..."
+                                  onchange="UITestPage.updateStepNote(${index}, this.value)">${step.note || ''}</textarea>
+                    </div>
+                    
+                    <div class="uit-step-modal-nav">
+                        <button class="uit-btn" ${index === 0 ? 'disabled' : ''} onclick="UITestPage.navStep(${index - 1})">◀ 上一步</button>
+                        <span style="color:var(--text-muted)">${index + 1} / ${total}</span>
+                        <button class="uit-btn" ${index >= total - 1 ? 'disabled' : ''} onclick="UITestPage.navStep(${index + 1})">下一步 ▶</button>
+                    </div>
+                    <div class="uit-step-modal-data">
+                        <div class="row"><span class="label">时间</span><span class="value">${time}</span></div>
+                        <div class="row"><span class="label">命令</span><span class="value">${step.cmd}</span></div>
+                        <div class="row"><span class="label">参数</span><span class="value">${step.param ? JSON.stringify(step.param) : '-'}</span></div>
+                        <div class="row"><span class="label">状态</span><span class="value">${step.success ? '✓ 成功' : '✗ 失败'}</span></div>
+                        <div class="row"><span class="label">TX</span><span class="value">${step.txHex || '-'}</span></div>
+                        <div class="row"><span class="label">RX</span><span class="value">${step.rxText || '-'}</span></div>
+                        ${step.lcdStatus ? `<div class="row"><span class="label">LCD</span><span class="value">line4=${step.lcdStatus.line4}, state=${step.lcdStatus.state}, mode=${step.lcdStatus.mode}</span></div>` : ''}
+                        ${step.error ? `<div class="row"><span class="label">错误</span><span class="value" style="color:#ff6b6b">${step.error}</span></div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    },
+    
+    // 更新步骤备注
+    updateStepNote(index, note) {
+        const step = this.testReport.steps[index];
+        if (step) {
+            step.note = note;
+        }
+    },
+    
+    // 人工评判步骤
+    judgeStep(index, result) {
+        const step = this.testReport.steps[index];
+        if (!step) return;
+        
+        step.judgeResult = result;
+        
+        // 更新弹窗中的状态
+        const statusEl = document.getElementById(`judge-status-${index}`);
+        if (statusEl) {
+            statusEl.textContent = result === 'pass' ? '已评判: ✅ 通过' : '已评判: ❌ 不通过';
+        }
+        
+        // 更新按钮状态
+        const modal = document.querySelector('.uit-step-modal');
+        if (modal) {
+            modal.querySelectorAll('.judge-btn').forEach(btn => btn.classList.remove('active'));
+            modal.querySelector(`.judge-btn.${result}`)?.classList.add('active');
+        }
+        
+        // 重新渲染分组视图
+        this.renderStepsGrouped();
+        
+        this.log('info', `步骤${index + 1} 评判: ${result === 'pass' ? '✅ 通过' : '❌ 不通过'}`);
+    },
+    
+    // 更新评判统计
+    updateJudgeStats() {
+        const steps = this.testReport.steps || [];
+        const total = steps.length;
+        const passed = steps.filter(s => s.judgeResult === 'pass').length;
+        const failed = steps.filter(s => s.judgeResult === 'fail').length;
+        const pending = total - passed - failed;
+        
+        // 更新统计显示
+        const statsEl = document.getElementById('uit-judge-stats');
+        if (statsEl) {
+            statsEl.innerHTML = `
+                <span class="stat-item">总计: ${total}</span>
+                <span class="stat-item pass">✅ ${passed}</span>
+                <span class="stat-item fail">❌ ${failed}</span>
+                <span class="stat-item pending">⏳ ${pending}</span>
+            `;
+        }
+    },
+    
+    // 批量评判所有未评判的步骤
+    judgeAllPending(result) {
+        const steps = this.testReport.steps || [];
+        let count = 0;
+        steps.forEach((step, index) => {
+            if (!step.judgeResult) {
+                step.judgeResult = result;
+                count++;
+            }
+        });
+        this.renderStepsGrouped();
+        this.log('info', `批量评判 ${count} 个步骤为 ${result === 'pass' ? '✅ 通过' : '❌ 不通过'}`);
+    },
+    
+    // 导航到指定步骤
+    navStep(index) {
+        // 关闭当前弹窗
+        document.querySelector('.uit-step-modal')?.remove();
+        // 打开新步骤
+        this.showStepDetail(index);
+    },
+    
+    // 获取命令显示名称
+    getCmdDisplayName(cmd) {
+        const names = {
+            'key_measure': '📏 测量',
+            'key_measure_long': '🔁 连续',
+            'key_mode': '🔄 模式',
+            'key_base': '📐 基准',
+            'key_clear': '🗑️ 清除',
+            'key_backlight': '💡 背光',
+            'key_power_off': '⏻ 关机',
+            'sim_ok': '✅ 模拟OK',
+            'sim_err': '❌ 模拟ERR',
+            'set_unit': '📏 单位',
+            'get_status': '📡 状态',
+        };
+        return names[cmd] || cmd;
+    },
+    
+    // 导出测试报告 - 层级结构格式
+    // 格式: 1 分组名 → 1.1 测试项名 → 1.1.1 步骤1, 1.1.2 步骤2...
+    exportReport() {
+        if (!this.testReport.testCases || this.testReport.testCases.length === 0) {
+            Utils.toast('没有测试数据，请先运行测试', 'warning');
+            return;
+        }
+        
+        const report = this.testReport;
+        const passed = report.testCases.filter(c => c.passed).length;
+        const failed = report.testCases.filter(c => !c.passed).length;
+        const total = report.testCases.length;
+        
+        // 人工评判统计
+        const steps = report.steps || [];
+        const judgeTotal = steps.length;
+        const judgePassed = steps.filter(s => s.judgeResult === 'pass').length;
+        const judgeFailed = steps.filter(s => s.judgeResult === 'fail').length;
+        const judgePending = judgeTotal - judgePassed - judgeFailed;
+        
+        // 按分组组织测试用例
+        const groupedCases = {};
+        for (const tc of report.testCases) {
+            // 从测试项key中提取分组 (假设key格式: groupKey_itemKey)
+            let groupName = '未分组';
+            // 尝试从groups中找到对应分组
+            for (let i = 0; i < this.groups.length; i++) {
+                const g = this.groups[i];
+                if (g.items && g.items.find(item => item.key === tc.key)) {
+                    groupName = g.name;
+                    break;
+                }
+            }
+            if (!groupedCases[groupName]) {
+                groupedCases[groupName] = [];
+            }
+            groupedCases[groupName].push(tc);
+        }
+        
+        // 生成HTML报告
+        let html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>UI自动化测试报告 - ${report.device}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; line-height: 1.6; }
+        .report { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { padding: 24px; border-bottom: 1px solid #eee; }
+        .header h1 { font-size: 24px; color: #333; margin-bottom: 8px; }
+        .header .meta { color: #666; font-size: 14px; }
+        .summary { display: flex; gap: 20px; padding: 20px 24px; background: #fafafa; }
+        .summary-item { flex: 1; text-align: center; padding: 16px; background: #fff; border-radius: 8px; border: 1px solid #eee; }
+        .summary-item .value { font-size: 32px; font-weight: bold; }
+        .summary-item .label { font-size: 12px; color: #666; margin-top: 4px; }
+        .summary-item.pass .value { color: #00c853; }
+        .summary-item.fail .value { color: #ff5252; }
+        .toc { padding: 20px 24px; background: #f8f9fa; border-bottom: 1px solid #eee; }
+        .toc h3 { margin-bottom: 12px; font-size: 16px; }
+        .toc-list { list-style: none; }
+        .toc-list li { margin: 4px 0; }
+        .toc-list a { color: #1976d2; text-decoration: none; }
+        .toc-list a:hover { text-decoration: underline; }
+        .toc-group { font-weight: 600; margin-top: 8px; }
+        .toc-item { margin-left: 20px; font-size: 13px; }
+        .toc-item.pass::before { content: '✓ '; color: #00c853; }
+        .toc-item.fail::before { content: '✗ '; color: #ff5252; }
+        .content { padding: 24px; }
+        
+        /* 层级结构样式 */
+        .group { margin-bottom: 32px; page-break-inside: avoid; }
+        .group-header { 
+            font-size: 18px; font-weight: 600; color: #1976d2; 
+            padding: 12px 16px; background: #e3f2fd; border-radius: 6px;
+            margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .group-header .num { color: #1565c0; margin-right: 8px; }
+        .group-stats { font-size: 12px; font-weight: normal; color: #666; }
+        .group-stats .pass { color: #00c853; }
+        .group-stats .fail { color: #ff5252; }
+        
+        .case { margin-bottom: 24px; margin-left: 20px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+        .case-header { 
+            padding: 10px 16px; background: #fafafa; 
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .case-header.pass { border-left: 4px solid #00c853; }
+        .case-header.fail { border-left: 4px solid #ff5252; }
+        .case-num { color: #666; font-size: 13px; margin-right: 8px; }
+        .case-name { font-weight: 500; flex: 1; }
+        .case-status { padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .case-status.pass { background: #e8f5e9; color: #00c853; }
+        .case-status.fail { background: #ffebee; color: #ff5252; }
+        .case-body { padding: 16px; }
+        .case-desc { color: #666; font-size: 13px; margin-bottom: 12px; }
+        .case-error { color: #ff5252; font-size: 13px; margin-bottom: 12px; padding: 8px 12px; background: #ffebee; border-radius: 4px; }
+        
+        /* 步骤样式 */
+        .steps { margin-top: 12px; }
+        .steps-title { font-size: 13px; font-weight: 500; color: #333; margin-bottom: 8px; }
+        .step { 
+            display: flex; gap: 16px; padding: 12px; 
+            background: #fafafa; border-radius: 6px; margin-bottom: 8px;
+            border: 1px solid #eee;
+        }
+        .step-num { 
+            width: 28px; height: 28px; border-radius: 50%; 
+            background: #e3f2fd; color: #1976d2; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600; flex-shrink: 0;
+        }
+        .step.success .step-num { background: #e8f5e9; color: #00c853; }
+        .step.fail .step-num { background: #ffebee; color: #ff5252; }
+        .step-content { flex: 1; min-width: 0; }
+        .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .step-cmd { font-family: 'Consolas', monospace; background: #e3f2fd; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
+        .step-time { font-size: 11px; color: #999; }
+        .step-desc { font-size: 12px; color: #666; margin-bottom: 6px; }
+        .step-data { font-size: 11px; color: #888; font-family: 'Consolas', monospace; word-break: break-all; }
+        .step-data .label { color: #666; }
+        .step-lcd { width: 200px; flex-shrink: 0; }
+        .step-lcd img { width: 100%; border-radius: 4px; border: 1px solid #ddd; background: #0c1821; }
+        .step-lcd-placeholder { 
+            width: 100%; height: 80px; background: #f0f0f0; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            color: #999; font-size: 11px;
+        }
+        
+        @media print {
+            body { background: #fff; padding: 0; }
+            .report { box-shadow: none; }
+            .group { page-break-inside: avoid; }
+            .case { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+<div class="report">
+    <div class="header">
+        <h1>🔬 UI自动化测试报告</h1>
+        <div class="meta">
+            <div>设备型号: ${report.device}</div>
+            <div>测试时间: ${new Date(report.startTime).toLocaleString()} ~ ${new Date(report.endTime).toLocaleString()}</div>
+            <div>总耗时: ${Math.round((new Date(report.endTime) - new Date(report.startTime)) / 1000)} 秒</div>
+        </div>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-item"><div class="value">${total}</div><div class="label">总用例</div></div>
+        <div class="summary-item pass"><div class="value">${passed}</div><div class="label">通过</div></div>
+        <div class="summary-item fail"><div class="value">${failed}</div><div class="label">失败</div></div>
+        <div class="summary-item"><div class="value">${total > 0 ? Math.round(passed/total*100) : 0}%</div><div class="label">通过率</div></div>
+    </div>
+    
+    <!-- 人工评判统计 -->
+    <div class="summary" style="background:#fff;border-top:1px solid #eee;">
+        <div class="summary-item"><div class="value">${judgeTotal}</div><div class="label">总步骤</div></div>
+        <div class="summary-item pass"><div class="value">${judgePassed}</div><div class="label">评判通过</div></div>
+        <div class="summary-item fail"><div class="value">${judgeFailed}</div><div class="label">评判不通过</div></div>
+        <div class="summary-item"><div class="value" style="color:#999">${judgePending}</div><div class="label">待评判</div></div>
+    </div>
+    
+    <!-- 目录 -->
+    <div class="toc">
+        <h3>📋 目录</h3>
+        <ul class="toc-list">`;
+        
+        // 生成目录
+        let groupIdx = 0;
+        for (const [groupName, cases] of Object.entries(groupedCases)) {
+            groupIdx++;
+            const groupPassed = cases.filter(c => c.passed).length;
+            const groupFailed = cases.filter(c => !c.passed).length;
+            html += `
+            <li class="toc-group"><a href="#group-${groupIdx}">${groupIdx}. ${groupName}</a> <span style="font-size:11px;color:#666">(${groupPassed}✓ ${groupFailed}✗)</span></li>`;
+            
+            let caseIdx = 0;
+            for (const tc of cases) {
+                caseIdx++;
+                const statusClass = tc.passed ? 'pass' : 'fail';
+                html += `
+            <li class="toc-item ${statusClass}"><a href="#case-${groupIdx}-${caseIdx}">${groupIdx}.${caseIdx} ${tc.name}</a></li>`;
+            }
+        }
+        
+        html += `
+        </ul>
+    </div>
+    
+    <div class="content">`;
+        
+        // 生成详细内容 - 层级结构
+        groupIdx = 0;
+        for (const [groupName, cases] of Object.entries(groupedCases)) {
+            groupIdx++;
+            const groupPassed = cases.filter(c => c.passed).length;
+            const groupFailed = cases.filter(c => !c.passed).length;
+            
+            html += `
+        <div class="group" id="group-${groupIdx}">
+            <div class="group-header">
+                <span><span class="num">${groupIdx}.</span> ${groupName}</span>
+                <span class="group-stats"><span class="pass">✓${groupPassed}</span> / <span class="fail">✗${groupFailed}</span> / ${cases.length}</span>
+            </div>`;
+            
+            let caseIdx = 0;
+            for (const tc of cases) {
+                caseIdx++;
+                const statusClass = tc.passed ? 'pass' : 'fail';
+                const statusText = tc.passed ? '✓ 通过' : '✗ 失败';
+                
+                html += `
+            <div class="case" id="case-${groupIdx}-${caseIdx}">
+                <div class="case-header ${statusClass}">
+                    <span><span class="case-num">${groupIdx}.${caseIdx}</span><span class="case-name">${tc.name}</span></span>
+                    <span class="case-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="case-body">
+                    ${tc.desc ? `<div class="case-desc">${tc.desc}</div>` : ''}
+                    ${tc.error ? `<div class="case-error">❌ 错误: ${tc.error}</div>` : ''}
+                    <div class="steps">
+                        <div class="steps-title">📝 执行步骤:</div>`;
+                
+                // 该用例的步骤
+                const caseSteps = report.steps.filter(s => s.testKey === tc.key);
+                let stepIdx = 0;
+                for (const step of caseSteps) {
+                    stepIdx++;
+                    const stepClass = step.success ? 'success' : 'fail';
+                    const cmdName = this.getCmdDisplayName(step.cmd);
+                    // 人工评判结果
+                    const judgeResult = step.judgeResult;
+                    const judgeText = judgeResult === 'pass' ? '✅ 人工评判: 通过' : 
+                                      judgeResult === 'fail' ? '❌ 人工评判: 不通过' : '⏳ 待评判';
+                    const judgeClass = judgeResult === 'pass' ? 'color:#00c853' : 
+                                       judgeResult === 'fail' ? 'color:#ff5252' : 'color:#999';
+                    
+                    html += `
+                        <div class="step ${stepClass}">
+                            <div class="step-num">${stepIdx}</div>
+                            <div class="step-content">
+                                <div class="step-header">
+                                    <span class="step-cmd">${cmdName}</span>
+                                    <span class="step-time">${new Date(step.time).toLocaleTimeString()}</span>
+                                </div>
+                                <div class="step-desc">${step.cmd}${step.param ? ' ' + JSON.stringify(step.param) : ''}</div>
+                                <div style="font-size:12px;font-weight:500;margin:6px 0;${judgeClass}">${judgeText}</div>
+                                <div class="step-data">
+                                    <span class="label">TX:</span> ${step.txHex || '-'}<br>
+                                    <span class="label">RX:</span> ${step.rxText?.substring(0, 150) || '-'}
+                                </div>
+                            </div>
+                            <div class="step-lcd">
+                                ${step.lcdImage ? `<img src="${step.lcdImage}" alt="LCD截图">` : '<div class="step-lcd-placeholder">无截图</div>'}
+                            </div>
+                        </div>`;
+                }
+                
+                if (caseSteps.length === 0) {
+                    html += `
+                        <div style="color:#999;font-size:12px;padding:12px;">无执行步骤记录</div>`;
+                }
+                
+                html += `
+                    </div>
+                </div>
+            </div>`;
+            }
+            
+            html += `
+        </div>`;
+        }
+        
+        html += `
+    </div>
+</div>
+</body>
+</html>`;
+        
+        // 下载文件
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `UI测试报告_${report.device}_${new Date().toISOString().slice(0,10)}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.log('pass', '测试报告已导出');
+    },
+    
+    // 导出DOC格式报告
+    async exportDocReport() {
+        if (!this.testReport.testCases || this.testReport.testCases.length === 0) {
+            Utils.toast('没有测试数据，请先运行测试', 'warning');
+            return;
+        }
+        
+        const report = this.testReport;
+        const passed = report.testCases.filter(c => c.passed).length;
+        const failed = report.testCases.filter(c => !c.passed).length;
+        const total = report.testCases.length;
+        
+        // 按分组组织测试用例
+        const groupedCases = {};
+        for (const tc of report.testCases) {
+            let groupName = '未分组';
+            for (let i = 0; i < this.groups.length; i++) {
+                const g = this.groups[i];
+                if (g.items && g.items.find(item => item.key === tc.key)) {
+                    groupName = g.name;
+                    break;
+                }
+            }
+            if (!groupedCases[groupName]) {
+                groupedCases[groupName] = [];
+            }
+            groupedCases[groupName].push(tc);
+        }
+        
+        // 构建报告数据
+        const docReport = {
+            time: report.startTime,
+            device: report.device,
+            stats: { total, passed, failed },
+            results: {},
+            steps: []  // 完整步骤数据
+        };
+        
+        // 整理结果和步骤
+        for (const [groupName, cases] of Object.entries(groupedCases)) {
+            docReport.results[groupName] = {};
+            for (const tc of cases) {
+                docReport.results[groupName][tc.key] = {
+                    name: tc.name,
+                    result: tc.passed ? 'pass' : 'fail'
+                };
+                
+                // 收集该用例的完整步骤数据
+                const caseSteps = report.steps.filter(s => s.testKey === tc.key);
+                for (let i = 0; i < caseSteps.length; i++) {
+                    const step = caseSteps[i];
+                    docReport.steps.push({
+                        testKey: tc.key,
+                        stepNum: i + 1,
+                        cmd: step.cmd,
+                        cmdName: this.getCmdDisplayName(step.cmd),
+                        param: step.param,
+                        time: step.time,
+                        judgeResult: step.judgeResult,
+                        lcdImage: step.lcdImage || null
+                    });
+                }
+            }
+        }
+        
+        // 调用后端生成DOC报告 - 使用HTTP API
+        Utils.toast('正在生成DOC报告...', 'info');
+        try {
+            const deviceId = DeviceConfigManager?.getCurrentDevice?.() || 'gd303_mini';
+            
+            // 使用 HTTP API 调用
+            const response = await fetch('http://localhost:8766/api/call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    method: 'ui_test_export_doc_report',
+                    params: [docReport, deviceId]
+                })
+            });
+            const result = await response.json();
+            
+            if (result && result.success) {
+                // 下载生成的DOC文件
+                const downloadResponse = await fetch('http://localhost:8766/api/call', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'ui_test_download_report',
+                        params: [result.filename]
+                    })
+                });
+                const downloadResult = await downloadResponse.json();
+                
+                if (downloadResult && downloadResult.success) {
+                    const byteCharacters = atob(downloadResult.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+                    
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = result.filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    this.log('pass', 'DOC报告已导出: ' + result.filename);
+                } else {
+                    Utils.toast('下载报告失败: ' + (downloadResult?.error || ''), 'error');
+                }
+            } else {
+                Utils.toast('生成报告失败: ' + (result?.error || ''), 'error');
+            }
+        } catch (e) {
+            console.error('导出DOC报告失败:', e);
+            Utils.toast('导出失败: ' + e.message, 'error');
+        }
+    }
+};
+
+window.UITestPage = UITestPage;
+</script>
+</script>

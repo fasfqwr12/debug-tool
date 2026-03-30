@@ -1,0 +1,622 @@
+<!-- 升降控制测试页面 -->
+<style>
+.lift-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* 顶部状态栏 - 使用主题变量 */
+.lift-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 20px;
+}
+.lift-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+}
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.lift-page .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-danger, #ef4444);
+}
+.lift-page .status-dot.connected {
+    background: var(--color-success, #22c55e);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+.status-text {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* 主布局 - 更紧凑 */
+.lift-main {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 16px;
+}
+
+/* 卡片样式 - 使用主题变量 */
+.lift-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+}
+.lift-card h3 {
+    color: var(--text-accent);
+    font-size: 14px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 连接配置 - 使用主题变量 */
+.config-group {
+    margin-bottom: 12px;
+}
+.config-group label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+.config-group input, .config-group select {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px 10px;
+    color: var(--text-color);
+    font-size: 13px;
+}
+.config-group input:focus, .config-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* 按钮 - 使用主题变量 */
+.lift-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+.lift-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
+}
+.lift-btn.primary:hover {
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+.lift-btn.danger {
+    background: var(--color-danger, #ef4444);
+    border-color: var(--color-danger, #ef4444);
+    color: var(--text-on-danger);
+}
+.lift-btn.secondary {
+    background: rgba(100, 100, 100, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+.lift-btn:hover {
+    border-color: var(--accent);
+}
+.lift-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* 中间控制区 */
+.control-center {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 位置显示 - 使用主题变量 */
+.position-display {
+    text-align: center;
+    padding: 24px;
+}
+.position-value {
+    font-size: 42px;
+    font-weight: 300;
+    color: var(--accent);
+    font-family: 'Consolas', monospace;
+}
+.position-unit {
+    font-size: 18px;
+    color: var(--text-muted);
+    margin-left: 6px;
+}
+.position-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* 运动控制 - 使用主题变量 */
+.motion-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+.jog-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--accent);
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.jog-btn:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+.jog-btn:active {
+    transform: scale(0.95);
+}
+/* 急停按钮 - 使用主题变量 */
+.stop-btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 3px solid var(--color-danger, #ef4444);
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--color-danger, #ef4444);
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.stop-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+/* 目标位置 - 使用主题变量 */
+.target-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+}
+.target-input-group input {
+    width: 110px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px 10px;
+    color: var(--accent);
+    font-size: 16px;
+    text-align: center;
+    font-family: 'Consolas', monospace;
+}
+
+/* 快捷位置 - 使用主题变量 */
+.quick-positions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.quick-btn {
+    padding: 6px 12px;
+    background: var(--accent-dim);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-accent);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.quick-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
+}
+
+/* 参数配置 - 使用主题变量 */
+.param-group {
+    margin-bottom: 10px;
+}
+.param-group label {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+.param-group label span {
+    color: var(--accent);
+    font-family: monospace;
+}
+.param-group input[type="range"] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border-color);
+    border-radius: 2px;
+    outline: none;
+}
+.param-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+}
+.param-input {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.param-input input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: var(--text-color);
+    font-size: 12px;
+}
+.param-input .unit {
+    color: var(--text-muted);
+    font-size: 11px;
+    min-width: 35px;
+}
+
+/* 状态信息 - 使用主题变量 */
+.status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.lift-page .status-item {
+    background: var(--input-bg);
+    border-radius: 4px;
+    padding: 8px;
+}
+.lift-page .status-item .label {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+.lift-page .status-item .value {
+    color: var(--text-color);
+    font-size: 13px;
+    font-family: monospace;
+    margin-top: 2px;
+}
+.lift-page .status-item .value.ok { color: var(--color-success, #22c55e); }
+.lift-page .status-item .value.error { color: var(--color-danger, #ef4444); }
+.lift-page .status-item .value.warning { color: var(--color-warning, #f59e0b); }
+
+/* 日志 - 使用主题变量 */
+.log-area {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px;
+    height: 140px;
+    overflow-y: auto;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+}
+.log-line {
+    padding: 2px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.log-line.info { color: var(--color-info, #06b6d4); }
+.log-line.success { color: var(--color-success, #22c55e); }
+.log-line.error { color: var(--color-danger, #ef4444); }
+.log-line .time { color: var(--text-dim); margin-right: 6px; }
+</style>
+
+<div class="lift-page">
+    <!-- 顶部状态栏 -->
+    <div class="lift-header">
+        <div class="lift-title">🔧 升降控制测试</div>
+        <div class="connection-status">
+            <div class="status-dot" id="conn-dot"></div>
+            <span class="status-text" id="conn-text">未连接</span>
+        </div>
+    </div>
+    
+    <!-- 主布局 -->
+    <div class="lift-main">
+        <!-- 左侧：连接与配置 -->
+        <div class="lift-card">
+            <h3>📡 连接配置</h3>
+            <div class="config-group">
+                <label>控制器IP地址</label>
+                <input type="text" id="ctrl-ip" value="192.168.0.11" placeholder="192.168.0.11">
+            </div>
+            <div class="config-group">
+                <label>轴号</label>
+                <select id="ctrl-axis">
+                    <option value="0">轴0</option>
+                    <option value="1">轴1</option>
+                    <option value="2">轴2</option>
+                    <option value="3">轴3</option>
+                </select>
+            </div>
+            <div class="btn-row">
+                <button class="lift-btn primary" id="btn-connect" onclick="LiftControl.connect()">连接</button>
+                <button class="lift-btn secondary" id="btn-disconnect" onclick="LiftControl.disconnect()" disabled>断开</button>
+            </div>
+            
+            <h3 style="margin-top: 24px;">⚙️ 轴参数</h3>
+            <div class="config-group">
+                <label>轴类型</label>
+                <select id="param-atype">
+                    <option value="1">脉冲+方向</option>
+                    <option value="2">双脉冲</option>
+                    <option value="3">AB相</option>
+                </select>
+            </div>
+            <div class="config-row">
+                <div class="config-group">
+                    <label>脉冲当量</label>
+                    <input type="number" id="param-units" value="1000" step="100">
+                </div>
+                <div class="config-group">
+                    <label>单位</label>
+                    <select id="param-unit-type">
+                        <option value="pulse/mm">脉冲/mm</option>
+                        <option value="pulse/deg">脉冲/度</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="lift-btn secondary" onclick="LiftControl.applyParams()" style="flex:1">应用参数</button>
+            </div>
+        </div>
+        
+        <!-- 中间：控制区 -->
+        <div class="control-center">
+            <!-- 位置显示 -->
+            <div class="lift-card">
+                <div class="position-display">
+                    <span class="position-value" id="current-pos">0.000</span>
+                    <span class="position-unit">mm</span>
+                    <div class="position-label">当前位置</div>
+                </div>
+            </div>
+            
+            <!-- 运动控制 -->
+            <div class="lift-card">
+                <h3>🎮 运动控制</h3>
+                <div class="motion-controls">
+                    <!-- JOG上 -->
+                    <button class="jog-btn" id="btn-jog-up" 
+                            onmousedown="LiftControl.jogStart(1)" 
+                            onmouseup="LiftControl.jogStop()"
+                            onmouseleave="LiftControl.jogStop()">▲</button>
+                    
+                    <!-- 停止按钮 -->
+                    <button class="stop-btn" onclick="LiftControl.stop()">停止</button>
+                    
+                    <!-- JOG下 -->
+                    <button class="jog-btn" id="btn-jog-down"
+                            onmousedown="LiftControl.jogStart(-1)" 
+                            onmouseup="LiftControl.jogStop()"
+                            onmouseleave="LiftControl.jogStop()">▼</button>
+                </div>
+                
+                <!-- 目标位置 -->
+                <div class="target-input-group">
+                    <input type="number" id="target-pos" value="0" step="0.1" placeholder="目标位置">
+                    <span class="position-unit">mm</span>
+                    <button class="lift-btn primary" onclick="LiftControl.moveTo()">移动</button>
+                </div>
+                
+                <!-- 快捷位置 -->
+                <div class="quick-positions" style="margin-top: 15px;">
+                    <button class="quick-btn" onclick="LiftControl.moveTo(0)">原点 0</button>
+                    <button class="quick-btn" onclick="LiftControl.moveTo(10)">10mm</button>
+                    <button class="quick-btn" onclick="LiftControl.moveTo(25)">25mm</button>
+                    <button class="quick-btn" onclick="LiftControl.moveTo(50)">50mm</button>
+                    <button class="quick-btn" onclick="LiftControl.moveTo(100)">100mm</button>
+                </div>
+            </div>
+            
+            <!-- 回零 -->
+            <div class="lift-card">
+                <h3>🏠 回零操作</h3>
+                <div class="config-row">
+                    <div class="config-group">
+                        <label>原点输入口</label>
+                        <select id="home-input">
+                            <option value="0">IN0</option>
+                            <option value="1">IN1</option>
+                            <option value="2">IN2</option>
+                            <option value="3">IN3</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>回零模式</label>
+                        <select id="home-mode">
+                            <option value="0">负向找原点+反找</option>
+                            <option value="1">正向找原点+反找</option>
+                            <option value="2">负向找原点</option>
+                            <option value="3">正向找原点</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="lift-btn primary" onclick="LiftControl.home()" style="flex:1">执行回零</button>
+                    <button class="lift-btn secondary" onclick="LiftControl.setZero()">设为零点</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧：参数与状态 -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- 速度参数 -->
+            <div class="lift-card">
+                <h3>⚡ 速度参数</h3>
+                <div class="param-group">
+                    <label>运动速度 <span id="speed-val">50</span></label>
+                    <input type="range" id="param-speed" min="1" max="200" value="50" 
+                           oninput="LiftControl.updateSpeedDisplay()">
+                    <div class="param-input">
+                        <input type="number" id="param-speed-input" value="50" min="1" max="200"
+                               onchange="LiftControl.setSpeed(this.value)">
+                        <span class="unit">mm/s</span>
+                    </div>
+                </div>
+                <div class="param-group">
+                    <label>加速度 <span id="accel-val">200</span></label>
+                    <input type="range" id="param-accel" min="10" max="1000" value="200"
+                           oninput="LiftControl.updateAccelDisplay()">
+                    <div class="param-input">
+                        <input type="number" id="param-accel-input" value="200" min="10" max="1000"
+                               onchange="LiftControl.setAccel(this.value)">
+                        <span class="unit">mm/s²</span>
+                    </div>
+                </div>
+                <div class="param-group">
+                    <label>减速度 <span id="decel-val">200</span></label>
+                    <input type="range" id="param-decel" min="10" max="1000" value="200"
+                           oninput="LiftControl.updateDecelDisplay()">
+                    <div class="param-input">
+                        <input type="number" id="param-decel-input" value="200" min="10" max="1000"
+                               onchange="LiftControl.setDecel(this.value)">
+                        <span class="unit">mm/s²</span>
+                    </div>
+                </div>
+                <div class="param-group">
+                    <label>JOG速度 <span id="jog-speed-val">20</span></label>
+                    <input type="range" id="param-jog-speed" min="1" max="100" value="20"
+                           oninput="LiftControl.updateJogSpeedDisplay()">
+                    <div class="param-input">
+                        <input type="number" id="param-jog-speed-input" value="20" min="1" max="100"
+                               onchange="LiftControl.setJogSpeed(this.value)">
+                        <span class="unit">mm/s</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 限位设置 -->
+            <div class="lift-card">
+                <h3>🚧 限位设置</h3>
+                <div class="config-row">
+                    <div class="config-group">
+                        <label>正向限位</label>
+                        <input type="number" id="limit-pos" value="100" step="1">
+                    </div>
+                    <div class="config-group">
+                        <label>负向限位</label>
+                        <input type="number" id="limit-neg" value="0" step="1">
+                    </div>
+                </div>
+                <div class="config-row">
+                    <div class="config-group">
+                        <label>正限位输入</label>
+                        <select id="limit-pos-in">
+                            <option value="-1">不使用</option>
+                            <option value="0">IN0</option>
+                            <option value="1">IN1</option>
+                            <option value="2">IN2</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>负限位输入</label>
+                        <select id="limit-neg-in">
+                            <option value="-1">不使用</option>
+                            <option value="0">IN0</option>
+                            <option value="1">IN1</option>
+                            <option value="2">IN2</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="lift-btn secondary" onclick="LiftControl.applyLimits()" style="flex:1">应用限位</button>
+                </div>
+            </div>
+            
+            <!-- 状态信息 -->
+            <div class="lift-card">
+                <h3>📊 状态信息</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="label">轴状态</div>
+                        <div class="value" id="st-axis">--</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">运动状态</div>
+                        <div class="value" id="st-motion">--</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">命令位置</div>
+                        <div class="value" id="st-dpos">--</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">反馈位置</div>
+                        <div class="value" id="st-mpos">--</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">当前速度</div>
+                        <div class="value" id="st-speed">--</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">跟随误差</div>
+                        <div class="value" id="st-fe">--</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 日志 -->
+            <div class="lift-card">
+                <h3>📝 操作日志</h3>
+                <div class="log-area" id="log-area"></div>
+            </div>
+        </div>
+    </div>
+</div>
