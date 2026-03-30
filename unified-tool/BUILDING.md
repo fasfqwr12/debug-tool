@@ -4,6 +4,7 @@
 
 - 建议 Python `3.12.x`
 - 新建虚拟环境后安装你们项目实际使用的依赖（按团队锁定版本）
+- 本仓库已提供基础依赖清单：`requirements.in`
 
 > 说明：本仓库是源码优先，不包含你本机缓存/发布产物。
 
@@ -19,6 +20,13 @@ python main_web.py
 
 - HTTP: `127.0.0.1:8766`
 - WebSocket: `127.0.0.1:8767`
+
+安装依赖（建议在虚拟环境中）：
+
+```powershell
+python -m pip install -U pip
+python -m pip install -r requirements.in
+```
 
 ## 3) 依赖边界（请务必统一）
 
@@ -40,3 +48,14 @@ python main_web.py
 3. 产物只发布，不入主仓
 4. 保留源码仓库纯净，确保可审计、可协作、可持续恢复
 
+仓库内一键打包脚本：
+
+```powershell
+.\build.ps1 -InstallDeps
+```
+
+不重复安装依赖可用：
+
+```powershell
+.\build.ps1
+```
