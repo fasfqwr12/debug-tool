@@ -30,3 +30,6 @@ runtime/
 
 # Large binaries (cannot be pushed to GitHub without LFS)
 高德模块/*.exe
+
+# Local side workspace
+code-map-workbench/
