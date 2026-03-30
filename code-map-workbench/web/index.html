@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Code Map Workbench</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b1020; --panel:#121a30; --panel2:#0f1730; --text:#dce7ff; --muted:#8ca0c8; --border:#24304d; --accent:#15efaa; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI","Microsoft YaHei",sans-serif; background:radial-gradient(circle at top,#162342,#0b1020 45%); color:var(--text); }
+    .app { display:grid; grid-template-rows:auto 1fr; height:100vh; position:relative; }
+    .busy { position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,.05); opacity:0; transition:opacity .12s ease; z-index:80; overflow:hidden; }
+    .busy.active { opacity:1; }
+    .busy::before { content:''; position:absolute; top:0; left:-30%; width:30%; height:100%; background:linear-gradient(90deg,transparent,var(--accent),transparent); animation:busy-slide 1s linear infinite; }
+    @keyframes busy-slide { from { left:-30%; } to { left:100%; } }
+    .toolbar { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(220px,320px) minmax(220px,0.8fr) auto auto auto; gap:10px; padding:14px; border-bottom:1px solid var(--border); background:rgba(9,14,29,.92); }
+    .toolbar input,.toolbar select { width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:#111a34; color:var(--text); }
+    .toolbar button { padding:12px 16px; border-radius:10px; border:1px solid var(--border); background:#17223f; color:var(--text); cursor:pointer; }
+    .toolbar .primary { background:var(--accent); color:#04110d; border-color:transparent; font-weight:700; }
+    .build-badge { display:inline-flex; align-items:center; justify-content:center; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.03); color:var(--muted); font-size:12px; white-space:nowrap; }
+    .layout { display:grid; grid-template-columns:320px 1fr; gap:12px; padding:12px; min-height:0; }
+    .panel { min-height:0; display:flex; flex-direction:column; overflow:hidden; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
+    .panel h3 { margin:0; padding:12px 14px; border-bottom:1px solid var(--border); font-size:14px; }
+    .editor-tools { display:flex; gap:8px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); background:rgba(12,19,36,.98); flex-wrap:wrap; position:sticky; top:0; z-index:4; box-shadow:0 8px 18px rgba(0,0,0,.22); }
+    .editor-tools button { padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#17223f; color:var(--text); cursor:pointer; }
+    .editor-tools button:disabled { opacity:.45; cursor:not-allowed; }
+    .tool-info { margin-left:auto; font-size:12px; color:var(--muted); padding:4px 10px; border:1px solid rgba(255,255,255,.06); border-radius:999px; background:rgba(255,255,255,.03); }
+    .body { padding:12px; overflow:auto; min-height:0; }
+    .pinned { display:none; padding:12px; border-bottom:1px solid var(--border); background:#0d1426; }
+    .pinned.active { display:block; }
+    .item,.subitem,.peek-item { padding:8px 10px; border-radius:8px; cursor:pointer; transition:background .12s ease, transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+    .item:hover,.subitem:hover,.peek-item:hover { background:rgba(21,239,170,.08); }
+    .item.active,.subitem.active { background:rgba(21,239,170,.12); }
+    .subitem { margin-left:12px; }
+    .code { font-family:Consolas,monospace; white-space:pre; overflow:auto; background:var(--panel2); border:1px solid var(--border); border-radius:10px; }
+    textarea.editor-area { width:100%; min-height:100%; resize:none; border:1px solid var(--border); border-radius:10px; background:var(--panel2); color:var(--text); padding:12px; font:13px/1.6 Consolas,monospace; }
+    .code.active-scroll { box-shadow: inset 0 0 0 1px rgba(21,239,170,.32), 0 0 0 1px rgba(21,239,170,.18); }
+    .line { display:grid; grid-template-columns:64px 1fr auto; width:max-content; min-width:100%; gap:14px; padding:0 12px; }
+    .line.anchor { background:rgba(21,239,170,.10); }
+    .line.focus-line { background:linear-gradient(90deg, rgba(21,239,170,.18), rgba(21,239,170,.06) 55%, transparent 88%); }
+    .line.function-selected { background:linear-gradient(90deg, rgba(21,239,170,.12), rgba(21,239,170,.03) 55%, transparent 88%); }
+    .line.function-selected .num { color:#baffee; }
+    .line.symbol-selected { background:linear-gradient(90deg, rgba(255,215,0,.18), rgba(255,215,0,.05) 55%, transparent 88%); }
+    .line.symbol-selected .num { color:#ffe77a; }
+    .line.current-line { background:linear-gradient(90deg, rgba(124,184,255,.22), rgba(124,184,255,.07) 58%, transparent 88%); }
+    .line.current-line .num { color:#a8d1ff; }
+    .num { color:var(--muted); text-align:right; border-right:1px solid rgba(255,255,255,.08); padding-right:8px; user-select:none; }
+    .actions { display:flex; gap:6px; align-items:center; padding:2px 0; }
+    .actions button,.peek-item button,.card button { padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:#162440; color:var(--text); cursor:pointer; transition:transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease; }
+    .actions button:hover,.peek-item button:hover,.card button:hover { transform:translateY(-1px); border-color:rgba(21,239,170,.42); background:rgba(21,239,170,.12); box-shadow:0 0 0 1px rgba(21,239,170,.12); }
+    .inline { margin-left:24px; padding-left:16px; border-left:2px solid rgba(21,239,170,.22); display:grid; gap:10px; }
+    .inline.focus-branch { border-left-color: rgba(21,239,170,.7); }
+    .inline.level-1 { border-left-color: rgba(21,239,170,.55); }
+    .inline.level-2 { border-left-color: rgba(74,196,255,.45); }
+    .inline.level-3 { border-left-color: rgba(255,190,92,.45); }
+    .inline.level-4 { border-left-color: rgba(255,124,124,.45); }
+    .token { cursor:pointer; border-radius:4px; padding:0 1px; }
+    .token:hover { background:rgba(255,255,255,.08); }
+    .token.sel { background:rgba(255,215,0,.22); color:#fff3aa; }
+    .card { display:grid; gap:10px; }
+    .facts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .fact,.section,.branch-head { background:#10182d; border:1px solid var(--border); border-radius:10px; padding:10px; transition:border-color .12s ease, box-shadow .12s ease, transform .12s ease, background .12s ease; }
+    .branch-head.active { border-color: rgba(21,239,170,.55); box-shadow: 0 0 0 1px rgba(21,239,170,.18), inset 0 0 0 1px rgba(21,239,170,.12); transform: translateY(-1px); background:linear-gradient(180deg, rgba(21,239,170,.10), rgba(16,24,45,.92)); }
+    .fact .label { color:var(--muted); font-size:12px; margin-bottom:4px; }
+    .section h4 { margin:0 0 8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .peek-item { display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:start; }
+    .tag { display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; line-height:1.3; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.05); color:#b7ffe6; margin-right:6px; white-space:nowrap; }
+    .muted { color:var(--muted); }
+    .status { padding:8px 14px; color:var(--muted); font-size:12px; }
+    .peek-float { position:fixed; right:20px; top:86px; bottom:20px; width:min(680px, calc(100vw - 48px)); background:#0d1426; border:1px solid var(--border); border-radius:14px; box-shadow:0 20px 40px rgba(0,0,0,.35); display:none; z-index:50; overflow:hidden; }
+    .peek-float.active { display:flex; flex-direction:column; }
+    .peek-backdrop { position:fixed; inset:0; background:transparent; display:none; z-index:45; }
+    .peek-backdrop.active { display:block; }
+    .peek-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); background:rgba(14,21,41,.96); }
+    .peek-head.dragging { cursor:grabbing; }
+    .peek-head .title { font-size:12px; color:var(--muted); margin-bottom:4px; }
+    .peek-head .name { font-size:14px; font-weight:700; }
+    .peek-body { padding:12px; overflow:auto; min-height:0; display:grid; gap:10px; }
+    .peek-close { padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#17223f; color:var(--text); cursor:pointer; }
+    .peek-code-actions { display:flex; gap:8px; }
+    .peek-empty { color:var(--muted); font-size:13px; }
+    .right-hint { color:var(--muted); font-size:13px; line-height:1.7; }
+    .search-results { position:absolute; top:62px; left:12px; right:12px; max-height:48vh; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#10182d; box-shadow:0 16px 30px rgba(0,0,0,.35); z-index:70; display:none; }
+    .search-results.active { display:block; }
+    .search-row { display:grid; grid-template-columns:auto 1fr auto; gap:10px; padding:10px 12px; border-top:1px solid rgba(255,255,255,.05); cursor:pointer; }
+    .search-row:first-child { border-top:0; }
+    .search-row:hover { background:rgba(21,239,170,.08); }
+    .search-row.active { background:rgba(21,239,170,.14); }
+    .search-kind { font-size:11px; color:#b7ffe6; border:1px solid rgba(21,239,170,.24); border-radius:999px; padding:2px 8px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="busy" id="busy"></div>
+  <div class="toolbar">
+    <input id="root" placeholder="输入工程目录，例如 D:\GreenLaser-Organized\firmware\gd303_unified">
+    <select id="recent"><option value="">最近工程</option></select>
+    <div style="position:relative;"><input id="search" placeholder="搜索文件 / 函数"><div class="search-results" id="search-results"></div></div>
+    <button id="pick">选择目录</button>
+    <button id="sample">示例工程</button>
+    <button class="primary" id="scan">导入并建索引</button>
+    <span class="build-badge">Build 2026-03-28</span>
+  </div>
+  <div class="layout">
+    <section class="panel"><h3>目录</h3><div class="body" id="tree"></div></section>
+    <section class="panel"><h3 id="title">请选择文件或函数</h3><div class="editor-tools"><button id="back">← 返回</button><button id="forward">→ 前进</button><button id="edit">编辑文件</button><button id="save">保存</button><button id="cancel-edit">取消编辑</button><button id="copy-path">复制路径</button><span class="tool-info" id="tool-info">未选中</span></div><div class="pinned" id="pinned"></div><div class="body" id="editor"></div><div class="status" id="status">未导入工程</div></section>
+  </div>
+  <div class="peek-backdrop" id="peek-backdrop"></div>
+  <div class="peek-float" id="peek-float">
+    <div class="peek-head" id="peek-head">
+      <div>
+        <div class="title">Peek</div>
+        <div class="name" id="peek-name">未选中符号</div>
+        <div class="muted" id="peek-meta"></div>
+      </div>
+      <div class="peek-code-actions">
+        <button class="peek-close" id="peek-copy">复制代码</button>
+        <button class="peek-close" id="peek-pin">Pin</button>
+        <button class="peek-close" id="peek-close">关闭</button>
+      </div>
+    </div>
+    <div class="peek-body" id="peek"></div>
+  </div>
+</div>
+<script>
+const API={call:async(method,...params)=>{state.busyCount++; updateBusy(); try { const r=await fetch('/api/call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method,params})}); return await r.json(); } finally { state.busyCount=Math.max(0,state.busyCount-1); updateBusy(); }}};
+const state={projectId:'',files:[],file:null,fileSource:null,focusFunction:null,children:{},expanded:{},selectedSymbol:'',peek:null,pinned:null,busyCount:0,detailPath:'',detailLine:0,focusBranch:'',focusFunctionId:'',navHistory:[],navIndex:-1,restoringHistory:false,editorMode:'view',editorDraft:'',searchItems:[],searchIndex:-1};
+const dom={root:document.getElementById('root'),recent:document.getElementById('recent'),search:document.getElementById('search'),searchResults:document.getElementById('search-results'),scan:document.getElementById('scan'),sample:document.getElementById('sample'),pick:document.getElementById('pick'),tree:document.getElementById('tree'),editor:document.getElementById('editor'),title:document.getElementById('title'),peek:document.getElementById('peek'),peekBackdrop:document.getElementById('peek-backdrop'),peekFloat:document.getElementById('peek-float'),peekHead:document.getElementById('peek-head'),peekName:document.getElementById('peek-name'),peekMeta:document.getElementById('peek-meta'),peekClose:document.getElementById('peek-close'),peekCopy:document.getElementById('peek-copy'),peekPin:document.getElementById('peek-pin'),pinned:document.getElementById('pinned'),busy:document.getElementById('busy'),status:document.getElementById('status'),toolInfo:document.getElementById('tool-info'),back:document.getElementById('back'),forward:document.getElementById('forward'),edit:document.getElementById('edit'),save:document.getElementById('save'),cancelEdit:document.getElementById('cancel-edit'),copyPath:document.getElementById('copy-path')};
+dom.sample.onclick=()=>{dom.root.value='E:\\相位\\1\\green'; scan();}; dom.scan.onclick=scan; dom.pick.onclick=pickFolder;
+dom.recent.onchange=()=>{ if(dom.recent.value){ dom.root.value=dom.recent.value; scan(); } };
+dom.search.oninput=()=>searchNow();
+dom.search.onkeydown=e=>handleSearchKey(e);
+dom.peekBackdrop.onclick=()=>closePeek();
+dom.back.onclick=()=>goBack(); dom.forward.onclick=()=>goForward(); dom.edit.onclick=()=>startEdit(); dom.save.onclick=()=>saveEdit(); dom.cancelEdit.onclick=()=>cancelEdit(); dom.copyPath.onclick=async()=>{if(state.fileSource?.path){await navigator.clipboard.writeText(state.fileSource.path); dom.status.textContent='已复制路径';}};
+dom.peekClose.onclick=(e)=>{e.stopPropagation(); closePeek();};
+dom.peekCopy.onclick=async()=>{const text=(state.peek?.lines||[]).map(line=>`${line.line_number}  ${line.text}`).join('\n'); await navigator.clipboard.writeText(text); dom.status.textContent='已复制 Peek 代码';};
+dom.peekPin.onclick=(e)=>{e.stopPropagation(); state.pinned=state.peek; renderPinned();};
+dom.peekFloat.onclick=(e)=>e.stopPropagation();
+initPeekDrag();
+loadRecent();
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePeek(); });
+document.addEventListener('pointerdown', e=>{ if(state.peek && dom.peekFloat.classList.contains('active') && !dom.peekFloat.contains(e.target) && !(e.target.closest && e.target.closest('[data-symbol]'))) closePeek(); });
+function updateBusy(){dom.busy.classList.toggle('active', state.busyCount>0);}
+function updateToolButtons(){dom.back.disabled=state.navIndex<=0; dom.forward.disabled=state.navIndex<0||state.navIndex>=state.navHistory.length-1; dom.edit.disabled=!state.fileSource||state.editorMode==='edit'; dom.save.disabled=state.editorMode!=='edit'; dom.cancelEdit.disabled=state.editorMode!=='edit'; dom.copyPath.disabled=!state.fileSource?.path;}
+function updateToolInfo(){if(!dom.toolInfo)return; const parts=[]; if(state.fileSource?.path) parts.push(state.fileSource.path); if(state.focusFunction?.name) parts.push(`函数: ${state.focusFunction.name}`); if(state.selectedSymbol) parts.push(`符号: ${state.selectedSymbol}`); dom.toolInfo.textContent=parts.join(' · ') || '未选中';}
+function recordNav(entry){if(state.restoringHistory||!entry)return;const history=state.navHistory.slice(0,state.navIndex+1);const last=history[history.length-1];if(last&&JSON.stringify(last)===JSON.stringify(entry)){state.navHistory=history;state.navIndex=history.length-1;updateToolButtons();return;}history.push(entry);state.navHistory=history.slice(-80);state.navIndex=state.navHistory.length-1;updateToolButtons();}
+async function goBack(){if(state.navIndex<=0)return;state.navIndex-=1;await restoreNav(state.navHistory[state.navIndex]);updateToolButtons();}
+async function goForward(){if(state.navIndex>=state.navHistory.length-1)return;state.navIndex+=1;await restoreNav(state.navHistory[state.navIndex]);updateToolButtons();}
+async function restoreNav(entry){if(!entry)return;state.restoringHistory=true;try{if(entry.kind==='file'){dom.root.value=entry.root||dom.root.value; if(!state.projectId||entry.projectId!==state.projectId) await scan(); const file=state.files.find(x=>x.id===entry.fileId); if(file){const d=await API.call('get_file',state.projectId,file.id); const s=await API.call('get_file_source',state.projectId,file.id); state.file=d.file; state.fileSource=s; state.focusFunction=null; state.expanded={}; state.children={}; state.detailPath=s.path; state.detailLine=entry.line||1; renderTree(); await renderEditor();}} else if(entry.kind==='function'){if(!state.projectId||entry.projectId!==state.projectId){dom.root.value=entry.root||dom.root.value; await scan();} const d=await API.call('get_function',state.projectId,entry.functionId); const s=await API.call('get_file_source',state.projectId,d.function.file_id); state.file={id:d.function.file_id,path:d.function.path}; state.fileSource=s; state.focusFunction=d.function; state.expanded={}; state.children={}; state.focusBranch=''; state.focusFunctionId=d.function.id; state.detailPath=s.path; state.detailLine=d.function.start_line; renderTree(); await renderEditor();}} finally{state.restoringHistory=false;}}
+function startEdit(){if(!state.fileSource)return;state.editorMode='edit';state.editorDraft=state.fileSource.source||'';renderEditor();}
+function cancelEdit(){if(state.editorMode!=='edit')return;state.editorMode='view';state.editorDraft='';renderEditor();}
+async function saveEdit(){if(state.editorMode!=='edit'||!state.file?.id)return;const r=await API.call('save_file_source',state.projectId,state.file.id,state.editorDraft);if(!r.success){dom.status.textContent=r.error||'保存失败';return;}const s=await API.call('get_file_source',state.projectId,state.file.id);state.fileSource=s;state.editorMode='view';state.editorDraft='';dom.status.textContent='已保存';renderEditor();}
+function closePeek(){state.peek=null; dom.peekFloat.classList.remove('active'); dom.peekBackdrop.classList.remove('active'); dom.peek.innerHTML='<div class="peek-empty">点击变量/宏/类型查看源头</div>';}
+function escapeRegExp(text){return String(text||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function lineSymbolClass(text){if(!state.selectedSymbol) return ''; const re=new RegExp(`\\b${escapeRegExp(state.selectedSymbol)}\\b`); return re.test(String(text||'')) ? ' symbol-selected' : '';}
+function bindCodeFocus(){document.querySelectorAll('.code').forEach(code=>{code.onmouseenter=()=>markCodeFocus(code); code.onwheel=()=>markCodeFocus(code); code.onpointerdown=()=>markCodeFocus(code);});}
+function markCodeFocus(target){document.querySelectorAll('.code.active-scroll').forEach(el=>el.classList.remove('active-scroll')); target.classList.add('active-scroll');}
+function captureViewport(anchor){const snapshot={top:dom.editor.scrollTop,left:dom.editor.scrollLeft,anchor,offset:null};if(anchor){const el=findAnchor(anchor);if(el){const rect=el.getBoundingClientRect();const host=dom.editor.getBoundingClientRect();snapshot.offset=rect.top-host.top;}}return snapshot;}
+function restoreViewport(snapshot){if(!snapshot)return;requestAnimationFrame(()=>{dom.editor.scrollLeft=snapshot.left||0;if(snapshot.anchor&&snapshot.offset!==null){const el=findAnchor(snapshot.anchor);if(el){const rect=el.getBoundingClientRect();const host=dom.editor.getBoundingClientRect();dom.editor.scrollTop += (rect.top-host.top)-snapshot.offset;return;}}dom.editor.scrollTop=snapshot.top||0;});}
+function findAnchor(anchor){if(!anchor)return null; return dom.editor.querySelector(`[data-path="${CSS.escape(anchor.path)}"][data-line="${anchor.line}"]`);}
+function initPeekDrag(){let startX=0,startY=0,startR=20,startT=86,dragging=false; dom.peekHead.addEventListener('pointerdown',e=>{if(e.target.closest('button')) return; dragging=true; startX=e.clientX; startY=e.clientY; const rect=dom.peekFloat.getBoundingClientRect(); startR=window.innerWidth-rect.right; startT=rect.top; dom.peekHead.classList.add('dragging'); dom.peekHead.setPointerCapture(e.pointerId);}); dom.peekHead.addEventListener('pointermove',e=>{if(!dragging) return; const dx=e.clientX-startX; const dy=e.clientY-startY; dom.peekFloat.style.right=`${Math.max(12,startR-dx)}px`; dom.peekFloat.style.top=`${Math.max(64,startT+dy)}px`; dom.peekFloat.style.bottom='20px';}); const end=()=>{dragging=false; dom.peekHead.classList.remove('dragging');}; dom.peekHead.addEventListener('pointerup',end); dom.peekHead.addEventListener('pointercancel',end);}
+async function scan(){dom.status.textContent='正在建立索引...';const r=await API.call('scan_project',dom.root.value.trim());if(!r.success)return dom.status.textContent=r.error||'导入失败';state.projectId=r.project.id;const f=await API.call('list_files',state.projectId);state.files=f.files||[];dom.status.textContent=`已索引 ${r.project.function_count} 个函数 / ${r.project.call_count} 条调用`;renderTree();updateToolButtons();}
+async function searchNow(){const q=dom.search.value.trim(); if(!state.projectId||!q){state.searchItems=[];state.searchIndex=-1;dom.searchResults.classList.remove('active'); dom.searchResults.innerHTML=''; return;} const r=await API.call('search',state.projectId,q,80); state.searchItems=r.results||[]; state.searchIndex=state.searchItems.length?0:-1; renderSearchResults();}
+function renderSearchResults(){const rows=state.searchItems||[]; dom.searchResults.innerHTML=rows.map((item,idx)=>`<div class="search-row ${idx===state.searchIndex?'active':''}" data-idx="${idx}"><span class="search-kind">${item.kind}</span><span>${item.label} · ${item.path}</span><span>${item.line||''}</span></div>`).join(''); dom.searchResults.classList.toggle('active', rows.length>0); dom.searchResults.querySelectorAll('[data-idx]').forEach(row=>row.onclick=async()=>{await openSearchResult(Number(row.dataset.idx));});}
+async function openSearchResult(idx){const item=(state.searchItems||[])[idx]; if(!item)return; dom.searchResults.classList.remove('active'); dom.search.value=''; state.searchItems=[]; state.searchIndex=-1; if(item.kind==='file'){const file=state.files.find(x=>x.id===item.id); if(file){const d=await API.call('get_file',state.projectId,file.id); const s=await API.call('get_file_source',state.projectId,file.id); state.file=d.file; state.fileSource=s; state.focusFunction=null; state.expanded={}; state.children={}; state.focusBranch=''; state.focusFunctionId=''; state.detailPath=s.path; state.detailLine=1; renderTree(); await renderEditor(); recordNav({kind:'file',projectId:state.projectId,root:dom.root.value,fileId:file.id,line:1});}} else if(item.kind==='function'){const d=await API.call('get_function',state.projectId,item.id); const s=await API.call('get_file_source',state.projectId,d.function.file_id); state.file={id:d.function.file_id,path:d.function.path}; state.fileSource=s; state.focusFunction=d.function; state.expanded={}; state.children={}; state.focusBranch=''; state.focusFunctionId=d.function.id; state.detailPath=s.path; state.detailLine=d.function.start_line; renderTree(); await renderEditor(); recordNav({kind:'function',projectId:state.projectId,root:dom.root.value,functionId:d.function.id});} else {state.selectedSymbol=item.label; await openPeek(item.label,item.path,Number(item.line||0)); if(item.path){const file=state.files.find(x=>x.path===item.path); if(file){const d=await API.call('get_file',state.projectId,file.id); const s=await API.call('get_file_source',state.projectId,file.id); state.file=d.file; state.fileSource=s; state.focusFunction=null; state.detailPath=s.path; state.detailLine=Number(item.line||0); renderTree(); await renderEditor();}}}}
+function handleSearchKey(e){if(!state.searchItems.length)return; if(e.key==='ArrowDown'){e.preventDefault(); state.searchIndex=Math.min(state.searchItems.length-1,state.searchIndex+1); renderSearchResults();} else if(e.key==='ArrowUp'){e.preventDefault(); state.searchIndex=Math.max(0,state.searchIndex-1); renderSearchResults();} else if(e.key==='Enter'){e.preventDefault(); openSearchResult(state.searchIndex);} else if(e.key==='Escape'){dom.searchResults.classList.remove('active'); state.searchItems=[]; state.searchIndex=-1;}}
+async function loadRecent(){const r=await API.call('list_recent_projects');const items=r.projects||[];dom.recent.innerHTML='<option value="">最近工程</option>'+items.map(item=>`<option value="${item.root}">${item.root}</option>`).join('');if(items[0]){dom.root.value=items[0].root; dom.recent.value=items[0].root; await scan();}}
+async function pickFolder(){const r=await API.call('select_folder'); if(r.success&&r.path){dom.root.value=r.path;} else if(r.error){dom.status.textContent=r.error;}}
+function renderTree(){dom.tree.innerHTML='';state.files.forEach(file=>{const item=document.createElement('div');item.className='item'+(state.file?.id===file.id?' active':'');item.textContent=`${file.path} · ${file.function_count}函数`;item.onclick=async()=>{const d=await API.call('get_file',state.projectId,file.id);const s=await API.call('get_file_source',state.projectId,file.id);state.file=d.file;state.fileSource=s;state.focusFunction=null;state.expanded={};state.children={};state.focusBranch='';state.focusFunctionId='';state.detailPath=s.path;state.detailLine=1;renderTree();await renderEditor();recordNav({kind:'file',projectId:state.projectId,root:dom.root.value,fileId:file.id,line:1});};dom.tree.appendChild(item);if(state.file?.id===file.id){(state.file.functions||[]).forEach(fn=>{const sub=document.createElement('div');sub.className='subitem'+(state.focusFunction?.id===fn.id?' active':'');sub.textContent=`${fn.name} · ${fn.start_line}`;sub.onclick=async()=>{const d=await API.call('get_function',state.projectId,fn.id);const s=await API.call('get_file_source',state.projectId,fn.file_id);state.file={...state.file,id:fn.file_id};state.fileSource=s;state.focusFunction=d.function;state.expanded={};state.children={};state.focusBranch='';state.focusFunctionId=d.function.id;state.detailPath=s.path;state.detailLine=d.function.start_line;renderTree();await renderEditor();recordNav({kind:'function',projectId:state.projectId,root:dom.root.value,functionId:d.function.id});};dom.tree.appendChild(sub);});}});}
+function tokenized(text,path,line){return String(text||'').replace(/\b[A-Za-z_]\w*\b/g,t=>`<span class="token ${state.selectedSymbol===t?'sel':''}" data-symbol="${t}" data-path="${path}" data-line="${line}">${t}</span>`);}
+async function ensureChildren(fnId){if(state.children[fnId])return state.children[fnId];const r=await API.call('get_calls',state.projectId,fnId,'out');state.children[fnId]=r.calls||[];return state.children[fnId];}
+async function renderEditor(){if(!state.fileSource?.lines){dom.editor.innerHTML='请选择左侧文件或函数';updateToolButtons();updateToolInfo();return;}dom.title.textContent=state.fileSource.path||'源码';if(state.editorMode==='edit'){dom.editor.innerHTML=`<textarea class="editor-area" id="editor-area"></textarea>`;const ta=document.getElementById('editor-area');ta.value=state.editorDraft||state.fileSource.source||'';ta.oninput=()=>state.editorDraft=ta.value;updateToolButtons();updateToolInfo();return;}const rootFn=state.focusFunction;const lineCallMap={};if(rootFn){const children=await ensureChildren(rootFn.id);children.forEach((c,i)=>{const k=`${rootFn.id}>${i}`;lineCallMap[c.line] ||= [];lineCallMap[c.line].push({...c,inlineKey:k});});}let html='<div class="code" id="main-code">';for(const line of state.fileSource.lines){const inRoot=rootFn&&line.line_number>=rootFn.start_line&&line.line_number<=rootFn.end_line;const anchor=((rootFn&&line.line_number===rootFn.start_line) || (state.detailPath===state.fileSource.path&&state.detailLine===line.line_number))?' anchor':'';const curLine=(state.detailPath===state.fileSource.path&&state.detailLine===line.line_number)?' current-line':'';const fnSel=(rootFn&&line.line_number>=rootFn.start_line&&line.line_number<=rootFn.end_line)?' function-selected':'';const symSel=lineSymbolClass(line.text);html+=`<div class="line${anchor}${curLine}${fnSel}${symSel}" data-line="${line.line_number}" data-path="${state.fileSource.path}"><span class="num">${line.line_number}</span><span>${tokenized(line.text,state.fileSource.path,line.line_number)}</span><span class="actions">`;if(inRoot&&lineCallMap[line.line_number]){for(const c of lineCallMap[line.line_number]) html+=`<button data-expand="${c.inlineKey}">${state.expanded[c.inlineKey]?'收起':'展开'} ${c.name}</button>`;}html+='</span></div>';if(inRoot&&lineCallMap[line.line_number]){for(const c of lineCallMap[line.line_number]) if(state.expanded[c.inlineKey]) html+=await renderInlineBlock(c,1);}}html+='</div>';dom.editor.innerHTML=html;bindEditorActions();bindCodeFocus();scrollToDetail();updateToolButtons();updateToolInfo();}
+async function renderInlineBlock(child, depth=1){const src=await API.call('get_function_source',state.projectId,child.function_id);const children=await ensureChildren(child.function_id);const byLine={};children.forEach((it,i)=>{const k=`${child.inlineKey}>${i}`;byLine[it.line] ||= [];byLine[it.line].push({...it,inlineKey:k});});const levelClass=`level-${Math.min(depth,4)}`;const branchClass=(state.focusBranch===child.inlineKey)?' focus-branch':'';const headActive=(state.focusFunctionId===child.function_id||state.focusBranch===child.inlineKey)?' active':'';let html=`<div class="inline ${levelClass}${branchClass}"><div class="branch-head${headActive}"><div><strong>${child.name}</strong></div><div class="muted">${child.path} : ${child.line}</div><div class="actions"><button data-root="${child.function_id}">设为根节点</button><button data-branch-focus="${child.inlineKey}">只保留当前分支</button><button data-branch-collapse="${child.inlineKey}">收起同级</button></div></div><div class="code">`;for(const line of src.lines||[]){const anchor=(state.detailPath===src.path&&state.detailLine===line.line_number)?' anchor':'';const fnSel=' function-selected';const focusLine=(state.focusFunctionId===child.function_id&&line.line_number===src.start_line)?' focus-line':'';const symSel=lineSymbolClass(line.text);html+=`<div class="line${anchor}${fnSel}${focusLine}${symSel}" data-line="${line.line_number}" data-path="${src.path}"><span class="num">${line.line_number}</span><span>${tokenized(line.text,src.path,line.line_number)}</span><span class="actions">`;if(byLine[line.line_number]){for(const nested of byLine[line.line_number]) html+=`<button data-expand="${nested.inlineKey}">${state.expanded[nested.inlineKey]?'收起':'展开'} ${nested.name}</button>`;}html+='</span></div>';if(byLine[line.line_number]){for(const nested of byLine[line.line_number]) if(state.expanded[nested.inlineKey]) html+=await renderInlineBlock(nested,depth+1);}}html+='</div></div>';return html;}
+function bindEditorActions(){dom.editor.querySelectorAll('[data-expand]').forEach(btn=>btn.onclick=async()=>{const row=btn.closest('[data-path][data-line]');const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);state.expanded[btn.dataset.expand]=!state.expanded[btn.dataset.expand];state.focusBranch=btn.dataset.expand;await renderEditor();restoreViewport(snap);});dom.editor.querySelectorAll('[data-root]').forEach(btn=>btn.onclick=async()=>{const d=await API.call('get_function',state.projectId,btn.dataset.root);const s=await API.call('get_file_source',state.projectId,d.function.file_id);state.focusFunction=d.function;state.fileSource=s;state.expanded={};state.children={};state.focusBranch='';state.focusFunctionId=d.function.id;renderTree();await renderEditor();});dom.editor.querySelectorAll('[data-branch-focus]').forEach(btn=>btn.onclick=async()=>{const row=btn.closest('[data-path][data-line]');const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);const keep=btn.dataset.branchFocus;const next={};Object.keys(state.expanded).forEach(k=>{if(keep.startsWith(k)||k.startsWith(keep))next[k]=true;});next[keep]=true;state.expanded=next;state.focusBranch=keep;await renderEditor();restoreViewport(snap);});dom.editor.querySelectorAll('[data-branch-collapse]').forEach(btn=>btn.onclick=async()=>{const row=btn.closest('[data-path][data-line]');const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);const node=btn.dataset.branchCollapse;const parent=node.includes('>')?node.slice(0,node.lastIndexOf('>')):'';const next={};Object.keys(state.expanded).forEach(k=>{if(!parent||!k.startsWith(parent+'>')||k===node||k.startsWith(node+'>')||node.startsWith(k))next[k]=true;});state.expanded=next;state.focusBranch=node;await renderEditor();restoreViewport(snap);});dom.editor.querySelectorAll('[data-symbol]').forEach(el=>el.onclick=async()=>{state.selectedSymbol=el.dataset.symbol;await openPeek(el.dataset.symbol,el.dataset.path,Number(el.dataset.line));await renderEditor();});}
+async function openPeek(symbol,path,line){const file=state.files.find(x=>x.path===path);const r=await API.call('peek_symbol',state.projectId,symbol,file?.id||null,line||null);state.peek=r.success?r:null;renderPeek();}
+function renderPeek(){
+  if(!state.peek){
+    dom.peek.innerHTML='<div class="peek-empty">点击变量/宏/类型查看源头</div>';
+    dom.peekFloat.classList.remove('active');
+    return;
+  }
+  const data=state.peek;
+  dom.peekFloat.classList.add('active');
+  dom.peekBackdrop.classList.add('active');
+  dom.peekName.textContent=data.symbol||'符号';
+  dom.peekMeta.textContent=`${data.path||''} : ${data.line||''}${data.kind?` · ${data.kind}`:''}`;
+  let html='<div class="card"><div class="facts">';
+  for(const fact of data.facts||[]){
+    html+=`<div class="fact"><div class="label">${fact.label}</div><div>${fact.value}</div></div>`;
+  }
+  html+='</div>';
+  for(const section of data.sections||[]){
+    html+=`<div class="section"><h4><span>${section.title}</span>${section.path?`<button data-jump-path="${section.path}" data-jump-line="${section.line}">定位源头</button>`:''}</h4>`;
+    if(section.kind==='code'){
+      html+='<div class="code">';
+      for(const line of section.lines||[]){
+        html+=`<div class="line"><span class="num">${line.line_number}</span><span>${tokenized(line.text,section.path,line.line_number)}</span><span></span></div>`;
+      }
+      html+='</div>';
+    }else{
+      for(const item of section.items||[]){
+        html+=`<div class="peek-item"><div>${item.tag?`<span class="tag">${item.tag}</span>`:''}${item.name||''}</div><div>${item.detail||''}</div><div class="actions">${item.function_id?`<button data-open-fn="${item.function_id}">看函数</button>`:''}${item.path?`<button data-jump-path="${item.path}" data-jump-line="${item.line}">定位</button>`:''}</div></div>`;
+      }
+    }
+    html+='</div>';
+  }
+  html+='<div class="code">';
+  for(const line of data.lines||[]){
+    html+=`<div class="line"><span class="num">${line.line_number}</span><span>${tokenized(line.text,data.path,line.line_number)}</span><span></span></div>`;
+  }
+  html+='</div></div>';
+  dom.peek.innerHTML=html;
+  bindPeekActions();
+  bindCodeFocus();
+}
+function bindPeekActions(){dom.peek.querySelectorAll('[data-jump-path]').forEach(btn=>btn.onclick=async()=>{const file=state.files.find(x=>x.path===btn.dataset.jumpPath);if(!file)return;const d=await API.call('get_file',state.projectId,file.id);const s=await API.call('get_file_source',state.projectId,file.id);state.file=d.file;state.fileSource=s;state.focusFunction=null;state.detailPath=btn.dataset.jumpPath;state.detailLine=Number(btn.dataset.jumpLine||0);renderTree();await renderEditor();});dom.peek.querySelectorAll('[data-open-fn]').forEach(btn=>btn.onclick=async()=>{const d=await API.call('get_function',state.projectId,btn.dataset.openFn);const s=await API.call('get_file_source',state.projectId,d.function.file_id);state.focusFunction=d.function;state.fileSource=s;state.expanded={};state.children={};state.detailPath=s.path;state.detailLine=d.function.start_line;renderTree();await renderEditor();});dom.peek.querySelectorAll('[data-symbol]').forEach(el=>el.onclick=async()=>await openPeek(el.dataset.symbol,el.dataset.path,Number(el.dataset.line)));}
+function renderPinned(){
+  if(!state.pinned){
+    dom.pinned.classList.remove('active');
+    dom.pinned.innerHTML='';
+    return;
+  }
+  const data=state.pinned;
+  let html=`<div class="card"><div class="actions"><button data-pinned-clear="1">取消顶置</button><button data-pinned-copy="1">复制代码</button><span class="muted">${data.symbol||''} · ${data.path||''}:${data.line||''}</span></div>`;
+  html+='<div class="facts">';
+  for(const fact of data.facts||[]){
+    html+=`<div class="fact"><div class="label">${fact.label}</div><div>${fact.value}</div></div>`;
+  }
+  html+='</div><div class="code">';
+  for(const line of data.lines||[]){
+    html+=`<div class="line"><span class="num">${line.line_number}</span><span>${tokenized(line.text,data.path,line.line_number)}</span><span></span></div>`;
+  }
+  html+='</div></div>';
+  dom.pinned.innerHTML=html;
+  dom.pinned.classList.add('active');
+  dom.pinned.querySelector('[data-pinned-clear]').onclick=()=>{state.pinned=null;renderPinned();};
+  dom.pinned.querySelector('[data-pinned-copy]').onclick=async()=>{
+    const text=(data.lines||[]).map(line=>`${line.line_number}  ${line.text}`).join('\n');
+    await navigator.clipboard.writeText(text);
+    dom.status.textContent='已复制 Pinned 代码';
+  };
+  dom.pinned.querySelectorAll('[data-symbol]').forEach(el=>el.onclick=async()=>await openPeek(el.dataset.symbol,el.dataset.path,Number(el.dataset.line)));
+  bindCodeFocus();
+}
+function scrollToDetail(){if(!state.detailPath||!state.detailLine)return;const target=dom.editor.querySelector(`[data-path="${CSS.escape(state.detailPath)}"][data-line="${state.detailLine}"]`);if(target) target.scrollIntoView({block:'center'});}
+</script>
+</body>
+</html>
