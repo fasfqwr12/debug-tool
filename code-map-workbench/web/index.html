@@ -13,29 +13,43 @@
     .busy.active { opacity:1; }
     .busy::before { content:''; position:absolute; top:0; left:-30%; width:30%; height:100%; background:linear-gradient(90deg,transparent,var(--accent),transparent); animation:busy-slide 1s linear infinite; }
     @keyframes busy-slide { from { left:-30%; } to { left:100%; } }
-    .toolbar { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(220px,320px) minmax(220px,0.8fr) auto auto auto; gap:10px; padding:14px; border-bottom:1px solid var(--border); background:rgba(9,14,29,.92); }
-    .toolbar input,.toolbar select { width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:#111a34; color:var(--text); }
-    .toolbar button { padding:12px 16px; border-radius:10px; border:1px solid var(--border); background:#17223f; color:var(--text); cursor:pointer; }
-    .toolbar .primary { background:var(--accent); color:#04110d; border-color:transparent; font-weight:700; }
-    .build-badge { display:inline-flex; align-items:center; justify-content:center; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.03); color:var(--muted); font-size:12px; white-space:nowrap; }
+    .toolbar { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(220px,320px) minmax(220px,0.8fr) auto auto auto auto auto; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border); background:rgba(9,14,29,.9); align-items:center; }
+    .toolbar input,.toolbar select { width:100%; padding:9px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(17,26,52,.8); color:var(--text); font-size:13px; }
+    .toolbar input::placeholder { color:#8ca0c8; opacity:.85; }
+    .toolbar button { padding:9px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(23,34,63,.78); color:#d8e5ff; cursor:pointer; font-size:13px; }
+    .toolbar button:hover { background:rgba(23,34,63,.94); border-color:rgba(255,255,255,.16); }
+    .toolbar .primary { background:rgba(21,239,170,.9); color:#04110d; border-color:transparent; font-weight:700; }
+    .build-badge { display:inline-flex; align-items:center; justify-content:center; padding:7px 9px; border-radius:10px; border:1px solid rgba(255,255,255,.05); background:rgba(255,255,255,.02); color:var(--muted); font-size:11px; white-space:nowrap; }
     .layout { display:grid; grid-template-columns:320px 1fr; gap:12px; padding:12px; min-height:0; }
     .panel { min-height:0; display:flex; flex-direction:column; overflow:hidden; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
     .panel h3 { margin:0; padding:12px 14px; border-bottom:1px solid var(--border); font-size:14px; }
-    .editor-tools { display:flex; gap:8px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); background:rgba(12,19,36,.98); flex-wrap:wrap; position:sticky; top:0; z-index:4; box-shadow:0 8px 18px rgba(0,0,0,.22); }
-    .editor-tools button { padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#17223f; color:var(--text); cursor:pointer; }
-    .editor-tools button:disabled { opacity:.45; cursor:not-allowed; }
-    .tool-info { margin-left:auto; font-size:12px; color:var(--muted); padding:4px 10px; border:1px solid rgba(255,255,255,.06); border-radius:999px; background:rgba(255,255,255,.03); }
+    .tree-tools { padding:10px 12px; border-bottom:1px solid var(--border); background:rgba(12,19,36,.96); }
+    .tree-tools input { width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#111a34; color:var(--text); }
+    .editor-tools { display:flex; gap:6px; align-items:center; padding:8px 10px; border-bottom:1px solid var(--border); background:rgba(12,19,36,.94); flex-wrap:wrap; position:sticky; top:0; z-index:4; box-shadow:0 5px 12px rgba(0,0,0,.18); }
+    .editor-tools button { padding:6px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.09); background:rgba(23,34,63,.78); color:#d8e5ff; cursor:pointer; font-size:12px; }
+    .editor-tools button:hover { background:rgba(23,34,63,.95); border-color:rgba(255,255,255,.16); }
+    .editor-tools button:disabled { opacity:.32; cursor:not-allowed; }
+    .tool-info { margin-left:auto; font-size:11px; color:var(--muted); padding:3px 9px; border:1px solid rgba(255,255,255,.05); border-radius:999px; background:rgba(255,255,255,.02); max-width:42%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .body { padding:12px; overflow:auto; min-height:0; }
+    #editor.body { padding-right:26px; }
     .pinned { display:none; padding:12px; border-bottom:1px solid var(--border); background:#0d1426; }
     .pinned.active { display:block; }
     .item,.subitem,.peek-item { padding:8px 10px; border-radius:8px; cursor:pointer; transition:background .12s ease, transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
     .item:hover,.subitem:hover,.peek-item:hover { background:rgba(21,239,170,.08); }
     .item.active,.subitem.active { background:rgba(21,239,170,.12); }
     .subitem { margin-left:12px; }
-    .code { font-family:Consolas,monospace; white-space:pre; overflow:auto; background:var(--panel2); border:1px solid var(--border); border-radius:10px; }
+    .code { font-family:Consolas,monospace; white-space:pre; overflow-x:auto; overflow-y:scroll; background:var(--panel2); border:1px solid var(--border); border-radius:10px; scrollbar-gutter:stable both-edges; padding-right:46px; }
     textarea.editor-area { width:100%; min-height:100%; resize:none; border:1px solid var(--border); border-radius:10px; background:var(--panel2); color:var(--text); padding:12px; font:13px/1.6 Consolas,monospace; }
+    .edit-split { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:10px; height:100%; min-height:0; }
+    .edit-side { display:flex; flex-direction:column; min-height:0; }
+    .edit-head { padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:#10182d; color:var(--muted); font-size:12px; margin-bottom:8px; }
+    .edit-diff { flex:1; min-height:0; overflow:auto; border:1px solid var(--border); border-radius:10px; background:#10182d; }
+    .diff-row { display:grid; grid-template-columns:54px 1fr; gap:8px; padding:6px 8px; border-top:1px solid rgba(255,255,255,.05); cursor:pointer; font-family:Consolas,monospace; font-size:12px; }
+    .diff-row:first-child { border-top:0; }
+    .diff-row:hover { background:rgba(21,239,170,.1); }
     .code.active-scroll { box-shadow: inset 0 0 0 1px rgba(21,239,170,.32), 0 0 0 1px rgba(21,239,170,.18); }
-    .line { display:grid; grid-template-columns:64px 1fr auto; width:max-content; min-width:100%; gap:14px; padding:0 12px; }
+    .line { position:relative; display:grid; grid-template-columns:64px minmax(0,1fr); width:100%; gap:14px; padding:0 12px; }
+    .line > span:nth-child(2) { min-width:0; }
     .line.anchor { background:rgba(21,239,170,.10); }
     .line.focus-line { background:linear-gradient(90deg, rgba(21,239,170,.18), rgba(21,239,170,.06) 55%, transparent 88%); }
     .line.function-selected { background:linear-gradient(90deg, rgba(21,239,170,.12), rgba(21,239,170,.03) 55%, transparent 88%); }
@@ -44,9 +58,12 @@
     .line.symbol-selected .num { color:#ffe77a; }
     .line.current-line { background:linear-gradient(90deg, rgba(124,184,255,.22), rgba(124,184,255,.07) 58%, transparent 88%); }
     .line.current-line .num { color:#a8d1ff; }
-    .num { color:var(--muted); text-align:right; border-right:1px solid rgba(255,255,255,.08); padding-right:8px; user-select:none; }
-    .actions { display:flex; gap:6px; align-items:center; padding:2px 0; }
-    .actions button,.peek-item button,.card button { padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:#162440; color:var(--text); cursor:pointer; transition:transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease; }
+    .num { color:var(--muted); text-align:right; border-right:1px solid rgba(255,255,255,.08); padding-right:8px; user-select:none; position:relative; }
+    .num.bookmarked::before { content:'•'; position:absolute; left:-8px; color:#ffd76a; }
+    .actions { display:flex; gap:4px; align-items:center; padding:2px 0; position:absolute; right:12px; top:50%; transform:translateY(-50%); z-index:4; background:linear-gradient(90deg, rgba(15,23,48,0), rgba(15,23,48,.9) 24%); border-radius:10px; opacity:0; pointer-events:none; transition:opacity .12s ease; }
+    .actions:empty { display:none; }
+    .line:hover .actions, .line.current-line .actions { opacity:1; pointer-events:auto; }
+    .actions button,.peek-item button,.card button { padding:3px 7px; border-radius:999px; border:1px solid var(--border); background:#162440; color:var(--text); cursor:pointer; font-size:11px; transition:transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease; }
     .actions button:hover,.peek-item button:hover,.card button:hover { transform:translateY(-1px); border-color:rgba(21,239,170,.42); background:rgba(21,239,170,.12); box-shadow:0 0 0 1px rgba(21,239,170,.12); }
     .inline { margin-left:24px; padding-left:16px; border-left:2px solid rgba(21,239,170,.22); display:grid; gap:10px; }
     .inline.focus-branch { border-left-color: rgba(21,239,170,.7); }
@@ -57,27 +74,37 @@
     .token { cursor:pointer; border-radius:4px; padding:0 1px; }
     .token:hover { background:rgba(255,255,255,.08); }
     .token.sel { background:rgba(255,215,0,.22); color:#fff3aa; }
-    .card { display:grid; gap:10px; }
-    .facts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .fact,.section,.branch-head { background:#10182d; border:1px solid var(--border); border-radius:10px; padding:10px; transition:border-color .12s ease, box-shadow .12s ease, transform .12s ease, background .12s ease; }
+    .card { display:grid; gap:8px; }
+    .facts { display:flex; flex-wrap:wrap; gap:6px; }
+    .fact,.section,.branch-head { background:#10182d; border:1px solid var(--border); border-radius:10px; padding:8px; transition:border-color .12s ease, box-shadow .12s ease, transform .12s ease, background .12s ease; }
     .branch-head.active { border-color: rgba(21,239,170,.55); box-shadow: 0 0 0 1px rgba(21,239,170,.18), inset 0 0 0 1px rgba(21,239,170,.12); transform: translateY(-1px); background:linear-gradient(180deg, rgba(21,239,170,.10), rgba(16,24,45,.92)); }
-    .fact .label { color:var(--muted); font-size:12px; margin-bottom:4px; }
-    .section h4 { margin:0 0 8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .fact { display:flex; align-items:center; gap:8px; min-width:220px; max-width:100%; }
+    .fact .label { color:var(--muted); font-size:11px; margin:0; white-space:nowrap; }
+    .fact > div:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .section h4 { margin:0 0 6px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
     .peek-item { display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:start; }
     .tag { display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; line-height:1.3; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.05); color:#b7ffe6; margin-right:6px; white-space:nowrap; }
     .muted { color:var(--muted); }
     .status { padding:8px 14px; color:var(--muted); font-size:12px; }
-    .peek-float { position:fixed; right:20px; top:86px; bottom:20px; width:min(680px, calc(100vw - 48px)); background:#0d1426; border:1px solid var(--border); border-radius:14px; box-shadow:0 20px 40px rgba(0,0,0,.35); display:none; z-index:50; overflow:hidden; }
+    .crumbs { padding:8px 12px; border-bottom:1px solid var(--border); color:#9ec7ff; font-size:12px; background:rgba(16,24,45,.9); white-space:nowrap; overflow:auto; }
+    .bookmark-bar { padding:8px 12px; border-bottom:1px solid var(--border); color:#9ec7ff; font-size:12px; background:rgba(14,21,39,.92); white-space:nowrap; overflow:auto; }
+    .bm-chip { display:inline-flex; align-items:center; gap:6px; margin-right:8px; padding:2px 8px; border-radius:999px; border:1px solid rgba(158,199,255,.28); background:rgba(158,199,255,.08); cursor:pointer; color:#cfe4ff; }
+    .bm-chip:hover { background:rgba(158,199,255,.15); }
+    .bm-chip.danger { border-color:rgba(255,125,125,.35); color:#ffd0d0; background:rgba(255,125,125,.08); }
+    .bm-chip.danger:hover { background:rgba(255,125,125,.16); }
+    .peek-float { position:fixed; right:10px; top:64px; bottom:10px; width:min(980px, calc(100vw - 20px)); background:#0d1426; border:1px solid var(--border); border-radius:14px; box-shadow:0 20px 40px rgba(0,0,0,.35); display:none; z-index:50; overflow:hidden; }
     .peek-float.active { display:flex; flex-direction:column; }
     .peek-backdrop { position:fixed; inset:0; background:transparent; display:none; z-index:45; }
     .peek-backdrop.active { display:block; }
-    .peek-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); background:rgba(14,21,41,.96); }
+    .peek-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; padding:8px 10px; border-bottom:1px solid var(--border); background:rgba(14,21,41,.96); }
     .peek-head.dragging { cursor:grabbing; }
-    .peek-head .title { font-size:12px; color:var(--muted); margin-bottom:4px; }
-    .peek-head .name { font-size:14px; font-weight:700; }
-    .peek-body { padding:12px; overflow:auto; min-height:0; display:grid; gap:10px; }
+    .peek-head .title { font-size:11px; color:var(--muted); margin-bottom:2px; }
+    .peek-head .name { font-size:14px; font-weight:700; line-height:1.25; }
+    .peek-body { padding:8px; overflow:auto; min-height:0; display:grid; gap:8px; }
     .peek-close { padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#17223f; color:var(--text); cursor:pointer; }
-    .peek-code-actions { display:flex; gap:8px; }
+    .peek-code-actions { display:flex; gap:6px; }
+    .peek-body .code { max-height:68vh; }
+    .peek-body .line { grid-template-columns:54px minmax(0,1fr) auto; gap:10px; padding:0 8px; }
     .peek-empty { color:var(--muted); font-size:13px; }
     .right-hint { color:var(--muted); font-size:13px; line-height:1.7; }
     .search-results { position:absolute; top:62px; left:12px; right:12px; max-height:48vh; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#10182d; box-shadow:0 16px 30px rgba(0,0,0,.35); z-index:70; display:none; }
@@ -87,6 +114,27 @@
     .search-row:hover { background:rgba(21,239,170,.08); }
     .search-row.active { background:rgba(21,239,170,.14); }
     .search-kind { font-size:11px; color:#b7ffe6; border:1px solid rgba(21,239,170,.24); border-radius:999px; padding:2px 8px; }
+    .search-main { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .search-sub { margin-top:3px; font-size:12px; color:#91a7cf; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .search-hit { background:rgba(255,221,86,.28); color:#ffe9a6; border-radius:3px; padding:0 1px; }
+    .tree-empty { color:var(--muted); font-size:12px; padding:8px; }
+    .cmd-backdrop { position:fixed; inset:0; background:rgba(4,8,18,.46); display:none; z-index:120; }
+    .cmd-backdrop.active { display:block; }
+    .cmd-palette { width:min(760px, calc(100vw - 40px)); margin:8vh auto 0; background:#0d1426; border:1px solid var(--border); border-radius:14px; box-shadow:0 20px 40px rgba(0,0,0,.45); overflow:hidden; }
+    .cmd-input { width:100%; border:0; border-bottom:1px solid var(--border); background:#111a34; color:var(--text); padding:14px 16px; font-size:14px; outline:none; }
+    .cmd-list { max-height:56vh; overflow:auto; }
+    .cmd-row { display:grid; grid-template-columns:1fr auto; gap:8px; padding:10px 14px; border-top:1px solid rgba(255,255,255,.05); cursor:pointer; }
+    .cmd-row:first-child { border-top:0; }
+    .cmd-row.active,.cmd-row:hover { background:rgba(21,239,170,.12); }
+    .cmd-hint { color:var(--muted); font-size:12px; }
+    .ctx-menu { position:fixed; min-width:180px; background:#0f1730; border:1px solid var(--border); border-radius:10px; box-shadow:0 14px 30px rgba(0,0,0,.45); padding:6px; z-index:130; display:none; }
+    .ctx-menu.active { display:block; }
+    .ctx-item { width:100%; text-align:left; border:0; background:transparent; color:var(--text); padding:8px 10px; border-radius:8px; cursor:pointer; }
+    .ctx-item:hover { background:rgba(21,239,170,.12); }
+    .toast-area { position:fixed; right:14px; bottom:14px; z-index:140; display:grid; gap:8px; width:min(360px, calc(100vw - 28px)); }
+    .toast { padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#0f1730; color:var(--text); box-shadow:0 10px 22px rgba(0,0,0,.35); font-size:12px; }
+    .toast.ok { border-color:rgba(21,239,170,.4); }
+    .toast.err { border-color:rgba(255,125,125,.45); }
   </style>
 </head>
 <body>
@@ -98,12 +146,13 @@
     <div style="position:relative;"><input id="search" placeholder="搜索文件 / 函数"><div class="search-results" id="search-results"></div></div>
     <button id="pick">选择目录</button>
     <button id="sample">示例工程</button>
+    <button id="keil-flags">Keil参数</button>
     <button class="primary" id="scan">导入并建索引</button>
     <span class="build-badge">Build 2026-03-28</span>
   </div>
   <div class="layout">
-    <section class="panel"><h3>目录</h3><div class="body" id="tree"></div></section>
-    <section class="panel"><h3 id="title">请选择文件或函数</h3><div class="editor-tools"><button id="back">← 返回</button><button id="forward">→ 前进</button><button id="edit">编辑文件</button><button id="save">保存</button><button id="cancel-edit">取消编辑</button><button id="copy-path">复制路径</button><span class="tool-info" id="tool-info">未选中</span></div><div class="pinned" id="pinned"></div><div class="body" id="editor"></div><div class="status" id="status">未导入工程</div></section>
+    <section class="panel"><h3>目录</h3><div class="tree-tools"><input id="tree-filter" placeholder="过滤文件/函数"></div><div class="body" id="tree"></div></section>
+    <section class="panel"><h3 id="title">请选择文件或函数</h3><div class="editor-tools"><button id="back">← 返回</button><button id="forward">→ 前进</button><button id="fold-all">折叠全部</button><button id="unfold-all">展开全部</button><button id="edit">编辑文件</button><button id="save">保存</button><button id="cancel-edit">取消编辑</button><button id="copy-path">复制路径</button><span class="tool-info" id="tool-info">未选中</span></div><div class="crumbs" id="crumbs">调用链: -</div><div class="bookmark-bar" id="bookmark-bar">书签: -</div><div class="pinned" id="pinned"></div><div class="body" id="editor"></div><div class="status" id="status">未导入工程</div></section>
   </div>
   <div class="peek-backdrop" id="peek-backdrop"></div>
   <div class="peek-float" id="peek-float">
@@ -121,57 +170,657 @@
     </div>
     <div class="peek-body" id="peek"></div>
   </div>
+  <div class="cmd-backdrop" id="cmd-backdrop">
+    <div class="cmd-palette">
+      <input class="cmd-input" id="cmd-input" placeholder="输入命令，例如：跳到行、折叠全部、保存">
+      <div class="cmd-list" id="cmd-list"></div>
+    </div>
+  </div>
+  <div class="ctx-menu" id="ctx-menu"></div>
+  <div class="toast-area" id="toast-area"></div>
 </div>
 <script>
+const UI_STATE_KEY='cmw_ui_state_v1';
+const SESSION_STATE_KEY='cmw_session_state_v1';
 const API={call:async(method,...params)=>{state.busyCount++; updateBusy(); try { const r=await fetch('/api/call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method,params})}); return await r.json(); } finally { state.busyCount=Math.max(0,state.busyCount-1); updateBusy(); }}};
-const state={projectId:'',files:[],file:null,fileSource:null,focusFunction:null,children:{},expanded:{},selectedSymbol:'',peek:null,pinned:null,busyCount:0,detailPath:'',detailLine:0,focusBranch:'',focusFunctionId:'',navHistory:[],navIndex:-1,restoringHistory:false,editorMode:'view',editorDraft:'',searchItems:[],searchIndex:-1};
-const dom={root:document.getElementById('root'),recent:document.getElementById('recent'),search:document.getElementById('search'),searchResults:document.getElementById('search-results'),scan:document.getElementById('scan'),sample:document.getElementById('sample'),pick:document.getElementById('pick'),tree:document.getElementById('tree'),editor:document.getElementById('editor'),title:document.getElementById('title'),peek:document.getElementById('peek'),peekBackdrop:document.getElementById('peek-backdrop'),peekFloat:document.getElementById('peek-float'),peekHead:document.getElementById('peek-head'),peekName:document.getElementById('peek-name'),peekMeta:document.getElementById('peek-meta'),peekClose:document.getElementById('peek-close'),peekCopy:document.getElementById('peek-copy'),peekPin:document.getElementById('peek-pin'),pinned:document.getElementById('pinned'),busy:document.getElementById('busy'),status:document.getElementById('status'),toolInfo:document.getElementById('tool-info'),back:document.getElementById('back'),forward:document.getElementById('forward'),edit:document.getElementById('edit'),save:document.getElementById('save'),cancelEdit:document.getElementById('cancel-edit'),copyPath:document.getElementById('copy-path')};
+const state={projectId:'',files:[],file:null,fileSource:null,focusFunction:null,children:{},expanded:{},selectedSymbol:'',selectedPath:'',selectedLine:0,selectedColumn:0,peek:null,pinned:null,busyCount:0,detailPath:'',detailLine:0,focusBranch:'',focusFunctionId:'',navHistory:[],navIndex:-1,restoringHistory:false,editorMode:'view',editorDraft:'',searchItems:[],searchIndex:-1,searchSeq:0,searchTerm:'',inlineMeta:{},inlineResolved:{},foldedFns:{},bookmarks:{},cmdActions:[],cmdIndex:0,suppressNextAutoScroll:false};
+const dom={root:document.getElementById('root'),recent:document.getElementById('recent'),search:document.getElementById('search'),searchResults:document.getElementById('search-results'),scan:document.getElementById('scan'),keilFlags:document.getElementById('keil-flags'),sample:document.getElementById('sample'),pick:document.getElementById('pick'),tree:document.getElementById('tree'),treeFilter:document.getElementById('tree-filter'),editor:document.getElementById('editor'),title:document.getElementById('title'),crumbs:document.getElementById('crumbs'),bookmarkBar:document.getElementById('bookmark-bar'),peek:document.getElementById('peek'),peekBackdrop:document.getElementById('peek-backdrop'),peekFloat:document.getElementById('peek-float'),peekHead:document.getElementById('peek-head'),peekName:document.getElementById('peek-name'),peekMeta:document.getElementById('peek-meta'),peekClose:document.getElementById('peek-close'),peekCopy:document.getElementById('peek-copy'),peekPin:document.getElementById('peek-pin'),pinned:document.getElementById('pinned'),busy:document.getElementById('busy'),status:document.getElementById('status'),toolInfo:document.getElementById('tool-info'),back:document.getElementById('back'),forward:document.getElementById('forward'),foldAll:document.getElementById('fold-all'),unfoldAll:document.getElementById('unfold-all'),edit:document.getElementById('edit'),save:document.getElementById('save'),cancelEdit:document.getElementById('cancel-edit'),copyPath:document.getElementById('copy-path'),cmdBackdrop:document.getElementById('cmd-backdrop'),cmdInput:document.getElementById('cmd-input'),cmdList:document.getElementById('cmd-list'),ctxMenu:document.getElementById('ctx-menu'),toastArea:document.getElementById('toast-area')};
 dom.sample.onclick=()=>{dom.root.value='E:\\相位\\1\\green'; scan();}; dom.scan.onclick=scan; dom.pick.onclick=pickFolder;
+dom.keilFlags.onclick=()=>loadKeilCompileContext();
 dom.recent.onchange=()=>{ if(dom.recent.value){ dom.root.value=dom.recent.value; scan(); } };
-dom.search.oninput=()=>searchNow();
+let searchTimer=null;
+dom.search.oninput=()=>{
+  clearTimeout(searchTimer);
+  const q=dom.search.value.trim();
+  if(!q){
+    state.searchTerm='';
+    state.searchItems=[];
+    state.searchIndex=-1;
+    hideSearchResults();
+    if(state.fileSource && state.editorMode==='view') renderEditor();
+    return;
+  }
+  searchTimer=setTimeout(()=>searchNow(),180);
+};
 dom.search.onkeydown=e=>handleSearchKey(e);
+dom.root.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); scan(); } };
+dom.treeFilter.oninput=()=>renderTree();
 dom.peekBackdrop.onclick=()=>closePeek();
-dom.back.onclick=()=>goBack(); dom.forward.onclick=()=>goForward(); dom.edit.onclick=()=>startEdit(); dom.save.onclick=()=>saveEdit(); dom.cancelEdit.onclick=()=>cancelEdit(); dom.copyPath.onclick=async()=>{if(state.fileSource?.path){await navigator.clipboard.writeText(state.fileSource.path); dom.status.textContent='已复制路径';}};
+dom.back.onclick=()=>goBack(); dom.forward.onclick=()=>goForward(); dom.foldAll.onclick=()=>foldAllFunctions(); dom.unfoldAll.onclick=()=>unfoldAllFunctions(); dom.edit.onclick=()=>startEdit(); dom.save.onclick=()=>saveEdit(); dom.cancelEdit.onclick=()=>cancelEdit(); dom.copyPath.onclick=async()=>{if(state.fileSource?.path){await navigator.clipboard.writeText(state.fileSource.path); setStatus('已复制路径','ok');}};
 dom.peekClose.onclick=(e)=>{e.stopPropagation(); closePeek();};
-dom.peekCopy.onclick=async()=>{const text=(state.peek?.lines||[]).map(line=>`${line.line_number}  ${line.text}`).join('\n'); await navigator.clipboard.writeText(text); dom.status.textContent='已复制 Peek 代码';};
+dom.peekCopy.onclick=async()=>{const text=(state.peek?.lines||[]).map(line=>`${line.line_number}  ${line.text}`).join('\n'); await navigator.clipboard.writeText(text); setStatus('已复制 Peek 代码','ok');};
 dom.peekPin.onclick=(e)=>{e.stopPropagation(); state.pinned=state.peek; renderPinned();};
 dom.peekFloat.onclick=(e)=>e.stopPropagation();
+dom.cmdBackdrop.onclick=(e)=>{if(e.target===dom.cmdBackdrop) closeCommandPalette();};
+dom.cmdInput.oninput=()=>renderCommandList(dom.cmdInput.value||'');
+dom.cmdInput.onkeydown=e=>handleCommandKey(e);
 initPeekDrag();
-loadRecent();
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePeek(); });
-document.addEventListener('pointerdown', e=>{ if(state.peek && dom.peekFloat.classList.contains('active') && !dom.peekFloat.contains(e.target) && !(e.target.closest && e.target.closest('[data-symbol]'))) closePeek(); });
+loadUiState();
+bootstrap();
+document.addEventListener('keydown', e=>{
+  const tag=String(e.target?.tagName||'').toLowerCase();
+  const typing=e.target?.isContentEditable||tag==='input'||tag==='textarea'||tag==='select';
+  if(dom.cmdBackdrop.classList.contains('active')&&e.key==='Escape'){ e.preventDefault(); closeCommandPalette(); return; }
+  if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){ e.preventDefault(); openCommandPalette(); return; }
+  if(!typing&&e.altKey&&e.key==='ArrowUp'){ e.preventDefault(); goBack(); return; }
+  if(!typing&&e.altKey&&e.key==='ArrowDown'){ e.preventDefault(); goForward(); return; }
+  if(!typing&&e.altKey&&e.key==='Enter'){ e.preventDefault(); openPeekAtSelection(); return; }
+  if(!typing&&e.key==='F4'){ e.preventDefault(); jumpFunction(e.shiftKey?-1:1); return; }
+  if(!typing&&e.key==='F12'){ e.preventDefault(); if(e.shiftKey) showSymbolReferences(); else goToSymbolDefinition(); return; }
+  if(!typing&&e.ctrlKey&&e.key==='F2'){ e.preventDefault(); if(state.fileSource?.path&&state.detailLine) toggleBookmark(state.fileSource.path,state.detailLine,true); return; }
+  if(!typing&&!e.ctrlKey&&e.key==='F2'){ e.preventDefault(); jumpBookmark(e.shiftKey?-1:1); return; }
+  if(!typing&&(e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='g'){ e.preventDefault(); jumpToLineByPrompt(); return; }
+  if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='f'){
+    e.preventDefault();
+    dom.search.focus();
+    dom.search.select();
+    return;
+  }
+  if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='s'&&state.editorMode==='edit'){
+    e.preventDefault();
+    saveEdit();
+    return;
+  }
+  if(e.key==='Escape'){
+    closePeek();
+    hideSearchResults();
+  }
+});
+document.addEventListener('pointerdown', e=>{
+  if(state.peek && dom.peekFloat.classList.contains('active') && !dom.peekFloat.contains(e.target) && !(e.target.closest && e.target.closest('[data-symbol]'))) closePeek();
+  const inSearch = dom.search.contains(e.target) || dom.searchResults.contains(e.target);
+  if(!inSearch) hideSearchResults();
+  if(dom.ctxMenu.classList.contains('active') && !dom.ctxMenu.contains(e.target)) closeContextMenu();
+});
+document.addEventListener('contextmenu', e=>handleContextMenu(e));
 function updateBusy(){dom.busy.classList.toggle('active', state.busyCount>0);}
-function updateToolButtons(){dom.back.disabled=state.navIndex<=0; dom.forward.disabled=state.navIndex<0||state.navIndex>=state.navHistory.length-1; dom.edit.disabled=!state.fileSource||state.editorMode==='edit'; dom.save.disabled=state.editorMode!=='edit'; dom.cancelEdit.disabled=state.editorMode!=='edit'; dom.copyPath.disabled=!state.fileSource?.path;}
+function updateToolButtons(){dom.back.disabled=state.navIndex<=0; dom.forward.disabled=state.navIndex<0||state.navIndex>=state.navHistory.length-1; dom.foldAll.disabled=!state.file?.functions?.length||state.editorMode==='edit'; dom.unfoldAll.disabled=!state.file?.functions?.length||state.editorMode==='edit'; dom.edit.disabled=!state.fileSource||state.editorMode==='edit'; dom.save.disabled=state.editorMode!=='edit'; dom.cancelEdit.disabled=state.editorMode!=='edit'; dom.copyPath.disabled=!state.fileSource?.path;}
 function updateToolInfo(){if(!dom.toolInfo)return; const parts=[]; if(state.fileSource?.path) parts.push(state.fileSource.path); if(state.focusFunction?.name) parts.push(`函数: ${state.focusFunction.name}`); if(state.selectedSymbol) parts.push(`符号: ${state.selectedSymbol}`); dom.toolInfo.textContent=parts.join(' · ') || '未选中';}
+function toast(message,type){const node=document.createElement('div');node.className=`toast ${type||'ok'}`;node.textContent=message;dom.toastArea.appendChild(node);setTimeout(()=>{node.style.opacity='0';node.style.transition='opacity .2s ease';setTimeout(()=>node.remove(),220);},2200);}
+function setStatus(message,type){dom.status.textContent=message;toast(message,type||'ok');}
+function buildCommandActions(){
+  const actions=[
+    {label:'导入并建索引',hint:'Scan',run:()=>scan()},
+    {label:'解析Keil编译参数',hint:'uvprojx',run:()=>loadKeilCompileContext()},
+    {label:'返回',hint:'Alt+Up',run:()=>goBack()},
+    {label:'前进',hint:'Alt+Down',run:()=>goForward()},
+    {label:'跳到行',hint:'Ctrl+G',run:()=>jumpToLineByPrompt()},
+    {label:'折叠全部函数',hint:'',run:()=>foldAllFunctions()},
+    {label:'展开全部函数',hint:'',run:()=>unfoldAllFunctions()},
+    {label:'切换编辑模式',hint:'',run:()=>state.editorMode==='edit'?cancelEdit():startEdit()},
+    {label:'保存文件',hint:'Ctrl+S',run:()=>saveEdit()},
+    {label:'清空当前文件书签',hint:'',run:()=>clearCurrentFileBookmarks()},
+    {label:'跳定义(F12)',hint:'',run:()=>goToSymbolDefinition()},
+    {label:'找引用(Shift+F12)',hint:'',run:()=>showSymbolReferences()},
+  ];
+  const recents=[...dom.recent.options].map(o=>o.value).filter(Boolean).slice(0,8);
+  recents.forEach(root=>actions.push({label:`打开最近工程: ${root}`,hint:'Recent',run:async()=>{dom.root.value=root;await scan();}}));
+  return actions;
+}
+function openCommandPalette(){state.cmdActions=buildCommandActions();state.cmdIndex=0;dom.cmdBackdrop.classList.add('active');dom.cmdInput.value='';renderCommandList('');setTimeout(()=>dom.cmdInput.focus(),0);}
+function closeCommandPalette(){dom.cmdBackdrop.classList.remove('active');}
+function renderCommandList(keyword){
+  const q=String(keyword||'').trim().toLowerCase();
+  const rows=state.cmdActions.filter(a=>!q||a.label.toLowerCase().includes(q)||String(a.hint||'').toLowerCase().includes(q));
+  if(!rows.length){dom.cmdList.innerHTML='<div class="cmd-row"><span>无匹配命令</span><span class="cmd-hint"></span></div>';state.cmdIndex=0;state.cmdRows=[];return;}
+  state.cmdRows=rows;
+  if(state.cmdIndex>=rows.length) state.cmdIndex=0;
+  dom.cmdList.innerHTML=rows.map((a,i)=>`<div class="cmd-row ${i===state.cmdIndex?'active':''}" data-cmd-idx="${i}"><span>${highlightText(a.label,q)}</span><span class="cmd-hint">${a.hint||''}</span></div>`).join('');
+  dom.cmdList.querySelectorAll('[data-cmd-idx]').forEach(el=>el.onclick=()=>runCommandIndex(Number(el.dataset.cmdIdx)));
+}
+function handleCommandKey(e){
+  if(e.key==='Escape'){e.preventDefault();closeCommandPalette();return;}
+  if(!state.cmdRows?.length) return;
+  if(e.key==='ArrowDown'){e.preventDefault();state.cmdIndex=Math.min(state.cmdRows.length-1,state.cmdIndex+1);renderCommandList(dom.cmdInput.value);}
+  else if(e.key==='ArrowUp'){e.preventDefault();state.cmdIndex=Math.max(0,state.cmdIndex-1);renderCommandList(dom.cmdInput.value);}
+  else if(e.key==='Enter'){e.preventDefault();runCommandIndex(state.cmdIndex);}
+}
+async function runCommandIndex(idx){const item=state.cmdRows?.[idx];if(!item)return;closeCommandPalette();try{await item.run();setStatus(`已执行: ${item.label}`,'ok');}catch(err){setStatus(`执行失败: ${item.label}`,'err');}}
+function closeContextMenu(){dom.ctxMenu.classList.remove('active');dom.ctxMenu.innerHTML='';}
+function openContextMenu(x,y,items){
+  if(!items?.length) return;
+  dom.ctxMenu.innerHTML=items.map((it,i)=>`<button class="ctx-item" data-ctx-idx="${i}">${it.label}</button>`).join('');
+  dom.ctxMenu.classList.add('active');
+  dom.ctxMenu.style.left=`${Math.max(8,Math.min(window.innerWidth-220,x))}px`;
+  dom.ctxMenu.style.top=`${Math.max(8,Math.min(window.innerHeight-180,y))}px`;
+  dom.ctxMenu.querySelectorAll('[data-ctx-idx]').forEach(el=>el.onclick=async()=>{const it=items[Number(el.dataset.ctxIdx)];closeContextMenu();await it.run();});
+}
+function handleContextMenu(e){
+  const token=e.target.closest?.('[data-symbol]');
+  const lineEl=e.target.closest?.('[data-line][data-path]');
+  if(!token&&!lineEl) return;
+  e.preventDefault();
+  const items=[];
+  if(token){
+    const symbol=token.dataset.symbol;
+    const path=token.dataset.path||state.fileSource?.path;
+    const line=Number(token.dataset.line||state.detailLine||0);
+    const col=Number(token.dataset.col||1);
+    items.push({label:`Peek ${symbol}`,run:()=>openPeek(symbol,path,line)});
+    items.push({label:`跳到定义 ${symbol}`,run:async()=>{state.selectedSymbol=symbol;state.selectedPath=path||'';state.selectedLine=line;state.selectedColumn=col;await goToSymbolDefinition();}});
+    items.push({label:`查找引用 ${symbol}`,run:async()=>{state.selectedSymbol=symbol;state.selectedPath=path||'';state.selectedLine=line;state.selectedColumn=col;await showSymbolReferences();}});
+    items.push({label:`复制符号 ${symbol}`,run:async()=>{await navigator.clipboard.writeText(symbol);setStatus('已复制符号','ok');}});
+  }
+  if(lineEl){
+    const p=lineEl.dataset.path; const ln=Number(lineEl.dataset.line||0);
+    items.push({label:isBookmarked(p,ln)?`取消书签 #${ln}`:`添加书签 #${ln}`,run:async()=>{toggleBookmark(p,ln);await renderEditor();}});
+    items.push({label:`复制该行 #${ln}`,run:async()=>{const txt=lineEl.querySelector('span:nth-child(2)')?.textContent||'';await navigator.clipboard.writeText(txt);setStatus('已复制该行','ok');}});
+  }
+  openContextMenu(e.clientX,e.clientY,items);
+}
+async function bootstrap(){const ok=await loadSessionState();if(!ok) await loadRecent();}
+function loadUiState(){try{const raw=localStorage.getItem(UI_STATE_KEY);if(!raw)return;const data=JSON.parse(raw);if(data&&typeof data==='object'){if(data.bookmarks&&typeof data.bookmarks==='object')state.bookmarks=data.bookmarks;if(data.foldedFns&&typeof data.foldedFns==='object')state.foldedFns=data.foldedFns;}}catch{}}
+function saveUiState(){try{localStorage.setItem(UI_STATE_KEY,JSON.stringify({bookmarks:state.bookmarks,foldedFns:state.foldedFns}));}catch{}}
+function saveSessionState(){try{localStorage.setItem(SESSION_STATE_KEY,JSON.stringify({root:dom.root.value||'',detailPath:state.detailPath||'',detailLine:state.detailLine||1,filePath:state.fileSource?.path||'',focusFunctionId:state.focusFunctionId||'',searchTerm:dom.search.value||'',treeFilter:dom.treeFilter?.value||'',selectedSymbol:state.selectedSymbol||'',selectedPath:state.selectedPath||'',selectedLine:state.selectedLine||0,selectedColumn:state.selectedColumn||0}));}catch{}}
+async function loadSessionState(){try{const raw=localStorage.getItem(SESSION_STATE_KEY);if(!raw)return false;const s=JSON.parse(raw);if(!s||!s.root)return false;dom.root.value=s.root;if(dom.treeFilter&&s.treeFilter)dom.treeFilter.value=s.treeFilter;if(s.searchTerm){dom.search.value=s.searchTerm;state.searchTerm=s.searchTerm;}if(s.selectedSymbol)state.selectedSymbol=s.selectedSymbol;if(s.selectedPath)state.selectedPath=s.selectedPath;state.selectedLine=Number(s.selectedLine||0);state.selectedColumn=Number(s.selectedColumn||0);await scan();if(!state.projectId)return false;let loaded=false;if(s.focusFunctionId){const d=await API.call('get_function',state.projectId,s.focusFunctionId);if(d?.success&&d.function){const src=await API.call('get_file_source',state.projectId,d.function.file_id);state.file={...(state.file||{}),id:d.function.file_id,path:d.function.path};state.fileSource=src;state.focusFunction=d.function;state.focusFunctionId=d.function.id;state.detailPath=src.path;state.detailLine=Number(s.detailLine||d.function.start_line||1);loaded=true;}}if(!loaded&&s.filePath){const file=state.files.find(x=>x.path===s.filePath);if(file){const d=await API.call('get_file',state.projectId,file.id);const src=await API.call('get_file_source',state.projectId,file.id);state.file=d.file;state.fileSource=src;state.focusFunction=findFunctionByLine(d.file?.functions||[],Number(s.detailLine||1));state.focusFunctionId=state.focusFunction?.id||'';state.detailPath=src.path;state.detailLine=Number(s.detailLine||1);loaded=true;}}if(loaded){renderTree();await renderEditor();if(s.searchTerm) searchNow();return true;}return false;}catch{return false;}}
+async function openPeekAtSelection(){if(!state.selectedSymbol||!state.projectId||!state.fileSource?.path)return;await openPeek(state.selectedSymbol,state.fileSource.path,Number(state.detailLine||0));}
+function currentNavPoint(){if(!state.projectId||!state.fileSource?.path)return null;return {kind:'point',projectId:state.projectId,root:dom.root.value||'',path:state.fileSource.path,line:Number(state.detailLine||1),symbol:state.selectedSymbol||''};}
+async function goToSymbolDefinition(){
+  if(!state.selectedSymbol||!state.projectId){setStatus('请先选中一个符号','err');return;}
+  const before=currentNavPoint(); if(before) recordNav(before);
+  const nav=await API.call('get_navigation_targets',state.projectId,state.selectedSymbol,state.selectedPath||state.fileSource?.path||'',Number(state.selectedLine||state.detailLine||0),Number(state.selectedColumn||0),180);
+  if(!nav?.success){setStatus(nav?.error||'未找到定义','err');return;}
+  if(nav?.message) setStatus(nav.message,'ok');
+  const def=nav.definition||{};
+  if(!def.path||!def.line){setStatus('未找到定义','err');return;}
+  state.searchItems=(nav.references||[]).map(it=>({kind:'reference',id:`ref:${it.path}:${it.line}:${it.column||1}`,label:state.selectedSymbol,path:it.path,line:it.line,snippet:it.snippet||'',function_name:it.function_name||'',function_id:it.function_id||''}));
+  state.searchIndex=state.searchItems.length?0:-1;
+  renderSearchResults();
+  await navigateToPathLine(def.path,Number(def.line||1),{recordNav:true});
+}
+async function showSymbolReferences(){
+  if(!state.selectedSymbol||!state.projectId){setStatus('请先选中一个符号','err');return;}
+  const nav=await API.call('get_navigation_targets',state.projectId,state.selectedSymbol,state.selectedPath||state.fileSource?.path||'',Number(state.selectedLine||state.detailLine||0),Number(state.selectedColumn||0),180);
+  if(!nav?.success){setStatus(nav?.error||'查找引用失败','err');return;}
+  if(nav?.message) setStatus(nav.message,'ok');
+  dom.search.value=state.selectedSymbol;
+  state.searchTerm=state.selectedSymbol;
+  state.searchItems=(nav.references||[]).map(it=>({kind:'reference',id:`ref:${it.path}:${it.line}:${it.column||1}`,label:state.selectedSymbol,path:it.path,line:it.line,snippet:it.snippet||'',function_name:it.function_name||'',function_id:it.function_id||''}));
+  state.searchIndex=state.searchItems.length?0:-1;
+  renderSearchResults();
+}
+async function navigateToPathLine(path,line,opts){
+  const file=state.files.find(x=>x.path===path);
+  if(!file) return;
+  const d=await API.call('get_file',state.projectId,file.id);
+  const s=await API.call('get_file_source',state.projectId,file.id);
+  const targetLine=Math.max(1,Number(line||1));
+  const hitFn=findFunctionByLine(d.file?.functions||[],targetLine);
+  state.file=d.file;
+  state.fileSource=s;
+  state.focusFunction=hitFn||null;
+  state.focusFunctionId=hitFn?.id||'';
+  state.detailPath=s.path;
+  state.detailLine=targetLine;
+  renderTree();
+  await renderEditor();
+  if(opts?.recordNav){const after=currentNavPoint(); if(after) recordNav(after);}
+}
+async function resolveFunctionIdByDefinition(name,path,line){
+  const file=state.files.find(x=>x.path===path);
+  if(!file) return '';
+  const d=await API.call('get_file',state.projectId,file.id);
+  const rows=(d?.file?.functions||[]);
+  const ln=Number(line||1);
+  const exact=rows.find(fn=>fn.name===name && ln>=Number(fn.start_line||0) && ln<=Number(fn.end_line||0));
+  if(exact) return exact.id;
+  const near=rows.find(fn=>ln>=Number(fn.start_line||0) && ln<=Number(fn.end_line||0));
+  return near?.id||'';
+}
+async function resolveExpandTarget(name,callPath,callLine,callCol){
+  if(!name||!callPath||!callLine) return {fnId:'',defPath:'',defLine:0};
+  let col=Number(callCol||0);
+  if(!col&&state.fileSource?.path===callPath){
+    const row=(state.fileSource.lines||[]).find(x=>Number(x.line_number)===Number(callLine));
+    const txt=String(row?.text||'');
+    const p=txt.indexOf(name);
+    if(p>=0) col=p+1;
+  }
+  const nav=await API.call('get_navigation_targets',state.projectId,name,callPath,Number(callLine||1),Math.max(1,col||1),30);
+  const def=nav?.definition||{};
+  if(!def?.path||!def?.line) return {fnId:'',defPath:'',defLine:0};
+  const fnId=await resolveFunctionIdByDefinition(name,def.path,Number(def.line||1));
+  return {fnId,defPath:def.path,defLine:Number(def.line||1)};
+}
+function getBookmarks(path){const rows=state.bookmarks[path]||[]; return [...rows].sort((a,b)=>a-b);}
+function isBookmarked(path,line){return getBookmarks(path).includes(Number(line||0));}
+function toggleBookmark(path,line,rerender){if(!path||!line)return;const n=Number(line);const rows=getBookmarks(path);const idx=rows.indexOf(n);if(idx>=0)rows.splice(idx,1);else rows.push(n);rows.sort((a,b)=>a-b);state.bookmarks[path]=rows;saveUiState();renderBookmarkBar();if(rerender)renderEditor();}
+function clearCurrentFileBookmarks(){const path=state.fileSource?.path;if(!path)return;delete state.bookmarks[path];saveUiState();renderBookmarkBar();renderEditor();}
+function renderBookmarkBar(){if(!dom.bookmarkBar)return;const path=state.fileSource?.path;if(!path){dom.bookmarkBar.textContent='书签: -';return;}const rows=getBookmarks(path);if(!rows.length){dom.bookmarkBar.textContent='书签: -';return;}dom.bookmarkBar.innerHTML='书签: '+rows.map(line=>`<span class="bm-chip" data-bm-line="${line}">#${line}</span>`).join('')+`<span class="bm-chip danger" data-bm-clear="1">清空</span>`;dom.bookmarkBar.querySelectorAll('[data-bm-line]').forEach(el=>el.onclick=async()=>{state.detailPath=path;state.detailLine=Number(el.dataset.bmLine);await renderEditor();});const clearBtn=dom.bookmarkBar.querySelector('[data-bm-clear]');if(clearBtn) clearBtn.onclick=()=>clearCurrentFileBookmarks();}
+function jumpBookmark(direction){const path=state.fileSource?.path;if(!path)return;const rows=getBookmarks(path);if(!rows.length)return;const cur=Number(state.detailLine||1);let target=rows[0];if(direction>0){target=rows.find(x=>x>cur)??rows[0];}else{const rev=[...rows].reverse();target=rev.find(x=>x<cur)??rev[0];}state.detailPath=path;state.detailLine=target;renderEditor();}
+function jumpToLineByPrompt(){if(!state.fileSource?.lines?.length)return;const max=state.fileSource.lines.length;const input=window.prompt(`跳转到行号 (1-${max})`,String(state.detailLine||1));if(input===null)return;const line=Math.max(1,Math.min(max,Number(input)||1));state.detailPath=state.fileSource.path;state.detailLine=line;const hitFn=findFunctionByLine(state.file?.functions||[],line);state.focusFunction=hitFn||state.focusFunction;state.focusFunctionId=hitFn?.id||state.focusFunctionId;renderTree();renderEditor();}
+function jumpFunction(direction){const list=[...(state.file?.functions||[])].sort((a,b)=>a.start_line-b.start_line);if(!list.length)return;const cur=Number(state.detailLine||1);let target=list[0];if(direction>0){target=list.find(fn=>fn.start_line>cur)||list[0];}else{const rev=[...list].reverse();target=rev.find(fn=>fn.start_line<cur)||rev[0];}state.focusFunction=target;state.focusFunctionId=target.id;state.detailPath=state.fileSource?.path||state.detailPath;state.detailLine=target.start_line;renderTree();renderEditor();}
+function foldAllFunctions(){if(!state.file?.functions?.length)return;const next={...state.foldedFns};for(const fn of state.file.functions)next[fn.id]=true;state.foldedFns=next;saveUiState();renderEditor();}
+function unfoldAllFunctions(){if(!state.file?.functions?.length)return;const next={...state.foldedFns};for(const fn of state.file.functions)delete next[fn.id];state.foldedFns=next;saveUiState();renderEditor();}
 function recordNav(entry){if(state.restoringHistory||!entry)return;const history=state.navHistory.slice(0,state.navIndex+1);const last=history[history.length-1];if(last&&JSON.stringify(last)===JSON.stringify(entry)){state.navHistory=history;state.navIndex=history.length-1;updateToolButtons();return;}history.push(entry);state.navHistory=history.slice(-80);state.navIndex=state.navHistory.length-1;updateToolButtons();}
 async function goBack(){if(state.navIndex<=0)return;state.navIndex-=1;await restoreNav(state.navHistory[state.navIndex]);updateToolButtons();}
 async function goForward(){if(state.navIndex>=state.navHistory.length-1)return;state.navIndex+=1;await restoreNav(state.navHistory[state.navIndex]);updateToolButtons();}
-async function restoreNav(entry){if(!entry)return;state.restoringHistory=true;try{if(entry.kind==='file'){dom.root.value=entry.root||dom.root.value; if(!state.projectId||entry.projectId!==state.projectId) await scan(); const file=state.files.find(x=>x.id===entry.fileId); if(file){const d=await API.call('get_file',state.projectId,file.id); const s=await API.call('get_file_source',state.projectId,file.id); state.file=d.file; state.fileSource=s; state.focusFunction=null; state.expanded={}; state.children={}; state.detailPath=s.path; state.detailLine=entry.line||1; renderTree(); await renderEditor();}} else if(entry.kind==='function'){if(!state.projectId||entry.projectId!==state.projectId){dom.root.value=entry.root||dom.root.value; await scan();} const d=await API.call('get_function',state.projectId,entry.functionId); const s=await API.call('get_file_source',state.projectId,d.function.file_id); state.file={id:d.function.file_id,path:d.function.path}; state.fileSource=s; state.focusFunction=d.function; state.expanded={}; state.children={}; state.focusBranch=''; state.focusFunctionId=d.function.id; state.detailPath=s.path; state.detailLine=d.function.start_line; renderTree(); await renderEditor();}} finally{state.restoringHistory=false;}}
+async function restoreNav(entry){if(!entry)return;state.restoringHistory=true;try{if(entry.kind==='point'){dom.root.value=entry.root||dom.root.value; if(!state.projectId||entry.projectId!==state.projectId) await scan(); await navigateToPathLine(entry.path,entry.line||1); state.selectedSymbol=entry.symbol||state.selectedSymbol;} else if(entry.kind==='file'){dom.root.value=entry.root||dom.root.value; if(!state.projectId||entry.projectId!==state.projectId) await scan(); const file=state.files.find(x=>x.id===entry.fileId); if(file){const d=await API.call('get_file',state.projectId,file.id); const s=await API.call('get_file_source',state.projectId,file.id); state.file=d.file; state.fileSource=s; state.focusFunction=null; state.expanded={}; state.children={}; state.detailPath=s.path; state.detailLine=entry.line||1; renderTree(); await renderEditor();}} else if(entry.kind==='function'){if(!state.projectId||entry.projectId!==state.projectId){dom.root.value=entry.root||dom.root.value; await scan();} const d=await API.call('get_function',state.projectId,entry.functionId); const s=await API.call('get_file_source',state.projectId,d.function.file_id); state.file={id:d.function.file_id,path:d.function.path}; state.fileSource=s; state.focusFunction=d.function; state.expanded={}; state.children={}; state.focusBranch=''; state.focusFunctionId=d.function.id; state.detailPath=s.path; state.detailLine=d.function.start_line; renderTree(); await renderEditor();}} finally{state.restoringHistory=false;}}
 function startEdit(){if(!state.fileSource)return;state.editorMode='edit';state.editorDraft=state.fileSource.source||'';renderEditor();}
 function cancelEdit(){if(state.editorMode!=='edit')return;state.editorMode='view';state.editorDraft='';renderEditor();}
-async function saveEdit(){if(state.editorMode!=='edit'||!state.file?.id)return;const r=await API.call('save_file_source',state.projectId,state.file.id,state.editorDraft);if(!r.success){dom.status.textContent=r.error||'保存失败';return;}const s=await API.call('get_file_source',state.projectId,state.file.id);state.fileSource=s;state.editorMode='view';state.editorDraft='';dom.status.textContent='已保存';renderEditor();}
+async function saveEdit(){if(state.editorMode!=='edit'||!state.file?.id)return;const r=await API.call('save_file_source',state.projectId,state.file.id,state.editorDraft);if(!r.success){setStatus(r.error||'保存失败','err');return;}const s=await API.call('get_file_source',state.projectId,state.file.id);state.fileSource=s;state.editorMode='view';state.editorDraft='';setStatus('已保存','ok');renderEditor();}
+function changedLines(baseText,draftText){const a=String(baseText||'').split('\n');const b=String(draftText||'').split('\n');const n=Math.max(a.length,b.length);const out=[];for(let i=0;i<n;i++){if((a[i]??'')!==(b[i]??''))out.push(i+1);}return out;}
+function jumpEditorLine(line){const ta=document.getElementById('editor-area');if(!ta)return;const n=Math.max(1,Number(line||1));const lines=ta.value.split('\n');let pos=0;for(let i=0;i<n-1&&i<lines.length;i++)pos+=lines[i].length+1;ta.focus();ta.setSelectionRange(pos,pos);}
 function closePeek(){state.peek=null; dom.peekFloat.classList.remove('active'); dom.peekBackdrop.classList.remove('active'); dom.peek.innerHTML='<div class="peek-empty">点击变量/宏/类型查看源头</div>';}
 function escapeRegExp(text){return String(text||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function escapeHtml(text){return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlightText(text,term){
+  const raw=String(text||'');
+  const q=String(term||'').trim();
+  if(!q) return escapeHtml(raw);
+  const re=new RegExp(escapeRegExp(q),'ig');
+  let out=''; let last=0; let m;
+  while((m=re.exec(raw))!==null){
+    out += escapeHtml(raw.slice(last,m.index));
+    out += `<span class="search-hit">${escapeHtml(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  out += escapeHtml(raw.slice(last));
+  return out;
+}
 function lineSymbolClass(text){if(!state.selectedSymbol) return ''; const re=new RegExp(`\\b${escapeRegExp(state.selectedSymbol)}\\b`); return re.test(String(text||'')) ? ' symbol-selected' : '';}
+function updateCrumbs(){
+  if(!dom.crumbs) return;
+  if(!state.focusFunction?.name){ dom.crumbs.textContent='调用链: -'; return; }
+  const parts=[state.focusFunction.name];
+  let key=state.focusBranch;
+  const branch=[];
+  while(key){
+    const meta=state.inlineMeta[key];
+    if(!meta) break;
+    branch.push(meta.name||key);
+    key=meta.parent||'';
+  }
+  branch.reverse().forEach(name=>parts.push(name));
+  dom.crumbs.textContent=`调用链: ${parts.join(' > ')}`;
+}
+function keepTreeActiveInView(){
+  const activeNode=dom.tree.querySelector('.subitem.active, .item.active');
+  if(!activeNode) return;
+  const host=dom.tree.getBoundingClientRect();
+  const rect=activeNode.getBoundingClientRect();
+  if(rect.top < host.top){
+    dom.tree.scrollTop -= (host.top - rect.top) + 12;
+    return;
+  }
+  if(rect.bottom > host.bottom){
+    dom.tree.scrollTop += (rect.bottom - host.bottom) + 12;
+  }
+}
 function bindCodeFocus(){document.querySelectorAll('.code').forEach(code=>{code.onmouseenter=()=>markCodeFocus(code); code.onwheel=()=>markCodeFocus(code); code.onpointerdown=()=>markCodeFocus(code);});}
 function markCodeFocus(target){document.querySelectorAll('.code.active-scroll').forEach(el=>el.classList.remove('active-scroll')); target.classList.add('active-scroll');}
 function captureViewport(anchor){const snapshot={top:dom.editor.scrollTop,left:dom.editor.scrollLeft,anchor,offset:null};if(anchor){const el=findAnchor(anchor);if(el){const rect=el.getBoundingClientRect();const host=dom.editor.getBoundingClientRect();snapshot.offset=rect.top-host.top;}}return snapshot;}
 function restoreViewport(snapshot){if(!snapshot)return;requestAnimationFrame(()=>{dom.editor.scrollLeft=snapshot.left||0;if(snapshot.anchor&&snapshot.offset!==null){const el=findAnchor(snapshot.anchor);if(el){const rect=el.getBoundingClientRect();const host=dom.editor.getBoundingClientRect();dom.editor.scrollTop += (rect.top-host.top)-snapshot.offset;return;}}dom.editor.scrollTop=snapshot.top||0;});}
 function findAnchor(anchor){if(!anchor)return null; return dom.editor.querySelector(`[data-path="${CSS.escape(anchor.path)}"][data-line="${anchor.line}"]`);}
 function initPeekDrag(){let startX=0,startY=0,startR=20,startT=86,dragging=false; dom.peekHead.addEventListener('pointerdown',e=>{if(e.target.closest('button')) return; dragging=true; startX=e.clientX; startY=e.clientY; const rect=dom.peekFloat.getBoundingClientRect(); startR=window.innerWidth-rect.right; startT=rect.top; dom.peekHead.classList.add('dragging'); dom.peekHead.setPointerCapture(e.pointerId);}); dom.peekHead.addEventListener('pointermove',e=>{if(!dragging) return; const dx=e.clientX-startX; const dy=e.clientY-startY; dom.peekFloat.style.right=`${Math.max(12,startR-dx)}px`; dom.peekFloat.style.top=`${Math.max(64,startT+dy)}px`; dom.peekFloat.style.bottom='20px';}); const end=()=>{dragging=false; dom.peekHead.classList.remove('dragging');}; dom.peekHead.addEventListener('pointerup',end); dom.peekHead.addEventListener('pointercancel',end);}
-async function scan(){dom.status.textContent='正在建立索引...';const r=await API.call('scan_project',dom.root.value.trim());if(!r.success)return dom.status.textContent=r.error||'导入失败';state.projectId=r.project.id;const f=await API.call('list_files',state.projectId);state.files=f.files||[];dom.status.textContent=`已索引 ${r.project.function_count} 个函数 / ${r.project.call_count} 条调用`;renderTree();updateToolButtons();}
-async function searchNow(){const q=dom.search.value.trim(); if(!state.projectId||!q){state.searchItems=[];state.searchIndex=-1;dom.searchResults.classList.remove('active'); dom.searchResults.innerHTML=''; return;} const r=await API.call('search',state.projectId,q,80); state.searchItems=r.results||[]; state.searchIndex=state.searchItems.length?0:-1; renderSearchResults();}
-function renderSearchResults(){const rows=state.searchItems||[]; dom.searchResults.innerHTML=rows.map((item,idx)=>`<div class="search-row ${idx===state.searchIndex?'active':''}" data-idx="${idx}"><span class="search-kind">${item.kind}</span><span>${item.label} · ${item.path}</span><span>${item.line||''}</span></div>`).join(''); dom.searchResults.classList.toggle('active', rows.length>0); dom.searchResults.querySelectorAll('[data-idx]').forEach(row=>row.onclick=async()=>{await openSearchResult(Number(row.dataset.idx));});}
-async function openSearchResult(idx){const item=(state.searchItems||[])[idx]; if(!item)return; dom.searchResults.classList.remove('active'); dom.search.value=''; state.searchItems=[]; state.searchIndex=-1; if(item.kind==='file'){const file=state.files.find(x=>x.id===item.id); if(file){const d=await API.call('get_file',state.projectId,file.id); const s=await API.call('get_file_source',state.projectId,file.id); state.file=d.file; state.fileSource=s; state.focusFunction=null; state.expanded={}; state.children={}; state.focusBranch=''; state.focusFunctionId=''; state.detailPath=s.path; state.detailLine=1; renderTree(); await renderEditor(); recordNav({kind:'file',projectId:state.projectId,root:dom.root.value,fileId:file.id,line:1});}} else if(item.kind==='function'){const d=await API.call('get_function',state.projectId,item.id); const s=await API.call('get_file_source',state.projectId,d.function.file_id); state.file={id:d.function.file_id,path:d.function.path}; state.fileSource=s; state.focusFunction=d.function; state.expanded={}; state.children={}; state.focusBranch=''; state.focusFunctionId=d.function.id; state.detailPath=s.path; state.detailLine=d.function.start_line; renderTree(); await renderEditor(); recordNav({kind:'function',projectId:state.projectId,root:dom.root.value,functionId:d.function.id});} else {state.selectedSymbol=item.label; await openPeek(item.label,item.path,Number(item.line||0)); if(item.path){const file=state.files.find(x=>x.path===item.path); if(file){const d=await API.call('get_file',state.projectId,file.id); const s=await API.call('get_file_source',state.projectId,file.id); state.file=d.file; state.fileSource=s; state.focusFunction=null; state.detailPath=s.path; state.detailLine=Number(item.line||0); renderTree(); await renderEditor();}}}}
-function handleSearchKey(e){if(!state.searchItems.length)return; if(e.key==='ArrowDown'){e.preventDefault(); state.searchIndex=Math.min(state.searchItems.length-1,state.searchIndex+1); renderSearchResults();} else if(e.key==='ArrowUp'){e.preventDefault(); state.searchIndex=Math.max(0,state.searchIndex-1); renderSearchResults();} else if(e.key==='Enter'){e.preventDefault(); openSearchResult(state.searchIndex);} else if(e.key==='Escape'){dom.searchResults.classList.remove('active'); state.searchItems=[]; state.searchIndex=-1;}}
+async function scan(){dom.status.textContent='正在建立索引...';const r=await API.call('scan_project',dom.root.value.trim());if(!r.success){setStatus(r.error||'导入失败','err');return;}state.projectId=r.project.id;const f=await API.call('list_files',state.projectId);state.files=f.files||[];setStatus(`已索引 ${r.project.function_count} 个函数 / ${r.project.call_count} 条调用`,'ok');renderTree();updateToolButtons();saveSessionState();}
+async function loadKeilCompileContext(){
+  const target=(dom.root.value||'').trim();
+  if(!target){ setStatus('请先输入工程目录或 uvprojx 路径','err'); return; }
+  const r=await API.call('get_keil_compile_context',target);
+  if(!r?.success){ setStatus(r?.error||'Keil 参数解析失败','err'); return; }
+  const t=r.target||{};
+  const compileCount=(r.compile_commands||[]).length;
+  setStatus(`Keil目标 ${t.name||'-'}: I=${t.include_count||0}, D=${t.define_count||0}, 源文件=${compileCount}`,'ok');
+}
+function hideSearchResults(){dom.searchResults.classList.remove('active'); dom.searchResults.innerHTML='';}
+async function searchNow(){
+  const q=dom.search.value.trim();
+  state.searchTerm=q;
+  if(!state.projectId||!q){
+    state.searchItems=[];
+    state.searchIndex=-1;
+    hideSearchResults();
+    if(state.fileSource && state.editorMode==='view') await renderEditor();
+    return;
+  }
+  const seq=++state.searchSeq;
+  dom.searchResults.innerHTML='<div class="search-row"><span class="search-kind">...</span><span>搜索中</span><span></span></div>';
+  dom.searchResults.classList.add('active');
+  const r=await API.call('search',state.projectId,q,80);
+  if(seq!==state.searchSeq) return;
+  state.searchItems=r.results||[];
+  state.searchIndex=state.searchItems.length?0:-1;
+  renderSearchResults();
+  if(state.fileSource && state.editorMode==='view') await renderEditor();
+}
+function renderSearchResults(){
+  const rows=state.searchItems||[];
+  if(!rows.length){
+    dom.searchResults.innerHTML='<div class="search-row"><span class="search-kind">0</span><span>未找到匹配项</span><span></span></div>';
+    dom.searchResults.classList.add('active');
+    return;
+  }
+  dom.searchResults.innerHTML=rows.map((item,idx)=>{
+    const main=`${highlightText(item.label,state.searchTerm)} · ${highlightText(item.path,state.searchTerm)}`;
+    const fn=item.function_name?`函数: ${highlightText(item.function_name,state.searchTerm)} · `:'';
+    const snippet=item.snippet?`${fn}${highlightText(item.snippet,state.searchTerm)}`:'';
+    const sub=snippet?`<div class="search-sub">${snippet}</div>`:'';
+    return `<div class="search-row ${idx===state.searchIndex?'active':''}" data-idx="${idx}"><span class="search-kind">${item.kind}</span><span><div class="search-main">${main}</div>${sub}</span><span>${item.line||''}</span></div>`;
+  }).join('');
+  dom.searchResults.classList.add('active');
+  dom.searchResults.querySelectorAll('[data-idx]').forEach(row=>row.onclick=async()=>{await openSearchResult(Number(row.dataset.idx));});
+}
+async function openSearchResult(idx){
+  const item=(state.searchItems||[])[idx];
+  if(!item)return;
+  const before=currentNavPoint(); if(before) recordNav(before);
+  hideSearchResults();
+  state.searchItems=[];
+  state.searchIndex=-1;
+  if(item.kind==='file'){
+    const file=state.files.find(x=>x.id===item.id);
+    if(!file) return;
+    await navigateToPathLine(file.path,Number(item.line||1),{recordNav:true});
+    return;
+  }
+  if(item.kind==='function'){
+    const d=await API.call('get_function',state.projectId,item.id);
+    const s=await API.call('get_file_source',state.projectId,d.function.file_id);
+    state.file={id:d.function.file_id,path:d.function.path};
+    state.fileSource=s;
+    state.focusFunction=d.function;
+    state.expanded={};
+    state.children={};
+    state.focusBranch='';
+    state.focusFunctionId=d.function.id;
+    state.detailPath=s.path;
+    state.detailLine=d.function.start_line;
+    renderTree();
+    await renderEditor();
+    const after=currentNavPoint(); if(after) recordNav(after);
+    recordNav({kind:'function',projectId:state.projectId,root:dom.root.value,functionId:d.function.id});
+    return;
+  }
+  if(item.kind==='text'){
+    if(item.path&&item.line) await navigateToPathLine(item.path,Number(item.line||1),{recordNav:true});
+    return;
+  }
+  state.selectedSymbol=item.label;
+  state.selectedPath=item.path||state.selectedPath;
+  state.selectedLine=Number(item.line||state.selectedLine||0);
+  state.selectedColumn=Number(item.column||state.selectedColumn||1);
+  if(item.path&&item.line) await navigateToPathLine(item.path,Number(item.line||1),{recordNav:true});
+  if(item.path) await openPeek(item.label,item.path,Number(item.line||0));
+}
+function handleSearchKey(e){
+  if(e.key==='Escape'){
+    state.searchItems=[];
+    state.searchIndex=-1;
+    hideSearchResults();
+    return;
+  }
+  if(!state.searchItems.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault(); state.searchIndex=Math.min(state.searchItems.length-1,state.searchIndex+1); renderSearchResults();}
+  else if(e.key==='ArrowUp'){e.preventDefault(); state.searchIndex=Math.max(0,state.searchIndex-1); renderSearchResults();}
+  else if(e.key==='Enter'){e.preventDefault(); openSearchResult(state.searchIndex);}
+}
 async function loadRecent(){const r=await API.call('list_recent_projects');const items=r.projects||[];dom.recent.innerHTML='<option value="">最近工程</option>'+items.map(item=>`<option value="${item.root}">${item.root}</option>`).join('');if(items[0]){dom.root.value=items[0].root; dom.recent.value=items[0].root; await scan();}}
-async function pickFolder(){const r=await API.call('select_folder'); if(r.success&&r.path){dom.root.value=r.path;} else if(r.error){dom.status.textContent=r.error;}}
-function renderTree(){dom.tree.innerHTML='';state.files.forEach(file=>{const item=document.createElement('div');item.className='item'+(state.file?.id===file.id?' active':'');item.textContent=`${file.path} · ${file.function_count}函数`;item.onclick=async()=>{const d=await API.call('get_file',state.projectId,file.id);const s=await API.call('get_file_source',state.projectId,file.id);state.file=d.file;state.fileSource=s;state.focusFunction=null;state.expanded={};state.children={};state.focusBranch='';state.focusFunctionId='';state.detailPath=s.path;state.detailLine=1;renderTree();await renderEditor();recordNav({kind:'file',projectId:state.projectId,root:dom.root.value,fileId:file.id,line:1});};dom.tree.appendChild(item);if(state.file?.id===file.id){(state.file.functions||[]).forEach(fn=>{const sub=document.createElement('div');sub.className='subitem'+(state.focusFunction?.id===fn.id?' active':'');sub.textContent=`${fn.name} · ${fn.start_line}`;sub.onclick=async()=>{const d=await API.call('get_function',state.projectId,fn.id);const s=await API.call('get_file_source',state.projectId,fn.file_id);state.file={...state.file,id:fn.file_id};state.fileSource=s;state.focusFunction=d.function;state.expanded={};state.children={};state.focusBranch='';state.focusFunctionId=d.function.id;state.detailPath=s.path;state.detailLine=d.function.start_line;renderTree();await renderEditor();recordNav({kind:'function',projectId:state.projectId,root:dom.root.value,functionId:d.function.id});};dom.tree.appendChild(sub);});}});}
-function tokenized(text,path,line){return String(text||'').replace(/\b[A-Za-z_]\w*\b/g,t=>`<span class="token ${state.selectedSymbol===t?'sel':''}" data-symbol="${t}" data-path="${path}" data-line="${line}">${t}</span>`);}
+async function pickFolder(){const r=await API.call('select_folder'); if(r.success&&r.path){dom.root.value=r.path;} else if(r.error){setStatus(r.error,'err');}}
+function findFunctionByLine(functions,line){const n=Number(line||0); if(!n||!Array.isArray(functions)) return null; return functions.find(fn=>n>=Number(fn.start_line||0)&&n<=Number(fn.end_line||0))||null;}
+function renderTree(){
+  const filterText=(dom.treeFilter?.value||'').trim().toLowerCase();
+  dom.tree.innerHTML='';
+  let visibleCount=0;
+  state.files.forEach(file=>{
+    const fileHit=!filterText || String(file.path||'').toLowerCase().includes(filterText);
+    const allFns=(state.file?.id===file.id)?(state.file.functions||[]):[];
+    const matchedFns=allFns.filter(fn=>!filterText || String(fn.name||'').toLowerCase().includes(filterText));
+    const shouldShowFile=fileHit || matchedFns.length>0;
+    if(!shouldShowFile) return;
+    visibleCount++;
+    const item=document.createElement('div');
+    item.className='item'+(state.file?.id===file.id?' active':'');
+    item.textContent=`${file.path} · ${file.function_count}函数`;
+    item.onclick=async()=>{
+      const d=await API.call('get_file',state.projectId,file.id);
+      const s=await API.call('get_file_source',state.projectId,file.id);
+      const keepLine=(state.file?.id===file.id && state.detailPath===s.path) ? Number(state.detailLine||1) : 1;
+      const hitFn=findFunctionByLine(d.file?.functions||[],keepLine);
+      state.file=d.file;
+      state.fileSource=s;
+      state.focusFunction=hitFn||null;
+      state.expanded={};
+      state.children={};
+      state.inlineResolved={};
+      state.focusBranch='';
+      state.focusFunctionId=hitFn?.id||'';
+      state.detailPath=s.path;
+      state.detailLine=keepLine;
+      renderTree();
+      await renderEditor();
+      recordNav({kind:'file',projectId:state.projectId,root:dom.root.value,fileId:file.id,line:keepLine});
+    };
+    dom.tree.appendChild(item);
+    if(state.file?.id===file.id){
+      (fileHit?allFns:matchedFns).forEach(fn=>{
+        const sub=document.createElement('div');
+        sub.className='subitem'+(state.focusFunction?.id===fn.id?' active':'');
+        sub.textContent=`${fn.name} · ${fn.start_line}`;
+        sub.onclick=async()=>{
+          const d=await API.call('get_function',state.projectId,fn.id);
+          const s=await API.call('get_file_source',state.projectId,fn.file_id);
+          state.file={...(state.file||{}),id:fn.file_id,path:d.function.path};
+          state.fileSource=s;
+          state.focusFunction=d.function;
+          state.expanded={};
+          state.children={};
+          state.inlineResolved={};
+          state.focusBranch='';
+          state.focusFunctionId=d.function.id;
+          state.detailPath=s.path;
+          state.detailLine=d.function.start_line;
+          renderTree();
+          await renderEditor();
+          recordNav({kind:'function',projectId:state.projectId,root:dom.root.value,functionId:d.function.id});
+        };
+        dom.tree.appendChild(sub);
+      });
+    }
+  });
+  if(!visibleCount){
+    dom.tree.innerHTML='<div class="tree-empty">未匹配到文件或函数</div>';
+    return;
+  }
+  keepTreeActiveInView();
+}
+function tokenized(text,path,line){
+  const raw=String(text||'');
+  const term=state.searchTerm;
+  const re=/\b[A-Za-z_]\w*\b/g;
+  let out=''; let last=0; let m;
+  while((m=re.exec(raw))!==null){
+    out += highlightText(raw.slice(last,m.index),term);
+    const token=m[0];
+    const col = (m.index||0) + 1;
+    out += `<span class="token ${state.selectedSymbol===token?'sel':''}" data-symbol="${token}" data-path="${path}" data-line="${line}" data-col="${col}">${highlightText(token,term)}</span>`;
+    last = m.index + token.length;
+  }
+  out += highlightText(raw.slice(last),term);
+  return out;
+}
 async function ensureChildren(fnId){if(state.children[fnId])return state.children[fnId];const r=await API.call('get_calls',state.projectId,fnId,'out');state.children[fnId]=r.calls||[];return state.children[fnId];}
-async function renderEditor(){if(!state.fileSource?.lines){dom.editor.innerHTML='请选择左侧文件或函数';updateToolButtons();updateToolInfo();return;}dom.title.textContent=state.fileSource.path||'源码';if(state.editorMode==='edit'){dom.editor.innerHTML=`<textarea class="editor-area" id="editor-area"></textarea>`;const ta=document.getElementById('editor-area');ta.value=state.editorDraft||state.fileSource.source||'';ta.oninput=()=>state.editorDraft=ta.value;updateToolButtons();updateToolInfo();return;}const rootFn=state.focusFunction;const lineCallMap={};if(rootFn){const children=await ensureChildren(rootFn.id);children.forEach((c,i)=>{const k=`${rootFn.id}>${i}`;lineCallMap[c.line] ||= [];lineCallMap[c.line].push({...c,inlineKey:k});});}let html='<div class="code" id="main-code">';for(const line of state.fileSource.lines){const inRoot=rootFn&&line.line_number>=rootFn.start_line&&line.line_number<=rootFn.end_line;const anchor=((rootFn&&line.line_number===rootFn.start_line) || (state.detailPath===state.fileSource.path&&state.detailLine===line.line_number))?' anchor':'';const curLine=(state.detailPath===state.fileSource.path&&state.detailLine===line.line_number)?' current-line':'';const fnSel=(rootFn&&line.line_number>=rootFn.start_line&&line.line_number<=rootFn.end_line)?' function-selected':'';const symSel=lineSymbolClass(line.text);html+=`<div class="line${anchor}${curLine}${fnSel}${symSel}" data-line="${line.line_number}" data-path="${state.fileSource.path}"><span class="num">${line.line_number}</span><span>${tokenized(line.text,state.fileSource.path,line.line_number)}</span><span class="actions">`;if(inRoot&&lineCallMap[line.line_number]){for(const c of lineCallMap[line.line_number]) html+=`<button data-expand="${c.inlineKey}">${state.expanded[c.inlineKey]?'收起':'展开'} ${c.name}</button>`;}html+='</span></div>';if(inRoot&&lineCallMap[line.line_number]){for(const c of lineCallMap[line.line_number]) if(state.expanded[c.inlineKey]) html+=await renderInlineBlock(c,1);}}html+='</div>';dom.editor.innerHTML=html;bindEditorActions();bindCodeFocus();scrollToDetail();updateToolButtons();updateToolInfo();}
-async function renderInlineBlock(child, depth=1){const src=await API.call('get_function_source',state.projectId,child.function_id);const children=await ensureChildren(child.function_id);const byLine={};children.forEach((it,i)=>{const k=`${child.inlineKey}>${i}`;byLine[it.line] ||= [];byLine[it.line].push({...it,inlineKey:k});});const levelClass=`level-${Math.min(depth,4)}`;const branchClass=(state.focusBranch===child.inlineKey)?' focus-branch':'';const headActive=(state.focusFunctionId===child.function_id||state.focusBranch===child.inlineKey)?' active':'';let html=`<div class="inline ${levelClass}${branchClass}"><div class="branch-head${headActive}"><div><strong>${child.name}</strong></div><div class="muted">${child.path} : ${child.line}</div><div class="actions"><button data-root="${child.function_id}">设为根节点</button><button data-branch-focus="${child.inlineKey}">只保留当前分支</button><button data-branch-collapse="${child.inlineKey}">收起同级</button></div></div><div class="code">`;for(const line of src.lines||[]){const anchor=(state.detailPath===src.path&&state.detailLine===line.line_number)?' anchor':'';const fnSel=' function-selected';const focusLine=(state.focusFunctionId===child.function_id&&line.line_number===src.start_line)?' focus-line':'';const symSel=lineSymbolClass(line.text);html+=`<div class="line${anchor}${fnSel}${focusLine}${symSel}" data-line="${line.line_number}" data-path="${src.path}"><span class="num">${line.line_number}</span><span>${tokenized(line.text,src.path,line.line_number)}</span><span class="actions">`;if(byLine[line.line_number]){for(const nested of byLine[line.line_number]) html+=`<button data-expand="${nested.inlineKey}">${state.expanded[nested.inlineKey]?'收起':'展开'} ${nested.name}</button>`;}html+='</span></div>';if(byLine[line.line_number]){for(const nested of byLine[line.line_number]) if(state.expanded[nested.inlineKey]) html+=await renderInlineBlock(nested,depth+1);}}html+='</div></div>';return html;}
-function bindEditorActions(){dom.editor.querySelectorAll('[data-expand]').forEach(btn=>btn.onclick=async()=>{const row=btn.closest('[data-path][data-line]');const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);state.expanded[btn.dataset.expand]=!state.expanded[btn.dataset.expand];state.focusBranch=btn.dataset.expand;await renderEditor();restoreViewport(snap);});dom.editor.querySelectorAll('[data-root]').forEach(btn=>btn.onclick=async()=>{const d=await API.call('get_function',state.projectId,btn.dataset.root);const s=await API.call('get_file_source',state.projectId,d.function.file_id);state.focusFunction=d.function;state.fileSource=s;state.expanded={};state.children={};state.focusBranch='';state.focusFunctionId=d.function.id;renderTree();await renderEditor();});dom.editor.querySelectorAll('[data-branch-focus]').forEach(btn=>btn.onclick=async()=>{const row=btn.closest('[data-path][data-line]');const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);const keep=btn.dataset.branchFocus;const next={};Object.keys(state.expanded).forEach(k=>{if(keep.startsWith(k)||k.startsWith(keep))next[k]=true;});next[keep]=true;state.expanded=next;state.focusBranch=keep;await renderEditor();restoreViewport(snap);});dom.editor.querySelectorAll('[data-branch-collapse]').forEach(btn=>btn.onclick=async()=>{const row=btn.closest('[data-path][data-line]');const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);const node=btn.dataset.branchCollapse;const parent=node.includes('>')?node.slice(0,node.lastIndexOf('>')):'';const next={};Object.keys(state.expanded).forEach(k=>{if(!parent||!k.startsWith(parent+'>')||k===node||k.startsWith(node+'>')||node.startsWith(k))next[k]=true;});state.expanded=next;state.focusBranch=node;await renderEditor();restoreViewport(snap);});dom.editor.querySelectorAll('[data-symbol]').forEach(el=>el.onclick=async()=>{state.selectedSymbol=el.dataset.symbol;await openPeek(el.dataset.symbol,el.dataset.path,Number(el.dataset.line));await renderEditor();});}
+async function renderEditor(){
+  if(!state.fileSource?.lines){dom.editor.innerHTML='请选择左侧文件或函数';updateToolButtons();updateToolInfo();updateCrumbs();renderBookmarkBar();return;}
+  dom.title.textContent=state.fileSource.path||'源码';
+  if(state.editorMode==='edit'){
+    const diff=changedLines(state.fileSource.source||'',state.editorDraft||'');
+    const preview=(state.editorDraft||'').split('\n');
+    dom.editor.innerHTML=`<div class="edit-split"><textarea class="editor-area" id="editor-area"></textarea><div class="edit-side"><div class="edit-head">改动 ${diff.length} 行</div><div class="edit-diff" id="edit-diff">${diff.length?diff.map(line=>`<div class="diff-row" data-diff-line="${line}"><span class="num">${line}</span><span>${escapeHtml(preview[line-1]||'')}</span></div>`).join(''):'<div class="diff-row"><span class="num">-</span><span class="muted">暂无改动</span></div>'}</div></div></div>`;
+    const ta=document.getElementById('editor-area');
+    const diffBox=document.getElementById('edit-diff');
+    const renderDiffList=()=>{
+      if(!diffBox) return;
+      const changed=changedLines(state.fileSource.source||'',state.editorDraft||'');
+      const previewLines=(state.editorDraft||'').split('\n');
+      const head=dom.editor.querySelector('.edit-head');
+      if(head) head.textContent=`改动 ${changed.length} 行`;
+      diffBox.innerHTML=changed.length?changed.map(line=>`<div class="diff-row" data-diff-line="${line}"><span class="num">${line}</span><span>${escapeHtml(previewLines[line-1]||'')}</span></div>`).join(''):'<div class="diff-row"><span class="num">-</span><span class="muted">暂无改动</span></div>';
+      diffBox.querySelectorAll('[data-diff-line]').forEach(row=>row.onclick=()=>jumpEditorLine(Number(row.dataset.diffLine||1)));
+    };
+    ta.value=state.editorDraft||state.fileSource.source||'';
+    ta.oninput=()=>{state.editorDraft=ta.value;renderDiffList();saveSessionState();};
+    renderDiffList();
+    updateToolButtons();updateToolInfo();updateCrumbs();renderBookmarkBar();
+    saveSessionState();
+    return;
+  }
+  const rootFn=state.focusFunction;
+  state.inlineMeta={};
+  const lineCallMap={};
+  if(rootFn){
+    const children=await ensureChildren(rootFn.id);
+    children.forEach((c,i)=>{const k=`${rootFn.id}>${i}`;state.inlineMeta[k]={name:c.name,parent:''};lineCallMap[c.line] ||= [];lineCallMap[c.line].push({...c,inlineKey:k});});
+  }
+  const fnByStart={};
+  for(const fn of (state.file?.functions||[])) fnByStart[fn.start_line]=fn;
+  let skipUntil=0;
+  let html='<div class="code" id="main-code">';
+  for(const line of state.fileSource.lines){
+    if(line.line_number<=skipUntil) continue;
+    const fnAtLine=fnByStart[line.line_number];
+    const folded=fnAtLine&&state.foldedFns[fnAtLine.id];
+    const inRoot=rootFn&&line.line_number>=rootFn.start_line&&line.line_number<=rootFn.end_line;
+    const anchor=((rootFn&&line.line_number===rootFn.start_line) || (state.detailPath===state.fileSource.path&&state.detailLine===line.line_number))?' anchor':'';
+    const curLine=(state.detailPath===state.fileSource.path&&state.detailLine===line.line_number)?' current-line':'';
+    const fnSel=(rootFn&&line.line_number>=rootFn.start_line&&line.line_number<=rootFn.end_line)?' function-selected':'';
+    const symSel=lineSymbolClass(line.text);
+    const bm=isBookmarked(state.fileSource.path,line.line_number);
+    html+=`<div class="line${anchor}${curLine}${fnSel}${symSel}" data-line="${line.line_number}" data-path="${state.fileSource.path}"><span class="num${bm?' bookmarked':''}">${line.line_number}</span><span>${tokenized(line.text,state.fileSource.path,line.line_number)}${folded?` <span class="muted">/* 已折叠 ${Math.max(0,fnAtLine.end_line-fnAtLine.start_line)} 行 */</span>`:''}</span><span class="actions">`;
+    if(fnAtLine) html+=`<button data-toggle-fold="${fnAtLine.id}">${folded?'展开':'折叠'}</button>`;
+    if(inRoot&&lineCallMap[line.line_number]){for(const c of lineCallMap[line.line_number]){const col=Math.max(1,String(line.text||'').indexOf(c.name||'')+1||1); html+=`<button data-expand="${c.inlineKey}" data-expand-fn="${c.function_id||''}" data-expand-name="${c.name||''}" data-expand-path="${state.fileSource.path}" data-expand-line="${c.line||0}" data-expand-col="${col}">${state.expanded[c.inlineKey]?'收起':'展开'} ${c.name}</button>`;}}
+    html+='</span></div>';
+    if(folded){skipUntil=fnAtLine.end_line;continue;}
+    if(inRoot&&lineCallMap[line.line_number]){for(const c of lineCallMap[line.line_number]) if(state.expanded[c.inlineKey]) html+=await renderInlineBlock(c,1);}
+  }
+  html+='</div>';
+  dom.editor.innerHTML=html;
+  bindEditorActions();
+  bindCodeFocus();
+  scrollToDetail();
+  updateToolButtons();
+  updateToolInfo();
+  updateCrumbs();
+  renderBookmarkBar();
+  saveSessionState();
+}
+async function renderInlineBlock(child, depth=1){const resolvedFnId=state.inlineResolved[child.inlineKey]||child.function_id;const src=await API.call('get_function_source',state.projectId,resolvedFnId);const children=await ensureChildren(resolvedFnId);const byLine={};children.forEach((it,i)=>{const k=`${child.inlineKey}>${i}`;state.inlineMeta[k]={name:it.name,parent:child.inlineKey};byLine[it.line] ||= [];byLine[it.line].push({...it,inlineKey:k});});const levelClass=`level-${Math.min(depth,4)}`;const branchClass=(state.focusBranch===child.inlineKey)?' focus-branch':'';const headActive=(state.focusFunctionId===resolvedFnId||state.focusBranch===child.inlineKey)?' active':'';const headMeta=`${src.path||child.path} : def ${src.start_line||child.def_line||'-'} · call ${child.line}`;let html=`<div class="inline ${levelClass}${branchClass}"><div class="branch-head${headActive}"><div><strong>${child.name}</strong></div><div class="muted">${headMeta}</div><div class="actions"><button data-root="${resolvedFnId}">设为根节点</button><button data-branch-focus="${child.inlineKey}">只保留当前分支</button><button data-branch-collapse="${child.inlineKey}">收起同级</button></div></div><div class="code">`;for(const line of src.lines||[]){const anchor=(state.detailPath===src.path&&state.detailLine===line.line_number)?' anchor':'';const fnSel=' function-selected';const focusLine=(state.focusFunctionId===resolvedFnId&&line.line_number===src.start_line)?' focus-line':'';const symSel=lineSymbolClass(line.text);html+=`<div class="line${anchor}${fnSel}${focusLine}${symSel}" data-line="${line.line_number}" data-path="${src.path}"><span class="num">${line.line_number}</span><span>${tokenized(line.text,src.path,line.line_number)}</span><span class="actions">`;if(byLine[line.line_number]){for(const nested of byLine[line.line_number]){const col=Math.max(1,String(line.text||'').indexOf(nested.name||'')+1||1); html+=`<button data-expand="${nested.inlineKey}" data-expand-fn="${nested.function_id||''}" data-expand-name="${nested.name||''}" data-expand-path="${src.path}" data-expand-line="${nested.line||0}" data-expand-col="${col}">${state.expanded[nested.inlineKey]?'收起':'展开'} ${nested.name}</button>`;}}html+='</span></div>';if(byLine[line.line_number]){for(const nested of byLine[line.line_number]) if(state.expanded[nested.inlineKey]) html+=await renderInlineBlock(nested,depth+1);}}html+='</div></div>';return html;}
+function bindEditorActions(){
+  dom.editor.querySelectorAll('[data-expand]').forEach(btn=>btn.onclick=async()=>{
+    const row=btn.closest('[data-path][data-line]');
+    const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);
+    const key=btn.dataset.expand;
+    const willOpen=!state.expanded[key];
+    state.expanded[key]=willOpen;
+    state.focusBranch=btn.dataset.expand;
+    const fallbackFn=btn.dataset.expandFn||'';
+    const expandName=btn.dataset.expandName||'';
+    const expandPath=btn.dataset.expandPath||row?.dataset?.path||state.fileSource?.path||'';
+    const expandLine=Number(btn.dataset.expandLine||row?.dataset?.line||0);
+    const expandCol=Number(btn.dataset.expandCol||1);
+    const before=(willOpen)?currentNavPoint():null;
+    if(before) recordNav(before);
+    if(willOpen){
+      let expandFn=fallbackFn;
+      const sem=await resolveExpandTarget(expandName,expandPath,expandLine,expandCol);
+      if(sem?.fnId){
+        expandFn=sem.fnId;
+        state.inlineResolved[key]=sem.fnId;
+      }else if(fallbackFn){
+        state.inlineResolved[key]=fallbackFn;
+      }
+      if(expandFn){
+      const d=await API.call('get_function',state.projectId,expandFn);
+      if(d?.success&&d.function){
+        state.focusFunctionId=d.function.id;
+        state.detailPath=d.function.path;
+        state.detailLine=Number(d.function.start_line||state.detailLine||1);
+      }
+      }
+    }
+    await renderEditor();
+    if(before){const after=currentNavPoint(); if(after) recordNav(after);}
+    if(!willOpen) restoreViewport(snap);
+  });
+  dom.editor.querySelectorAll('[data-toggle-fold]').forEach(btn=>btn.onclick=async()=>{
+    const id=btn.dataset.toggleFold;
+    state.foldedFns[id]=!state.foldedFns[id];
+    saveUiState();
+    await renderEditor();
+  });
+  dom.editor.querySelectorAll('[data-root]').forEach(btn=>btn.onclick=async()=>{
+    const d=await API.call('get_function',state.projectId,btn.dataset.root);
+    const s=await API.call('get_file_source',state.projectId,d.function.file_id);
+    state.focusFunction=d.function;
+    state.fileSource=s;
+    state.expanded={};
+    state.children={};
+    state.inlineResolved={};
+    state.focusBranch='';
+    state.focusFunctionId=d.function.id;
+    renderTree();
+    await renderEditor();
+  });
+  dom.editor.querySelectorAll('[data-branch-focus]').forEach(btn=>btn.onclick=async()=>{
+    const row=btn.closest('[data-path][data-line]');
+    const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);
+    const keep=btn.dataset.branchFocus;
+    const next={};
+    Object.keys(state.expanded).forEach(k=>{if(keep.startsWith(k)||k.startsWith(keep))next[k]=true;});
+    next[keep]=true;
+    state.expanded=next;
+    state.focusBranch=keep;
+    await renderEditor();
+    restoreViewport(snap);
+  });
+  dom.editor.querySelectorAll('[data-branch-collapse]').forEach(btn=>btn.onclick=async()=>{
+    const row=btn.closest('[data-path][data-line]');
+    const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);
+    const node=btn.dataset.branchCollapse;
+    const parent=node.includes('>')?node.slice(0,node.lastIndexOf('>')):'';
+    const next={};
+    Object.keys(state.expanded).forEach(k=>{if(!parent||!k.startsWith(parent+'>')||k===node||k.startsWith(node+'>')||node.startsWith(k))next[k]=true;});
+    state.expanded=next;
+    state.focusBranch=node;
+    await renderEditor();
+    restoreViewport(snap);
+  });
+  dom.editor.querySelectorAll('[data-symbol]').forEach(el=>el.onclick=async()=>{
+    const row=el.closest('[data-path][data-line]');
+    const snap=captureViewport(row?{path:row.dataset.path,line:Number(row.dataset.line)}:null);
+    const path = el.dataset.path || state.fileSource?.path || '';
+    const line = Number(el.dataset.line || state.detailLine || 0);
+    const col = Number(el.dataset.col || 1);
+    state.selectedSymbol=el.dataset.symbol;
+    state.selectedPath=path;
+    state.selectedLine=line;
+    state.selectedColumn=col;
+    state.suppressNextAutoScroll=true;
+    await openPeek(el.dataset.symbol,path,line);
+    await renderEditor();
+    restoreViewport(snap);
+  });
+}
 async function openPeek(symbol,path,line){const file=state.files.find(x=>x.path===path);const r=await API.call('peek_symbol',state.projectId,symbol,file?.id||null,line||null);state.peek=r.success?r:null;renderPeek();}
 function renderPeek(){
   if(!state.peek){
@@ -237,12 +886,22 @@ function renderPinned(){
   dom.pinned.querySelector('[data-pinned-copy]').onclick=async()=>{
     const text=(data.lines||[]).map(line=>`${line.line_number}  ${line.text}`).join('\n');
     await navigator.clipboard.writeText(text);
-    dom.status.textContent='已复制 Pinned 代码';
+    setStatus('已复制 Pinned 代码','ok');
   };
   dom.pinned.querySelectorAll('[data-symbol]').forEach(el=>el.onclick=async()=>await openPeek(el.dataset.symbol,el.dataset.path,Number(el.dataset.line)));
   bindCodeFocus();
 }
-function scrollToDetail(){if(!state.detailPath||!state.detailLine)return;const target=dom.editor.querySelector(`[data-path="${CSS.escape(state.detailPath)}"][data-line="${state.detailLine}"]`);if(target) target.scrollIntoView({block:'center'});}
+function scrollToDetail(){
+  if(state.suppressNextAutoScroll){
+    state.suppressNextAutoScroll=false;
+    return;
+  }
+  if(!state.detailPath||!state.detailLine)return;
+  const exact=dom.editor.querySelector('#main-code .line.current-line');
+  if(exact){ exact.scrollIntoView({block:'center'}); return; }
+  const target=dom.editor.querySelector(`#main-code [data-path="${CSS.escape(state.detailPath)}"][data-line="${state.detailLine}"]`);
+  if(target) target.scrollIntoView({block:'center'});
+}
 </script>
 </body>
 </html>
