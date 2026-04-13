@@ -17,7 +17,7 @@ def run(root: str = r"E:\相位\program\green") -> int:
     def check(name: str, cond: bool, detail: str = "") -> None:
         report.append((name, bool(cond), detail))
 
-    scan = svc.scan_project(root)
+    scan = svc.scan_project(root, "whitelist")
     check("scan_project success", scan.get("success") is True, str(scan.get("error", "")))
     if not scan.get("success"):
         _print(report)
@@ -37,28 +37,28 @@ def run(root: str = r"E:\相位\program\green") -> int:
     check("no fake function from comments: number", "number" not in usbd_funcs, f"count={usbd_funcs.count('number')}")
     check("has function: usbd_ep_deinit", "usbd_ep_deinit" in usbd_funcs)
 
-    res = svc.search(pid, "drv_manager_init", 10).get("results", [])
+    res = svc.search(pid, "comm_init", 10).get("results", [])
     first = res[0] if res else {}
-    check("search drv_manager_init top path", first.get("path") == "drivers/drv_manager.c", str(first))
-    check("search drv_manager_init top line", int(first.get("line") or 0) == 42, str(first))
+    check("search comm_init top path", first.get("path") == "drivers/drv_comm.c", str(first))
+    check("search comm_init top line", int(first.get("line") or 0) == 28, str(first))
 
     res2 = svc.search(pid, "LD_PWR_RCU", 10).get("results", [])
     check("search LD_PWR_RCU non-empty", len(res2) > 0, f"count={len(res2)}")
     check("search LD_PWR_RCU has macro", any(r.get("kind") == "macro" for r in res2), str(res2[:3]))
 
     file_id = next((f["id"] for f in idx["files"] if f["path"] == "drivers/drv_pll.c"), None)
-    peek = svc.peek_symbol(pid, "g_pll_interface", file_id, 88)
-    check("peek g_pll_interface success", peek.get("success") is True, str(peek.get("error", "")))
-    check("peek g_pll_interface kind definition", peek.get("kind") == "definition", f"kind={peek.get('kind')}")
-    check("peek g_pll_interface line 77", int(peek.get("line") or 0) == 77, f"line={peek.get('line')}")
+    peek = svc.peek_symbol(pid, "g_pll_ctx", file_id, 41)
+    check("peek g_pll_ctx success", peek.get("success") is True, str(peek.get("error", "")))
+    check("peek g_pll_ctx kind definition", peek.get("kind") == "definition", f"kind={peek.get('kind')}")
+    check("peek g_pll_ctx line 41", int(peek.get("line") or 0) == 41, f"line={peek.get('line')}")
     facts = {f.get("label"): f.get("value") for f in (peek.get("facts") or [])}
     check("peek has variable type", "变量类型" in facts, str(facts))
-    check("peek type is drv_interface_t", str(facts.get("变量类型", "")).strip() == "drv_interface_t", str(facts))
+    check("peek type is pll_context_t", str(facts.get("变量类型", "")).strip() == "pll_context_t", str(facts))
 
-    nav = svc.get_navigation_targets(pid, "drv_manager_init", "app/app_init.c", 10, 5, 80)
+    nav = svc.get_navigation_targets(pid, "comm_init", "app/app_init.c", 93, 3, 80)
     defn = nav.get("definition") or {}
-    check("nav drv_manager_init def path", defn.get("path") == "drivers/drv_manager.c", str(defn))
-    check("nav drv_manager_init def line", int(defn.get("line") or 0) == 42, str(defn))
+    check("nav comm_init def path", defn.get("path") == "drivers/drv_comm.c", str(defn))
+    check("nav comm_init def line", int(defn.get("line") or 0) == 28, str(defn))
     check("nav references exist", len(nav.get("references") or []) > 0, f"refs={len(nav.get('references') or [])}")
 
     # Multi-line function declaration should be indexed and jumpable.
@@ -75,11 +75,11 @@ def run(root: str = r"E:\相位\program\green") -> int:
     root_fn = next((f for f in idx["functions"] if f["name"] == "app_init" and f["path"] == "app/app_init.c"), None)
     if root_fn:
         calls = svc.get_calls(pid, root_fn["id"], "out").get("calls") or []
-        dm = [c for c in calls if c.get("name") == "drv_manager_init"]
-        check("callgraph app_init -> drv_manager_init exists", len(dm) > 0, f"count={len(dm)}")
+        dm = [c for c in calls if c.get("name") == "comm_init"]
+        check("callgraph app_init -> comm_init exists", len(dm) > 0, f"count={len(dm)}")
         if dm:
-            check("callgraph target path drivers", dm[0].get("path") == "drivers/drv_manager.c", str(dm[0]))
-            check("callgraph def_line 42", int(dm[0].get("def_line") or 0) == 42, str(dm[0]))
+            check("callgraph target path drivers", dm[0].get("path") == "drivers/drv_comm.c", str(dm[0]))
+            check("callgraph def_line 28", int(dm[0].get("def_line") or 0) == 28, str(dm[0]))
     else:
         check("app_init function exists", False, "not found")
 

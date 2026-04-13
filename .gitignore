@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
 
 # Runtime / logs / local outputs
 unified-tool/logs/
@@ -27,6 +28,15 @@ unified-tool/_backup/
 
 # Root compatibility link
 runtime/
+
+# Code Map Workbench local tools / outputs
+code-map-workbench/tools/_last_regression.json
+code-map-workbench/tools/clang+llvm-*/
+code-map-workbench/tools/clangd/
+
+# Serial desktop packaging outputs
+serial_web_upper_desktop/build/
+serial_web_upper_desktop/dist/
 
 # Large binaries (cannot be pushed to GitHub without LFS)
 高德模块/*.exe

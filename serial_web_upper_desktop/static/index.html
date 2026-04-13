@@ -1,0 +1,1514 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>多串口并行上位机 - Web</title>
+  <style>
+    :root {
+      --bg: #eef4fb;
+      --panel: #ffffff;
+      --panel-2: #f7fbff;
+      --line: rgba(107, 134, 173, 0.2);
+      --line-strong: rgba(80, 116, 170, 0.34);
+      --text: #1b2b46;
+      --muted: #6f819e;
+      --accent: #1877f2;
+      --accent-2: #0aa785;
+      --warn: #d18a1a;
+      --danger: #d84f63;
+      --sidebar-width: 336px;
+      --status-height: 218px;
+      --radius: 18px;
+      --shadow: 0 18px 45px rgba(58, 91, 136, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(65, 136, 255, 0.18), transparent 24%),
+        radial-gradient(circle at 90% 12%, rgba(10, 167, 133, 0.1), transparent 22%),
+        linear-gradient(180deg, #f8fbff 0%, #f1f6fc 46%, #ebf2fa 100%);
+    }
+
+    body { overflow: hidden; }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff, #f4f8fd);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+    }
+
+    button.primary {
+      border: none;
+      background: linear-gradient(135deg, #1d7fff, #49a5ff);
+      box-shadow: 0 10px 24px rgba(39, 124, 255, 0.28);
+    }
+
+    button.teal {
+      border: none;
+      background: linear-gradient(135deg, #0db78f, #1fd1a5);
+      box-shadow: 0 10px 24px rgba(13, 183, 143, 0.24);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="datetime-local"],
+    select {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #f9fbfe;
+      color: var(--text);
+      padding: 9px 11px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(74, 163, 255, 0.65);
+      box-shadow: 0 0 0 3px rgba(74, 163, 255, 0.12);
+    }
+
+    .app-shell {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 8px minmax(0, 1fr);
+      gap: 0;
+      padding: 14px;
+    }
+
+    .sidebar,
+    .main-shell {
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 10px;
+    }
+
+    .sidebar-scroll {
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 2px;
+    }
+
+    .resizer-x,
+    .resizer-y {
+      position: relative;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(104, 132, 173, 0.08), rgba(104, 132, 173, 0.18));
+      cursor: col-resize;
+    }
+
+    .resizer-x::after,
+    .resizer-y::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: inherit;
+      background: rgba(74, 163, 255, 0.18);
+      opacity: 0;
+      transition: opacity 120ms ease;
+    }
+
+    .resizer-x:hover::after,
+    .resizer-y:hover::after,
+    .resizer-x.dragging::after,
+    .resizer-y.dragging::after {
+      opacity: 1;
+    }
+
+    .resizer-y {
+      cursor: row-resize;
+      height: 8px;
+    }
+
+    .panel {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 251, 255, 0.92)),
+        var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .panel h3,
+    .panel h2 {
+      margin: 0;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(107, 134, 173, 0.12);
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 8px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .port-list {
+      min-height: 228px;
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #f8fbfe;
+      color: var(--text);
+      padding: 8px;
+    }
+
+    .main-shell {
+      display: grid;
+      grid-template-rows: var(--status-height) 8px minmax(0, 1fr);
+      gap: 0;
+      min-height: 0;
+      padding-left: 10px;
+    }
+
+    .status-panel,
+    .logs-panel {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .system-log {
+      min-height: 140px;
+      max-height: 200px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 10px;
+      background: #f8fbfe;
+    }
+
+    .status-table-wrap,
+    .log-table-wrap,
+    .stream-wrap {
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(157, 181, 220, 0.1);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(247, 251, 255, 0.96);
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(24, 119, 242, 0.025);
+    }
+
+    tbody tr:hover {
+      background: rgba(24, 119, 242, 0.09);
+    }
+
+    .state-row {
+      cursor: pointer;
+    }
+
+    .state-row.active {
+      background: rgba(10, 167, 133, 0.12);
+      box-shadow: inset 3px 0 0 rgba(10, 167, 133, 0.8);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border: 1px solid transparent;
+    }
+
+    .badge.online {
+      color: #0d7a5b;
+      background: rgba(10, 167, 133, 0.12);
+      border-color: rgba(10, 167, 133, 0.22);
+    }
+
+    .badge.offline {
+      color: #b64a5d;
+      background: rgba(216, 79, 99, 0.1);
+      border-color: rgba(216, 79, 99, 0.18);
+    }
+
+    .logs-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      align-items: end;
+    }
+
+    .toolbar-row.compact {
+      grid-template-columns: 1.1fr 0.9fr 0.9fr 1fr 1fr 1.2fr;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border: 1px solid rgba(107, 134, 173, 0.14);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(244,248,253,0.95));
+    }
+
+    .toggle-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 12px;
+      background: #f3f7fc;
+      border: 1px solid var(--line);
+    }
+
+    .toggle-group button {
+      padding: 7px 12px;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      box-shadow: none;
+    }
+
+    .toggle-group button.active {
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(74, 163, 255, 0.22), rgba(74, 163, 255, 0.08));
+      border: 1px solid rgba(74, 163, 255, 0.28);
+    }
+
+    .log-content {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+    }
+
+    .stream-wrap {
+      padding: 14px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.58;
+      white-space: pre-wrap;
+      color: #28405f;
+    }
+
+    .stream-empty,
+    .table-empty {
+      padding: 36px 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .dir-rx {
+      color: #118567;
+      font-weight: 600;
+    }
+
+    .dir-tx {
+      color: #1b72df;
+      font-weight: 600;
+    }
+
+    .log-row.error,
+    .log-row.decode-error {
+      background: rgba(216, 79, 99, 0.08);
+    }
+
+    .log-row.rx td:first-child,
+    .log-row.tx td:first-child {
+      box-shadow: inset 3px 0 0 transparent;
+    }
+
+    .log-row.rx td:first-child {
+      box-shadow: inset 3px 0 0 rgba(10, 167, 133, 0.72);
+    }
+
+    .log-row.tx td:first-child {
+      box-shadow: inset 3px 0 0 rgba(24, 119, 242, 0.72);
+    }
+
+    .col-resize {
+      position: absolute;
+      top: 0;
+      right: -4px;
+      width: 8px;
+      height: 100%;
+      cursor: col-resize;
+    }
+
+    .th-inner {
+      position: relative;
+      display: flex;
+      align-items: center;
+      min-height: 18px;
+    }
+
+    .hidden-col {
+      display: none;
+    }
+
+    .hint-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+      padding: 0 2px;
+    }
+
+    #logKeyword {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+    }
+
+    #stateWrap .status-table-wrap,
+    #logTableView .log-table-wrap,
+    #logStreamView .stream-wrap {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+    }
+
+    @media (max-width: 1280px) {
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .toolbar-row,
+      .toolbar-row.compact {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .app-shell {
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
+      .resizer-x,
+      .resizer-y { display: none; }
+      .sidebar { padding-right: 0; }
+      .main-shell {
+        padding-left: 0;
+        grid-template-rows: 260px minmax(0, 1fr);
+        gap: 12px;
+      }
+      .grid-3,
+      .grid-4 { grid-template-columns: 1fr; }
+      .toolbar-row,
+      .toolbar-row.compact { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar">
+      <div class="sidebar-scroll">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>设备控制区</h2>
+              <div class="caption">固定保留现有连接、扫码、发送流程</div>
+            </div>
+            <span id="svcState" class="badge offline">WS未连接</span>
+          </div>
+
+          <label class="field-label" for="ports">串口列表</label>
+          <select id="ports" class="port-list" multiple></select>
+          <div class="caption">Ctrl / Shift 可多选，状态表点击也会联动日志筛选</div>
+
+          <div class="row" style="margin-top: 10px;">
+            <button id="refreshPortsBtn">刷新串口</button>
+            <button id="connectSelectedBtn" class="primary">连接选中</button>
+          </div>
+          <div class="row">
+            <button id="connectAllBtn">连接全部</button>
+            <button id="disconnectSelectedBtn">断开选中</button>
+            <button id="disconnectAllBtn">断开全部</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>连接参数</h3>
+            <div class="caption">保持现有后端兼容</div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label class="field-label" for="baud">Baud</label>
+              <input id="baud" type="number" value="115200" />
+            </div>
+            <div>
+              <label class="field-label" for="timeout">Timeout(s)</label>
+              <input id="timeout" type="number" step="0.1" value="0.1" />
+            </div>
+          </div>
+          <label class="caption" style="display:block; margin-top: 10px;">
+            <input id="autoReconnect" type="checkbox" checked />
+            掉线自动重连
+          </label>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>HEX 发送</h3>
+            <div class="caption">选中串口或全部串口</div>
+          </div>
+          <div class="row">
+            <input id="customHex" type="text" placeholder="例如: AA 01 02 FF" />
+          </div>
+          <div class="row" style="margin-top: 10px;">
+            <button id="sendSelectedBtn" class="teal">发给选中</button>
+            <button id="sendAllBtn">发给全部</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>扫码探测</h3>
+            <div class="caption">固定帧并行扫描</div>
+          </div>
+          <div class="grid-2">
+            <div style="grid-column: 1 / -1;">
+              <label class="field-label">固定探测帧</label>
+              <input type="text" value="AA EE F0 00 00 00 00 F0 BB FF" readonly />
+            </div>
+            <div>
+              <label class="field-label" for="scanWait">等待(ms)</label>
+              <input id="scanWait" type="number" value="800" />
+            </div>
+            <div>
+              <label class="field-label" for="connectWait">连接等待(ms)</label>
+              <input id="connectWait" type="number" value="1200" />
+            </div>
+          </div>
+          <div class="row" style="margin-top: 10px;">
+            <button id="scanSelectedBtn">并行扫码(选中)</button>
+            <button id="scanConnectedBtn">并行扫码(已连)</button>
+            <button id="autoPickBtn" class="primary">自动筛选设备</button>
+          </div>
+          <label class="caption" style="display:block; margin-top: 10px;">
+            <input id="keepOnly" type="checkbox" />
+            筛选后断开非设备口
+          </label>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>并行定时发送</h3>
+            <div class="caption">保留原行为</div>
+          </div>
+          <div class="row">
+            <input id="periodHex" type="text" value="AA EE F0 00 00 00 00 F0 BB FF" />
+          </div>
+          <div class="row" style="margin-top: 10px;">
+            <input id="periodMs" type="number" value="1000" style="max-width: 140px;" />
+            <button id="startScheduleBtn" class="teal">启动定时</button>
+            <button id="stopScheduleBtn">停止定时</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>系统事件流</h3>
+            <div class="caption">保留原系统日志，但挪到侧栏</div>
+          </div>
+          <div id="systemLog" class="system-log"></div>
+        </section>
+      </div>
+    </aside>
+
+    <div class="resizer-x" id="sidebarResizer" aria-hidden="true"></div>
+
+    <main class="main-shell">
+      <section class="panel status-panel" id="statusPanel">
+        <div class="panel-header">
+          <div>
+            <h2>设备状态区</h2>
+            <div class="caption">点击某一行后，日志筛选自动切到该串口</div>
+          </div>
+          <div class="caption" id="statusSummary">等待数据</div>
+        </div>
+        <div id="stateWrap"></div>
+      </section>
+
+      <div class="resizer-y" id="statusResizer" aria-hidden="true"></div>
+
+      <section class="panel logs-panel" id="logsPanel">
+        <div class="panel-header" style="margin-bottom: 12px;">
+          <div>
+            <h2>串口日志工作台</h2>
+            <div class="caption">表格视图 + 文本流视图，共用同一份筛选结果</div>
+          </div>
+          <div class="caption" id="logMeta">等待加载</div>
+        </div>
+
+        <div class="logs-toolbar">
+          <div class="toolbar-row compact">
+            <div>
+              <label class="field-label" for="logPortFilter">串口</label>
+              <select id="logPortFilter"></select>
+            </div>
+            <div>
+              <label class="field-label" for="logDirectionFilter">方向</label>
+              <select id="logDirectionFilter">
+                <option value="ALL">全部</option>
+                <option value="RX">RX</option>
+                <option value="TX">TX</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="logEventFilter">事件</label>
+              <select id="logEventFilter">
+                <option value="ALL">全部</option>
+                <option value="rx">rx</option>
+                <option value="tx">tx</option>
+                <option value="error">error</option>
+                <option value="port_open">port_open</option>
+                <option value="port_close">port_close</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="logLimit">条数</label>
+              <input id="logLimit" type="number" min="1" max="5000" value="300" />
+            </div>
+            <div>
+              <label class="field-label" for="logEncoding">编码</label>
+              <select id="logEncoding">
+                <option value="auto">auto</option>
+                <option value="utf-8">utf-8</option>
+                <option value="gbk">gbk</option>
+                <option value="ascii">ascii</option>
+                <option value="latin1">latin1</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="logDisplayMode">HEX/文本模式</label>
+              <select id="logDisplayMode">
+                <option value="both">HEX + 文本</option>
+                <option value="hex">仅 HEX</option>
+                <option value="text">仅 文本</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="toolbar-row">
+            <div style="grid-column: span 2;">
+              <label class="field-label" for="logKeyword">关键字</label>
+              <input id="logKeyword" type="text" placeholder="支持串口 / 事件 / HEX / 文本 / 备注模糊匹配" />
+            </div>
+            <div>
+              <label class="field-label" for="logStartTime">开始时间</label>
+              <input id="logStartTime" type="datetime-local" />
+            </div>
+            <div>
+              <label class="field-label" for="logEndTime">结束时间</label>
+              <input id="logEndTime" type="datetime-local" />
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+              <button id="applyLogFiltersBtn" class="primary" style="width:100%;">刷新日志</button>
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+              <button id="resetLogFiltersBtn" style="width:100%;">重置筛选</button>
+            </div>
+          </div>
+
+          <div class="toolbar-actions">
+            <div class="row">
+              <div class="toggle-group">
+                <button id="tableTabBtn" data-tab="table" class="active">表格视图</button>
+                <button id="streamTabBtn" data-tab="stream">文本流视图</button>
+              </div>
+              <label class="caption" style="display:flex; align-items:center; gap:6px;">
+                <input id="autoScrollToggle" type="checkbox" checked />
+                实时滚动
+              </label>
+            </div>
+            <div class="row">
+              <button id="exportCurrentFilterBtn" class="teal">导出当前筛选</button>
+              <button id="exportCurrentPortBtn">导出该串口全部</button>
+              <button id="exportAllBtn">导出全部</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint-row">
+          <span id="activePortHint">当前日志范围: 全部串口</span>
+          <span id="logCountHint">0 条</span>
+        </div>
+
+        <div class="log-content">
+          <div id="logTableView"></div>
+          <div id="logStreamView" style="display:none;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const PREFS_KEY = 'serial-upper-log-prefs-v2';
+    const DEFAULT_COLUMN_WIDTHS = {
+      time: 180,
+      port: 120,
+      direction: 88,
+      event: 110,
+      size: 80,
+      hex: 300,
+      text: 260,
+      remark: 240,
+    };
+    const defaultPrefs = {
+      sidebarWidth: 336,
+      statusHeight: 218,
+      logView: 'table',
+      autoScroll: true,
+      logFilters: {
+        viewPort: '',
+        direction: 'ALL',
+        event: 'ALL',
+        keyword: '',
+        start: '',
+        end: '',
+        limit: 300,
+        encoding: 'auto',
+        displayMode: 'both',
+      },
+      columnWidths: { ...DEFAULT_COLUMN_WIDTHS },
+    };
+
+    const appShell = document.getElementById('appShell');
+    const portsEl = document.getElementById('ports');
+    const svcState = document.getElementById('svcState');
+    const systemLogEl = document.getElementById('systemLog');
+    const stateWrap = document.getElementById('stateWrap');
+    const statusSummary = document.getElementById('statusSummary');
+    const logMeta = document.getElementById('logMeta');
+    const activePortHint = document.getElementById('activePortHint');
+    const logCountHint = document.getElementById('logCountHint');
+    const logTableView = document.getElementById('logTableView');
+    const logStreamView = document.getElementById('logStreamView');
+
+    const controls = {
+      refreshPortsBtn: document.getElementById('refreshPortsBtn'),
+      connectSelectedBtn: document.getElementById('connectSelectedBtn'),
+      connectAllBtn: document.getElementById('connectAllBtn'),
+      disconnectSelectedBtn: document.getElementById('disconnectSelectedBtn'),
+      disconnectAllBtn: document.getElementById('disconnectAllBtn'),
+      sendSelectedBtn: document.getElementById('sendSelectedBtn'),
+      sendAllBtn: document.getElementById('sendAllBtn'),
+      scanSelectedBtn: document.getElementById('scanSelectedBtn'),
+      scanConnectedBtn: document.getElementById('scanConnectedBtn'),
+      autoPickBtn: document.getElementById('autoPickBtn'),
+      startScheduleBtn: document.getElementById('startScheduleBtn'),
+      stopScheduleBtn: document.getElementById('stopScheduleBtn'),
+      baud: document.getElementById('baud'),
+      timeout: document.getElementById('timeout'),
+      autoReconnect: document.getElementById('autoReconnect'),
+      customHex: document.getElementById('customHex'),
+      scanWait: document.getElementById('scanWait'),
+      connectWait: document.getElementById('connectWait'),
+      keepOnly: document.getElementById('keepOnly'),
+      periodHex: document.getElementById('periodHex'),
+      periodMs: document.getElementById('periodMs'),
+      logPortFilter: document.getElementById('logPortFilter'),
+      logDirectionFilter: document.getElementById('logDirectionFilter'),
+      logEventFilter: document.getElementById('logEventFilter'),
+      logLimit: document.getElementById('logLimit'),
+      logEncoding: document.getElementById('logEncoding'),
+      logDisplayMode: document.getElementById('logDisplayMode'),
+      logKeyword: document.getElementById('logKeyword'),
+      logStartTime: document.getElementById('logStartTime'),
+      logEndTime: document.getElementById('logEndTime'),
+      applyLogFiltersBtn: document.getElementById('applyLogFiltersBtn'),
+      resetLogFiltersBtn: document.getElementById('resetLogFiltersBtn'),
+      tableTabBtn: document.getElementById('tableTabBtn'),
+      streamTabBtn: document.getElementById('streamTabBtn'),
+      autoScrollToggle: document.getElementById('autoScrollToggle'),
+      exportCurrentFilterBtn: document.getElementById('exportCurrentFilterBtn'),
+      exportCurrentPortBtn: document.getElementById('exportCurrentPortBtn'),
+      exportAllBtn: document.getElementById('exportAllBtn'),
+      sidebarResizer: document.getElementById('sidebarResizer'),
+      statusResizer: document.getElementById('statusResizer'),
+    };
+
+    const stateMap = new Map();
+    let logsData = [];
+    let refreshLogsTimer = null;
+    let wsPingTimer = null;
+    let wsReconnectTimer = null;
+    let systemLogLines = [];
+
+    const prefs = loadPrefs();
+
+    function cloneDefaultPrefs() {
+      return {
+        ...defaultPrefs,
+        logFilters: { ...defaultPrefs.logFilters },
+        columnWidths: { ...DEFAULT_COLUMN_WIDTHS },
+      };
+    }
+
+    function loadPrefs() {
+      try {
+        const raw = localStorage.getItem(PREFS_KEY);
+        if (!raw) return cloneDefaultPrefs();
+        const parsed = JSON.parse(raw);
+        return {
+          ...cloneDefaultPrefs(),
+          ...parsed,
+          logFilters: {
+            ...cloneDefaultPrefs().logFilters,
+            ...(parsed.logFilters || {}),
+          },
+          columnWidths: {
+            ...DEFAULT_COLUMN_WIDTHS,
+            ...(parsed.columnWidths || {}),
+          },
+        };
+      } catch (_) {
+        return cloneDefaultPrefs();
+      }
+    }
+
+    function savePrefs() {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    }
+
+    function applyLayoutPrefs() {
+      document.documentElement.style.setProperty('--sidebar-width', `${prefs.sidebarWidth}px`);
+      document.documentElement.style.setProperty('--status-height', `${prefs.statusHeight}px`);
+    }
+
+    function applyFilterPrefsToControls() {
+      const filters = prefs.logFilters;
+      controls.logDirectionFilter.value = filters.direction;
+      controls.logEventFilter.value = filters.event;
+      controls.logLimit.value = filters.limit;
+      controls.logEncoding.value = filters.encoding;
+      controls.logDisplayMode.value = filters.displayMode;
+      controls.logKeyword.value = filters.keyword;
+      controls.logStartTime.value = filters.start;
+      controls.logEndTime.value = filters.end;
+      controls.autoScrollToggle.checked = prefs.autoScroll;
+      switchTab(prefs.logView, false);
+    }
+
+    function selectedPorts() {
+      return Array.from(portsEl.selectedOptions).map((option) => option.value);
+    }
+
+    function appendSystemLog(message) {
+      const t = new Date().toLocaleTimeString();
+      systemLogLines.push(`[${t}] ${message}`);
+      if (systemLogLines.length > 240) {
+        systemLogLines = systemLogLines.slice(-240);
+      }
+      systemLogEl.textContent = systemLogLines.join('\n');
+      if (prefs.autoScroll) {
+        systemLogEl.scrollTop = systemLogEl.scrollHeight;
+      }
+    }
+
+    async function api(url, method = 'GET', body = null) {
+      const options = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) options.body = JSON.stringify(body);
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || JSON.stringify(data));
+      }
+      return data;
+    }
+
+    function updatePortList(ports) {
+      const selected = new Set(selectedPorts());
+      portsEl.innerHTML = ports.map((port) => `<option value="${escapeHtml(port)}">${escapeHtml(port)}</option>`).join('');
+      Array.from(portsEl.options).forEach((option) => {
+        option.selected = selected.has(option.value);
+      });
+      refreshLogPortOptions();
+    }
+
+    function refreshLogPortOptions() {
+      const ports = Array.from(stateMap.keys()).sort();
+      const current = prefs.logFilters.viewPort || '';
+      const options = ['<option value="">全部</option>']
+        .concat(ports.map((port) => `<option value="${escapeHtml(port)}">${escapeHtml(port)}</option>`))
+        .join('');
+      controls.logPortFilter.innerHTML = options;
+      controls.logPortFilter.value = ports.includes(current) ? current : '';
+      if (!ports.includes(current)) {
+        prefs.logFilters.viewPort = '';
+      }
+    }
+
+    function applySnapshot(snapshot) {
+      stateMap.clear();
+      for (const state of snapshot.states || []) {
+        stateMap.set(state.port, state);
+      }
+      updatePortList(Array.from(stateMap.keys()).sort());
+      renderStateTable();
+    }
+
+    function renderStateTable() {
+      const rows = Array.from(stateMap.values()).sort((a, b) => a.port.localeCompare(b.port));
+      const connected = rows.filter((row) => row.is_open).length;
+      const devices = rows.filter((row) => row.has_device).length;
+      statusSummary.textContent = `共 ${rows.length} 口，已连接 ${connected}，识别设备 ${devices}`;
+
+      if (!rows.length) {
+        stateWrap.innerHTML = '<div class="table-empty">暂无串口状态，先点击“刷新串口”。</div>';
+        return;
+      }
+
+      const currentPort = prefs.logFilters.viewPort || '';
+      const bodyRows = rows.map((row) => {
+        const activeClass = currentPort === row.port ? ' active' : '';
+        const statusClass = row.is_open ? 'online' : 'offline';
+        const statusText = row.is_open ? '已连接' : '未连接';
+        const lastReply = row.last_rx_at ? new Date(row.last_rx_at * 1000).toLocaleTimeString() : '-';
+        return `
+          <tr class="state-row${activeClass}" data-port="${escapeHtml(row.port)}">
+            <td title="${escapeHtml(row.port)}">${escapeHtml(row.port)}</td>
+            <td><span class="badge ${statusClass}">${statusText}</span></td>
+            <td>${row.has_device ? '有设备' : '-'}</td>
+            <td>${row.rx_total}</td>
+            <td>${row.tx_total}</td>
+            <td title="${escapeHtml(row.last_rx_hex || '')}">${escapeHtml(lastReply)}</td>
+            <td title="${escapeHtml(row.last_error || '')}" style="color: #ff9ea9;">${escapeHtml(row.last_error || '')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      stateWrap.innerHTML = `
+        <div class="status-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>端口</th>
+                <th>连接</th>
+                <th>设备</th>
+                <th>RX字节</th>
+                <th>TX字节</th>
+                <th>最近回包</th>
+                <th>错误</th>
+              </tr>
+            </thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function switchTab(tab, persist = true) {
+      prefs.logView = tab;
+      controls.tableTabBtn.classList.toggle('active', tab === 'table');
+      controls.streamTabBtn.classList.toggle('active', tab === 'stream');
+      logTableView.style.display = tab === 'table' ? '' : 'none';
+      logStreamView.style.display = tab === 'stream' ? '' : 'none';
+      if (persist) savePrefs();
+    }
+
+    function bindBaseActions() {
+      controls.refreshPortsBtn.addEventListener('click', refreshPorts);
+      controls.connectSelectedBtn.addEventListener('click', connectSelected);
+      controls.connectAllBtn.addEventListener('click', connectAll);
+      controls.disconnectSelectedBtn.addEventListener('click', disconnectSelected);
+      controls.disconnectAllBtn.addEventListener('click', disconnectAll);
+      controls.sendSelectedBtn.addEventListener('click', sendSelected);
+      controls.sendAllBtn.addEventListener('click', sendAll);
+      controls.scanSelectedBtn.addEventListener('click', scanSelected);
+      controls.scanConnectedBtn.addEventListener('click', scanConnected);
+      controls.autoPickBtn.addEventListener('click', autoPick);
+      controls.startScheduleBtn.addEventListener('click', startSchedule);
+      controls.stopScheduleBtn.addEventListener('click', stopSchedule);
+      controls.tableTabBtn.addEventListener('click', () => switchTab('table'));
+      controls.streamTabBtn.addEventListener('click', () => switchTab('stream'));
+      stateWrap.addEventListener('click', onStateTableClick);
+    }
+
+    async function refreshPorts() {
+      const data = await api('/api/ports');
+      updatePortList(data.ports || []);
+      appendSystemLog(`刷新串口: ${(data.ports || []).join(', ') || '无'}`);
+    }
+
+    async function connectSelected() {
+      await api('/api/connect', 'POST', {
+        ports: selectedPorts(),
+        baud: Number(controls.baud.value),
+        timeout: Number(controls.timeout.value),
+        auto_reconnect: controls.autoReconnect.checked,
+      });
+    }
+
+    async function connectAll() {
+      await api('/api/connect', 'POST', {
+        ports: [],
+        baud: Number(controls.baud.value),
+        timeout: Number(controls.timeout.value),
+        auto_reconnect: controls.autoReconnect.checked,
+      });
+    }
+
+    async function disconnectSelected() {
+      await api('/api/disconnect', 'POST', { ports: selectedPorts(), all: false });
+    }
+
+    async function disconnectAll() {
+      await api('/api/disconnect', 'POST', { ports: [], all: true });
+    }
+
+    async function sendSelected() {
+      await api('/api/send', 'POST', {
+        hex: controls.customHex.value,
+        ports: selectedPorts(),
+        target: 'selected',
+      });
+    }
+
+    async function sendAll() {
+      await api('/api/send', 'POST', {
+        hex: controls.customHex.value,
+        ports: [],
+        target: 'all',
+      });
+    }
+
+    async function scanSelected() {
+      const data = await api('/api/scan', 'POST', {
+        ports: selectedPorts(),
+        wait_ms: Number(controls.scanWait.value),
+      });
+      selectPorts(data.found || []);
+    }
+
+    async function scanConnected() {
+      const data = await api('/api/scan', 'POST', {
+        ports: [],
+        wait_ms: Number(controls.scanWait.value),
+      });
+      selectPorts(data.found || []);
+    }
+
+    async function autoPick() {
+      const data = await api('/api/auto-pick', 'POST', {
+        baud: Number(controls.baud.value),
+        timeout: Number(controls.timeout.value),
+        auto_reconnect: controls.autoReconnect.checked,
+        wait_connect_ms: Number(controls.connectWait.value),
+        scan_wait_ms: Number(controls.scanWait.value),
+        keep_only_devices: controls.keepOnly.checked,
+      });
+      selectPorts(data.found || []);
+      appendSystemLog(`自动筛选完成: 扫描 ${(data.ports || []).length} 口, 找到 ${(data.found || []).length} 口`);
+    }
+
+    async function startSchedule() {
+      const ports = selectedPorts();
+      await api('/api/schedule/start', 'POST', {
+        hex: controls.periodHex.value,
+        interval_ms: Number(controls.periodMs.value),
+        ports,
+        target: ports.length ? 'selected' : 'all',
+      });
+    }
+
+    async function stopSchedule() {
+      await api('/api/schedule/stop', 'POST', {});
+    }
+
+    function selectPorts(ports) {
+      const selected = new Set(ports);
+      Array.from(portsEl.options).forEach((option) => {
+        option.selected = selected.has(option.value);
+      });
+    }
+
+    function onStateTableClick(event) {
+      const row = event.target.closest('tr[data-port]');
+      if (!row) return;
+      prefs.logFilters.viewPort = row.dataset.port || '';
+      selectPorts(prefs.logFilters.viewPort ? [prefs.logFilters.viewPort] : []);
+      controls.logPortFilter.value = prefs.logFilters.viewPort;
+      savePrefs();
+      renderStateTable();
+      scheduleLogsRefresh();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function collectLogFiltersFromControls() {
+      prefs.logFilters = {
+        viewPort: controls.logPortFilter.value,
+        direction: controls.logDirectionFilter.value,
+        event: controls.logEventFilter.value,
+        keyword: controls.logKeyword.value.trim(),
+        start: controls.logStartTime.value,
+        end: controls.logEndTime.value,
+        limit: clamp(Number(controls.logLimit.value || '300'), 1, 5000),
+        encoding: controls.logEncoding.value,
+        displayMode: controls.logDisplayMode.value,
+      };
+      prefs.autoScroll = controls.autoScrollToggle.checked;
+      savePrefs();
+    }
+
+    function applyLogFiltersToControls() {
+      applyFilterPrefsToControls();
+      refreshLogPortOptions();
+      controls.logPortFilter.value = prefs.logFilters.viewPort || '';
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, Number.isFinite(value) ? value : min));
+    }
+
+    function toTimestamp(value) {
+      if (!value) return null;
+      const ms = new Date(value).getTime();
+      return Number.isNaN(ms) ? null : ms / 1000;
+    }
+
+    function buildLogQuery(overrides = {}) {
+      const filters = { ...prefs.logFilters, ...overrides };
+      const params = new URLSearchParams();
+      if (filters.viewPort) params.set('view_port', filters.viewPort);
+      if (filters.direction && filters.direction !== 'ALL') params.set('direction', filters.direction);
+      if (filters.event && filters.event !== 'ALL') params.set('event', filters.event);
+      if (filters.keyword) params.set('keyword', filters.keyword);
+      const startTs = toTimestamp(filters.start);
+      const endTs = toTimestamp(filters.end);
+      if (startTs !== null) params.set('start_ts', String(startTs));
+      if (endTs !== null) params.set('end_ts', String(endTs));
+      if (filters.limit) params.set('limit', String(filters.limit));
+      if (filters.encoding) params.set('encoding', filters.encoding);
+      return params;
+    }
+
+    async function refreshLogs() {
+      collectLogFiltersFromControls();
+      const params = buildLogQuery();
+      const data = await api(`/api/logs?${params.toString()}`);
+      logsData = data.logs || [];
+      renderLogs();
+    }
+
+    function scheduleLogsRefresh(delay = 120) {
+      clearTimeout(refreshLogsTimer);
+      refreshLogsTimer = setTimeout(() => {
+        refreshLogs().catch((error) => appendSystemLog(error.message || String(error)));
+      }, delay);
+    }
+
+    function renderLogs() {
+      renderLogMeta();
+      renderLogTable();
+      renderLogStream();
+    }
+
+    function renderLogMeta() {
+      const filters = prefs.logFilters;
+      const currentPort = filters.viewPort || '';
+      activePortHint.textContent = `当前日志范围: ${currentPort || '全部串口'}`;
+      logCountHint.textContent = `${logsData.length} 条`;
+      logMeta.textContent = `${filters.encoding} / ${filters.displayMode} / ${prefs.logView === 'table' ? '表格' : '文本流'}`;
+    }
+
+    function renderLogTable() {
+      if (!logsData.length) {
+        logTableView.innerHTML = '<div class="table-empty">当前筛选下暂无日志记录。</div>';
+        return;
+      }
+
+      const columns = [
+        ['time', '时间'],
+        ['port', '串口'],
+        ['direction', '方向'],
+        ['event', '事件'],
+        ['size', '长度'],
+        ['hex', 'HEX'],
+        ['text', '文本'],
+        ['remark', '备注'],
+      ];
+      const displayMode = prefs.logFilters.displayMode;
+      const hidden = {
+        hex: displayMode === 'text',
+        text: displayMode === 'hex',
+      };
+
+      const colgroup = columns
+        .map(([key]) => {
+          const width = prefs.columnWidths[key] || DEFAULT_COLUMN_WIDTHS[key] || 120;
+          const cls = hidden[key] ? ' class="hidden-col"' : '';
+          return `<col${cls} style="width:${width}px">`;
+        })
+        .join('');
+
+      const head = columns
+        .map(([key, label]) => {
+          const cls = hidden[key] ? ' class="hidden-col"' : '';
+          return `<th${cls} data-col="${key}"><div class="th-inner">${label}<span class="col-resize" data-col="${key}"></span></div></th>`;
+        })
+        .join('');
+
+      const rows = logsData.map((row) => {
+        const rowClass = [
+          'log-row',
+          (row.direction || '').toLowerCase(),
+          row.event === 'error' ? 'error' : '',
+          row.decode_error ? 'decode-error' : '',
+        ].filter(Boolean).join(' ');
+        const remark = row.decode_error ? `${row.message || ''}${row.message ? ' | ' : ''}${row.decode_error}` : (row.message || '');
+        const directionClass = row.direction === 'RX' ? 'dir-rx' : row.direction === 'TX' ? 'dir-tx' : '';
+        return `
+          <tr class="${rowClass}">
+            <td title="${escapeHtml(row.time || '')}">${escapeHtml(row.time || '')}</td>
+            <td title="${escapeHtml(row.port || '')}">${escapeHtml(row.port || '')}</td>
+            <td class="${directionClass}">${escapeHtml(row.direction || '-')}</td>
+            <td>${escapeHtml(row.event || '')}</td>
+            <td>${escapeHtml(row.size ?? 0)}</td>
+            <td${hidden.hex ? ' class="hidden-col"' : ''} title="${escapeHtml(row.hex || '')}">${escapeHtml(row.hex || '')}</td>
+            <td${hidden.text ? ' class="hidden-col"' : ''} title="${escapeHtml(row.text || '')}">${escapeHtml(row.text || '')}</td>
+            <td title="${escapeHtml(remark)}">${escapeHtml(remark)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      logTableView.innerHTML = `
+        <div class="log-table-wrap" id="logTableWrap">
+          <table>
+            <colgroup>${colgroup}</colgroup>
+            <thead><tr>${head}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+
+      bindColumnResize();
+      if (prefs.autoScroll) {
+        const wrap = document.getElementById('logTableWrap');
+        if (wrap) wrap.scrollTop = wrap.scrollHeight;
+      }
+    }
+
+    function renderLogStream() {
+      if (!logsData.length) {
+        logStreamView.innerHTML = '<div class="stream-empty">当前筛选下暂无文本流。</div>';
+        return;
+      }
+
+      const displayMode = prefs.logFilters.displayMode;
+      const lines = logsData.map((row) => {
+        const head = `[${row.time}] [${row.port}] [${row.direction || row.event}]`;
+        const segments = [];
+        if (displayMode !== 'text' && row.hex) segments.push(`HEX ${row.hex}`);
+        if (displayMode !== 'hex' && row.text) segments.push(`TXT ${row.text}`);
+        if (row.message) segments.push(`NOTE ${row.message}`);
+        if (row.decode_error) segments.push(`DECODE ${row.decode_error}`);
+        return `${head} ${segments.join(' | ')}`.trim();
+      });
+
+      logStreamView.innerHTML = `<div class="stream-wrap" id="streamWrap">${escapeHtml(lines.join('\n'))}</div>`;
+      if (prefs.autoScroll) {
+        const wrap = document.getElementById('streamWrap');
+        if (wrap) wrap.scrollTop = wrap.scrollHeight;
+      }
+    }
+
+    function bindLogControls() {
+      controls.applyLogFiltersBtn.addEventListener('click', () => {
+        refreshLogs().catch((error) => appendSystemLog(error.message || String(error)));
+      });
+
+      controls.resetLogFiltersBtn.addEventListener('click', () => {
+        prefs.logFilters = { ...defaultPrefs.logFilters };
+        prefs.autoScroll = true;
+        savePrefs();
+        applyLogFiltersToControls();
+        refreshLogs().catch((error) => appendSystemLog(error.message || String(error)));
+      });
+
+      controls.logPortFilter.addEventListener('change', () => {
+        collectLogFiltersFromControls();
+        renderStateTable();
+        scheduleLogsRefresh();
+      });
+      controls.logDirectionFilter.addEventListener('change', () => scheduleLogsRefresh());
+      controls.logEventFilter.addEventListener('change', () => scheduleLogsRefresh());
+      controls.logLimit.addEventListener('change', () => scheduleLogsRefresh());
+      controls.logEncoding.addEventListener('change', () => scheduleLogsRefresh());
+      controls.logDisplayMode.addEventListener('change', () => {
+        collectLogFiltersFromControls();
+        renderLogs();
+      });
+      controls.logKeyword.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          refreshLogs().catch((error) => appendSystemLog(error.message || String(error)));
+        }
+      });
+      controls.logStartTime.addEventListener('change', () => scheduleLogsRefresh());
+      controls.logEndTime.addEventListener('change', () => scheduleLogsRefresh());
+      controls.autoScrollToggle.addEventListener('change', () => {
+        prefs.autoScroll = controls.autoScrollToggle.checked;
+        savePrefs();
+      });
+
+      controls.exportCurrentFilterBtn.addEventListener('click', () => {
+        collectLogFiltersFromControls();
+        window.open(`/api/logs/export?${buildLogQuery().toString()}`, '_blank');
+      });
+      controls.exportCurrentPortBtn.addEventListener('click', () => {
+        collectLogFiltersFromControls();
+        const port = prefs.logFilters.viewPort || selectedPorts()[0] || '';
+        if (!port) {
+          appendSystemLog('请先在状态表或左侧串口列表里确定一个串口。');
+          return;
+        }
+        const params = new URLSearchParams();
+        params.set('view_port', port);
+        params.set('encoding', prefs.logFilters.encoding);
+        window.open(`/api/logs/export?${params.toString()}`, '_blank');
+      });
+      controls.exportAllBtn.addEventListener('click', () => {
+        const params = new URLSearchParams();
+        params.set('encoding', prefs.logFilters.encoding);
+        window.open(`/api/logs/export?${params.toString()}`, '_blank');
+      });
+    }
+
+    function bindColumnResize() {
+      const handles = logTableView.querySelectorAll('.col-resize');
+      handles.forEach((handle) => {
+        handle.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+          const col = handle.dataset.col;
+          const startX = event.clientX;
+          const startWidth = prefs.columnWidths[col] || DEFAULT_COLUMN_WIDTHS[col] || 120;
+          function onMove(moveEvent) {
+            prefs.columnWidths[col] = clamp(startWidth + moveEvent.clientX - startX, 72, 640);
+            savePrefs();
+            renderLogTable();
+          }
+          function onUp() {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+          }
+          window.addEventListener('mousemove', onMove);
+          window.addEventListener('mouseup', onUp);
+        });
+      });
+    }
+
+    function bindResizers() {
+      bindDragResizer(controls.sidebarResizer, 'x', (delta) => {
+        prefs.sidebarWidth = clamp(delta, 280, 520);
+        applyLayoutPrefs();
+        savePrefs();
+      });
+      bindDragResizer(controls.statusResizer, 'y', (delta) => {
+        prefs.statusHeight = clamp(delta, 170, 420);
+        applyLayoutPrefs();
+        savePrefs();
+      });
+    }
+
+    function bindDragResizer(el, axis, onDelta) {
+      if (!el) return;
+      el.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        const start = axis === 'x' ? event.clientX : event.clientY;
+        const base = axis === 'x' ? prefs.sidebarWidth : prefs.statusHeight;
+        el.classList.add('dragging');
+        function onMove(moveEvent) {
+          const current = axis === 'x' ? moveEvent.clientX : moveEvent.clientY;
+          onDelta(base + current - start);
+        }
+        function onUp() {
+          el.classList.remove('dragging');
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+        }
+        window.addEventListener('mousemove', onMove, { passive: true });
+        window.addEventListener('mouseup', onUp, { passive: true });
+      });
+    }
+
+    function connectWs() {
+      const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(`${protocol}://${location.host}/ws/events`);
+
+      ws.onopen = () => {
+        svcState.textContent = 'WS已连接';
+        svcState.className = 'badge online';
+        clearInterval(wsPingTimer);
+        wsPingTimer = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) ws.send('ping');
+        }, 5000);
+      };
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'state_snapshot' && msg.snapshot) {
+          applySnapshot(msg.snapshot);
+          scheduleLogsRefresh(80);
+          return;
+        }
+        if (msg.type === 'log') {
+          appendSystemLog(msg.message);
+          return;
+        }
+        if (['rx', 'tx', 'error', 'port_open', 'port_close'].includes(msg.type)) {
+          scheduleLogsRefresh(80);
+        }
+      };
+
+      ws.onclose = () => {
+        svcState.textContent = 'WS断开，重连中';
+        svcState.className = 'badge offline';
+        clearInterval(wsPingTimer);
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = setTimeout(connectWs, 1200);
+      };
+
+      ws.onerror = () => ws.close();
+    }
+
+    async function init() {
+      applyLayoutPrefs();
+      applyLogFiltersToControls();
+      bindBaseActions();
+      bindLogControls();
+      bindResizers();
+      connectWs();
+
+      try {
+        await refreshPorts();
+        const snapshot = await api('/api/state');
+        applySnapshot(snapshot);
+        await refreshLogs();
+      } catch (error) {
+        appendSystemLog(error.message || String(error));
+      }
+    }
+
+    window.addEventListener('error', (event) => {
+      appendSystemLog(`前端错误: ${event.message}`);
+    });
+
+    window.addEventListener('load', () => {
+      init();
+    });
+  </script>
+</body>
+</html>

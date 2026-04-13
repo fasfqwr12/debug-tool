@@ -6,10 +6,16 @@ import json
 import shlex
 import shutil
 import subprocess
+import time
 import urllib.parse
 import xml.etree.ElementTree as ET
+import queue
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
+
+from .navigation_engine import NavigationEngine
+from .perf_metrics import PerfMetrics
+from .search_engine import SearchEngine
 
 
 CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
@@ -24,30 +30,502 @@ class CodeMapService:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.recent_path = self.base_dir / "recent_projects.json"
         self._cached_clangd_path = ""
+        self._source_cache: Dict[str, tuple] = {}
+        self._perf_lock = threading.Lock()
+        self._perf_stats: Dict[str, Dict[str, Any]] = {}
+        self._clangd_session: Dict[str, Any] = {}
+        self._clangd_session_lock = threading.Lock()
+        self._clangd_persistent_disabled_until: Dict[str, float] = {}
+        self._clangd_persistent_failures: Dict[str, int] = {}
+        self._nav_cache: Dict[str, Dict[str, Any]] = {}
+        self._nav_cache_lock = threading.Lock()
+        self._search_cache: Dict[str, Dict[str, Any]] = {}
+        self._search_cache_lock = threading.Lock()
+        self._stats_lock = threading.Lock()
+        self._stat_counters: Dict[str, float] = {}
+        self._index_state: Dict[str, Dict[str, Any]] = {}
+        self._last_navigation: Dict[str, Any] = {}
+        self._last_navigation_lock = threading.Lock()
+        self._search_engine = SearchEngine(self)
+        self._navigation_engine = NavigationEngine(self)
+        self._perf_metrics = PerfMetrics(self)
 
     def set_window(self, window) -> None:
         self.window = window
 
-    def scan_project(self, root: str) -> Dict:
+    def _read_source_cached(self, abs_path: str) -> tuple:
+        """Return (text, raw_lines) with mtime-based caching."""
+        key = str(Path(abs_path).resolve())
+        try:
+            mtime = Path(abs_path).stat().st_mtime
+        except OSError:
+            self._source_cache.pop(key, None)
+            return "", []
+        cached = self._source_cache.get(key)
+        if cached and cached[0] == mtime:
+            return cached[1], cached[2]
+        text = Path(abs_path).read_text(encoding="utf-8", errors="ignore")
+        raw_lines = text.splitlines()
+        self._source_cache[key] = (mtime, text, raw_lines)
+        return text, raw_lines
+
+    def _perf_begin(self) -> float:
+        return time.perf_counter()
+
+    def _perf_record(self, metric: str, elapsed_ms: float) -> None:
+        with self._perf_lock:
+            bucket = self._perf_stats.setdefault(
+                metric,
+                {"count": 0, "total_ms": 0.0, "max_ms": 0.0, "last_ms": 0.0, "samples": []},
+            )
+            bucket["count"] += 1
+            bucket["total_ms"] += elapsed_ms
+            bucket["last_ms"] = elapsed_ms
+            if elapsed_ms > bucket["max_ms"]:
+                bucket["max_ms"] = elapsed_ms
+            samples = bucket.setdefault("samples", [])
+            samples.append(elapsed_ms)
+            if len(samples) > 160:
+                del samples[:-160]
+
+    def _perf_end(self, metric: str, start_at: float) -> None:
+        elapsed_ms = (time.perf_counter() - start_at) * 1000.0
+        self._perf_record(metric, elapsed_ms)
+
+    def _stat_inc(self, key: str, amount: float = 1.0) -> None:
+        with self._stats_lock:
+            self._stat_counters[key] = float(self._stat_counters.get(key) or 0.0) + float(amount)
+
+    def _set_last_navigation(self, payload: Dict[str, Any]) -> None:
+        with self._last_navigation_lock:
+            self._last_navigation = dict(payload or {})
+
+    def _set_index_state(self, project_root: Path, **kwargs) -> None:
+        root_key = str(project_root.resolve())
+        now = time.time()
+        with self._stats_lock:
+            row = self._index_state.get(root_key, {"root": root_key, "created_at": now})
+            row.update(kwargs)
+            row["updated_at"] = now
+            self._index_state[root_key] = row
+
+    def _trim_nav_cache(self) -> None:
+        if len(self._nav_cache) <= 320:
+            return
+        items = sorted(self._nav_cache.items(), key=lambda kv: float((kv[1] or {}).get("ts") or 0.0))
+        for key, _ in items[: max(1, len(items) - 280)]:
+            self._nav_cache.pop(key, None)
+
+    def _get_nav_cache(self, key: str, ttl_s: float = 25.0) -> Optional[Dict[str, Any]]:
+        now = time.time()
+        with self._nav_cache_lock:
+            row = self._nav_cache.get(key)
+            if not row:
+                return None
+            ts = float(row.get("ts") or 0.0)
+            if now - ts > ttl_s:
+                self._nav_cache.pop(key, None)
+                return None
+            return dict(row.get("data") or {})
+
+    def _put_nav_cache(self, key: str, data: Dict[str, Any]) -> None:
+        with self._nav_cache_lock:
+            self._nav_cache[key] = {"ts": time.time(), "data": dict(data or {})}
+            self._trim_nav_cache()
+
+    def _nav_cache_key(
+        self,
+        project_id: str,
+        symbol: str,
+        current_path: str,
+        current_line: int,
+        current_column: int,
+        limit: int,
+    ) -> str:
+        return "|".join([
+            project_id,
+            (symbol or "").strip(),
+            (current_path or "").replace("\\", "/"),
+            str(int(current_line or 0)),
+            str(int(current_column or 0)),
+            str(int(limit or 0)),
+        ])
+
+    def _search_cache_key(self, project_id: str, keyword: str, limit: int) -> str:
+        return "|".join([project_id, (keyword or "").strip().lower(), str(int(limit or 0))])
+
+    def _get_search_cache(self, key: str, ttl_s: float = 8.0) -> Optional[List[Dict[str, Any]]]:
+        now = time.time()
+        with self._search_cache_lock:
+            row = self._search_cache.get(key)
+            if not row:
+                return None
+            ts = float(row.get("ts") or 0.0)
+            if now - ts > ttl_s:
+                self._search_cache.pop(key, None)
+                return None
+            data = row.get("data") or []
+            return [dict(x) for x in data]
+
+    def _put_search_cache(self, key: str, rows: List[Dict[str, Any]]) -> None:
+        with self._search_cache_lock:
+            self._search_cache[key] = {"ts": time.time(), "data": [dict(x) for x in (rows or [])]}
+            if len(self._search_cache) > 320:
+                items = sorted(self._search_cache.items(), key=lambda kv: float((kv[1] or {}).get("ts") or 0.0))
+                for old_key, _ in items[: max(1, len(items) - 280)]:
+                    self._search_cache.pop(old_key, None)
+
+    def _is_fast_resolve_confident(
+        self,
+        index: Dict,
+        symbol: str,
+        definition: Dict,
+        current_path: str,
+        cur_file_id: str,
+        current_line: int,
+    ) -> bool:
+        if not definition:
+            return False
+        kind = str(definition.get("kind") or "")
+        if kind == "macro":
+            return True
+        if symbol.isupper() and "_" in symbol and kind in {"definition", "declaration", "typedef", "struct"}:
+            return True
+        if kind == "function":
+            fn_rows = [fn for fn in index.get("functions", []) if fn.get("name") == symbol]
+            if len(fn_rows) == 1:
+                return True
+            def_path = str(definition.get("path") or "")
+            if def_path and def_path == (current_path or "").replace("\\", "/"):
+                return True
+        def_path = str(definition.get("path") or "")
+        if def_path and cur_file_id and self._resolve_file_id_by_path(index, def_path) == cur_file_id:
+            dist = abs(int(current_line or 0) - int(definition.get("line") or 0))
+            if dist <= 240:
+                return True
+        return False
+
+    def _kickoff_clangd_warmup(self, index: Dict) -> None:
+        project_root = Path(index["project"]["root"]).resolve()
+        clangd_path = self._find_clangd_path()
+        self._set_index_state(
+            project_root,
+            state="pending",
+            ready=False,
+            clangd_found=bool(clangd_path),
+            scan_mode=index.get("project", {}).get("scan_mode", ""),
+        )
+        if not clangd_path:
+            return
+
+        def _worker() -> None:
+            t0 = time.perf_counter()
+            try:
+                ok, err = self._ensure_compile_commands(project_root)
+                if not ok:
+                    self._set_index_state(project_root, state="compile_commands_error", ready=False, error=err)
+                    return
+                session = self._ensure_clangd_session(project_root, clangd_path)
+                if not session:
+                    self._set_index_state(project_root, state="session_error", ready=False, error="clangd 会话不可用")
+                    return
+                self._set_index_state(project_root, state="ready", ready=True, error="")
+            except Exception as exc:
+                self._set_index_state(project_root, state="warmup_error", ready=False, error=str(exc))
+            finally:
+                self._set_index_state(project_root, warmup_ms=round((time.perf_counter() - t0) * 1000.0, 3))
+
+        threading.Thread(target=_worker, name="clangd-warmup", daemon=True).start()
+
+    def get_perf_stats(self) -> Dict:
+        return self._perf_metrics.get_perf_stats()
+        with self._perf_lock:
+            rows = []
+            for name, raw in sorted(self._perf_stats.items()):
+                count = int(raw.get("count") or 0)
+                total_ms = float(raw.get("total_ms") or 0.0)
+                avg_ms = (total_ms / count) if count else 0.0
+                samples = [float(x) for x in (raw.get("samples") or []) if isinstance(x, (int, float))]
+                recent_avg_ms = (sum(samples) / len(samples)) if samples else avg_ms
+                p95_ms = 0.0
+                if samples:
+                    ordered = sorted(samples)
+                    idx = max(0, min(len(ordered) - 1, int(len(ordered) * 0.95) - 1))
+                    p95_ms = ordered[idx]
+                rows.append({
+                    "metric": name,
+                    "count": count,
+                    "avg_ms": round(avg_ms, 3),
+                    "recent_avg_ms": round(recent_avg_ms, 3),
+                    "p95_ms": round(p95_ms, 3),
+                    "max_ms": round(float(raw.get("max_ms") or 0.0), 3),
+                    "last_ms": round(float(raw.get("last_ms") or 0.0), 3),
+                })
+        with self._stats_lock:
+            nav_cache_hit = float(self._stat_counters.get("navigation.cache_hit") or 0.0)
+            nav_cache_total = float(self._stat_counters.get("navigation.cache_total") or 0.0)
+            nav_cache_bypass = float(self._stat_counters.get("navigation.cache_bypass_count") or 0.0)
+            timeout_count = float(self._stat_counters.get("navigation.semantic_timeout_count") or 0.0)
+            cache_hit_ratio = (nav_cache_hit / nav_cache_total * 100.0) if nav_cache_total else 0.0
+            rows.append({
+                "metric": "navigation.cache_hit_ratio",
+                "count": int(nav_cache_total),
+                "avg_ms": round(cache_hit_ratio, 3),
+                "recent_avg_ms": round(cache_hit_ratio, 3),
+                "p95_ms": round(cache_hit_ratio, 3),
+                "max_ms": round(cache_hit_ratio, 3),
+                "last_ms": round(cache_hit_ratio, 3),
+            })
+            rows.append({
+                "metric": "navigation.cache_bypass_count",
+                "count": int(nav_cache_bypass),
+                "avg_ms": round(nav_cache_bypass, 3),
+                "recent_avg_ms": round(nav_cache_bypass, 3),
+                "p95_ms": round(nav_cache_bypass, 3),
+                "max_ms": round(nav_cache_bypass, 3),
+                "last_ms": round(nav_cache_bypass, 3),
+            })
+            rows.append({
+                "metric": "navigation.semantic_timeout_count",
+                "count": int(timeout_count),
+                "avg_ms": round(timeout_count, 3),
+                "recent_avg_ms": round(timeout_count, 3),
+                "p95_ms": round(timeout_count, 3),
+                "max_ms": round(timeout_count, 3),
+                "last_ms": round(timeout_count, 3),
+            })
+            non_cache_samples = []
+            if "navigation.non_cache" in self._perf_stats:
+                raw = self._perf_stats.get("navigation.non_cache") or {}
+                non_cache_samples = [float(x) for x in (raw.get("samples") or []) if isinstance(x, (int, float))]
+            non_cache_p95 = 0.0
+            if non_cache_samples:
+                ordered = sorted(non_cache_samples)
+                idx = max(0, min(len(ordered) - 1, int(len(ordered) * 0.95) - 1))
+                non_cache_p95 = ordered[idx]
+            rows.append({
+                "metric": "navigation.non_cache_p95_ms",
+                "count": len(non_cache_samples),
+                "avg_ms": round(non_cache_p95, 3),
+                "recent_avg_ms": round(non_cache_p95, 3),
+                "p95_ms": round(non_cache_p95, 3),
+                "max_ms": round(non_cache_p95, 3),
+                "last_ms": round(non_cache_p95, 3),
+            })
+            index_rows = []
+            now = time.time()
+            for root_key, raw in sorted(self._index_state.items()):
+                updated = float(raw.get("updated_at") or 0.0)
+                index_rows.append({
+                    "root": root_key,
+                    "state": str(raw.get("state") or ""),
+                    "ready": bool(raw.get("ready")),
+                    "scan_mode": str(raw.get("scan_mode") or ""),
+                    "clangd_found": bool(raw.get("clangd_found")),
+                    "warmup_ms": float(raw.get("warmup_ms") or 0.0),
+                    "age_s": round(max(0.0, now - updated), 3) if updated else 0.0,
+                    "error": str(raw.get("error") or ""),
+                })
+        return {"success": True, "rows": rows, "index_state": index_rows}
+
+    def get_navigation_state(self, project_id: str) -> Dict:
+        return self._perf_metrics.get_navigation_state(project_id)
+        if project_id not in self._projects:
+            return {"success": False, "error": "工程未索引"}
+        with self._stats_lock:
+            nav_cache_hit = float(self._stat_counters.get("navigation.cache_hit") or 0.0)
+            nav_cache_total = float(self._stat_counters.get("navigation.cache_total") or 0.0)
+            nav_cache_bypass = float(self._stat_counters.get("navigation.cache_bypass_count") or 0.0)
+            cache_hit_ratio = (nav_cache_hit / nav_cache_total * 100.0) if nav_cache_total else 0.0
+        with self._last_navigation_lock:
+            last = dict(self._last_navigation or {})
+        definition = last.get("definition") or {}
+        refs = last.get("references") or []
+        return {
+            "success": True,
+            "project_id": project_id,
+            "resolve_mode": str(last.get("resolve_mode") or ""),
+            "perf_mode": str(last.get("perf_mode") or ""),
+            "cache_hit_ratio": round(cache_hit_ratio, 3),
+            "cache_bypass_count": int(nav_cache_bypass),
+            "last_definition": {
+                "path": definition.get("path", ""),
+                "line": int(definition.get("line") or 0),
+                "function_id": definition.get("function_id", ""),
+                "kind": definition.get("kind", ""),
+            },
+            "last_reference_count": len(refs),
+            "last_references": [
+                {
+                    "path": r.get("path", ""),
+                    "line": int(r.get("line") or 0),
+                    "function_id": r.get("function_id", ""),
+                }
+                for r in refs[:5]
+            ],
+        }
+
+    def simulate_navigation_chain(
+        self,
+        project_id: str,
+        steps: List[Dict[str, Any]],
+        perf_mode: str = "coldish",
+        enable_test: bool = False,
+    ) -> Dict:
+        return self._navigation_engine.simulate_navigation_chain(
+            project_id=project_id,
+            steps=steps,
+            perf_mode=perf_mode,
+            enable_test=enable_test,
+        )
+        if not enable_test:
+            return {"success": False, "error": "simulate_navigation_chain 仅测试使用，请显式 enable_test=true"}
+        if project_id not in self._projects:
+            return {"success": False, "error": "工程未索引"}
+        index = self._projects[project_id]
+        history: List[Dict[str, Any]] = []
+        nav_index = -1
+        current: Dict[str, Any] = {}
+        selected: Dict[str, Any] = {}
+        traces: List[Dict[str, Any]] = []
+
+        def _push_history(point: Dict[str, Any]) -> None:
+            nonlocal history, nav_index
+            if not point:
+                return
+            if nav_index >= 0 and nav_index < len(history) and history[nav_index] == point:
+                return
+            history = history[: nav_index + 1]
+            history.append(dict(point))
+            if len(history) > 80:
+                history = history[-80:]
+            nav_index = len(history) - 1
+
+        for idx, step in enumerate(steps or []):
+            action = str(step.get("action") or "").strip().lower()
+            if action == "symbol_click":
+                selected = {
+                    "symbol": str(step.get("symbol") or ""),
+                    "path": str(step.get("path") or ""),
+                    "line": int(step.get("line") or 0),
+                    "column": int(step.get("column") or 1),
+                }
+                traces.append({"step": idx, "action": action, "selected": dict(selected)})
+                continue
+            if action in {"go_definition", "expand"}:
+                symbol = str(step.get("symbol") or selected.get("symbol") or "")
+                path = str(step.get("path") or selected.get("path") or "")
+                line = int(step.get("line") or selected.get("line") or 1)
+                col = int(step.get("column") or selected.get("column") or 1)
+                if current:
+                    _push_history(current)
+                nav = self.get_navigation_targets(
+                    project_id,
+                    symbol,
+                    path,
+                    line,
+                    col,
+                    int(step.get("limit") or 80),
+                    perf_mode,
+                )
+                definition = nav.get("definition") or {}
+                def_path = str(definition.get("path") or "")
+                def_line = int(definition.get("line") or 0)
+                fn_ctx = self._find_function_context_in_index(index, def_path, def_line) if def_path and def_line > 0 else {}
+                branch_key = str(step.get("branch_key") or "")
+                if action == "expand":
+                    base = str(current.get("branch_key") or "")
+                    branch_key = f"{base}>{symbol}" if base else (branch_key or symbol)
+                current = {
+                    "symbol": symbol,
+                    "path": def_path or path,
+                    "line": def_line or line,
+                    "column": int(definition.get("column") or col),
+                    "function_id": str(definition.get("function_id") or fn_ctx.get("id") or ""),
+                    "branch_key": branch_key if action == "expand" else str(current.get("branch_key") or ""),
+                    "resolve_mode": str(nav.get("resolve_mode") or ""),
+                    "perf_mode": str(nav.get("perf_mode") or perf_mode),
+                }
+                _push_history(current)
+                traces.append({"step": idx, "action": action, "ok": bool(nav.get("success")), "point": dict(current)})
+                continue
+            if action == "back":
+                if nav_index > 0:
+                    nav_index -= 1
+                    current = dict(history[nav_index])
+                traces.append({"step": idx, "action": action, "point": dict(current), "nav_index": nav_index})
+                continue
+            if action == "forward":
+                if nav_index + 1 < len(history):
+                    nav_index += 1
+                    current = dict(history[nav_index])
+                traces.append({"step": idx, "action": action, "point": dict(current), "nav_index": nav_index})
+                continue
+            traces.append({"step": idx, "action": action, "error": "unknown action"})
+        return {
+            "success": True,
+            "perf_mode": perf_mode,
+            "steps": traces,
+            "history_size": len(history),
+            "history_index": nav_index,
+            "current": current,
+        }
+
+    def scan_project(self, root: str, scan_mode: str = "full") -> Dict:
+        t0 = self._perf_begin()
         project_root = Path(root).resolve()
         if not project_root.exists():
             return {"success": False, "error": f"目录不存在: {project_root}"}
 
-        files = self._collect_files(project_root)
+        self._source_cache.clear()
+        with self._nav_cache_lock:
+            self._nav_cache.clear()
+        with self._search_cache_lock:
+            self._search_cache.clear()
+        mode = (scan_mode or "full").strip().lower()
+        if mode not in {"full", "whitelist"}:
+            mode = "full"
+        files = self._collect_files(project_root, mode)
         file_records: List[Dict] = []
         function_records: List[Dict] = []
+        token_index: Dict[str, List[Dict[str, Any]]] = {}
+        lines_by_file: Dict[str, List[Dict[str, Any]]] = {}
 
         for path in files:
             rel = path.relative_to(project_root).as_posix()
             file_id = f"file:{rel}"
-            text = path.read_text(encoding="utf-8", errors="ignore")
+            text, raw_lines = self._read_source_cached(str(path))
             file_records.append({
                 "id": file_id,
                 "path": rel,
                 "abs_path": str(path),
-                "line_count": len(text.splitlines()),
+                "line_count": len(raw_lines),
             })
             function_records.extend(self._parse_functions(rel, file_id, str(path), text))
+            lines_by_file[file_id] = [{"line_number": i + 1, "text": line} for i, line in enumerate(raw_lines)]
+            for ln, line_text in enumerate(raw_lines, start=1):
+                for m in re.finditer(r"\b[A-Za-z_]\w*\b", line_text or ""):
+                    token = m.group(0)
+                    token_index.setdefault(token.lower(), []).append({
+                        "file_id": file_id,
+                        "path": rel,
+                        "line": ln,
+                        "column": int(m.start()) + 1,
+                        "token": token,
+                        "text": line_text,
+                    })
+
+        # ---- O(1) lookup indexes ----
+        _file_by_id = {f["id"]: f for f in file_records}
+        _file_by_path = {f["path"]: f for f in file_records}
+        _fn_by_id = {fn["id"]: fn for fn in function_records}
+        _fns_by_file: Dict[str, List[Dict]] = {}
+        for fn in function_records:
+            _fns_by_file.setdefault(fn["file_id"], []).append(fn)
+        _fn_count_by_file = {fid: len(fns) for fid, fns in _fns_by_file.items()}
+        _abs_to_rel: Dict[str, str] = {}
+        for f in file_records:
+            _abs_to_rel[str(Path(f["abs_path"]).resolve()).lower()] = f["path"]
 
         fn_by_name: Dict[str, List[Dict]] = {}
         for fn in function_records:
@@ -79,14 +557,25 @@ class CodeMapService:
                 "root": str(project_root),
                 "function_count": len(function_records),
                 "call_count": len(calls),
+                "scan_mode": mode,
             },
             "files": file_records,
             "functions": function_records,
             "calls": calls,
+            "token_index": token_index,
+            "_file_by_id": _file_by_id,
+            "_file_by_path": _file_by_path,
+            "_fn_by_id": _fn_by_id,
+            "_fns_by_file": _fns_by_file,
+            "_fn_count_by_file": _fn_count_by_file,
+            "_abs_to_rel": _abs_to_rel,
+            "_lines_by_file": lines_by_file,
         }
         with self._lock:
             self._projects[project_id] = index
         self._remember_project(index["project"])
+        self._kickoff_clangd_warmup(index)
+        self._perf_end("scan_project", t0)
         return {"success": True, "project": index["project"]}
 
     def list_recent_projects(self) -> Dict:
@@ -99,12 +588,20 @@ class CodeMapService:
             return {"success": True, "projects": []}
 
     def search(self, project_id: str, keyword: str, limit: int = 80) -> Dict:
+        return self._search_engine.search(project_id, keyword, limit)
+        t0 = self._perf_begin()
         index = self._projects[project_id]
         text = (keyword or "").strip().lower()
         if not text:
             return {"success": True, "results": []}
+        cache_key = self._search_cache_key(project_id, text, int(limit or 80))
+        cached = self._get_search_cache(cache_key)
+        if cached is not None:
+            self._perf_end("search", t0)
+            return {"success": True, "results": cached[:limit]}
         results: List[Dict] = []
         seen = set()
+        limit = max(1, int(limit or 80))
 
         for file_item in index["files"]:
             if text in file_item["path"].lower():
@@ -121,42 +618,114 @@ class CodeMapService:
                     seen.add(key)
                     results.append({"kind": "function", "id": fn["id"], "label": fn["name"], "path": fn["path"], "line": fn["start_line"]})
 
-        for file_item in index["files"]:
-            source = self.get_file_source(project_id, file_item["id"])
-            for idx, line in enumerate(source["lines"]):
-                line_text = line["text"]
-                if text not in line_text.lower():
-                    continue
-                raw_key = ("text", file_item["id"], line["line_number"])
-                if raw_key not in seen:
+        if re.fullmatch(r"[A-Za-z_]\w*", text):
+            token_rows = index.get("token_index", {}).get(text, [])
+        else:
+            token_rows = []
+
+        t_idx = self._perf_begin()
+        _lines_cache: Dict[str, List[Dict]] = {}
+        for row in token_rows:
+            file_id = row.get("file_id") or ""
+            line_no = int(row.get("line") or 0)
+            path = row.get("path") or ""
+            if not file_id or line_no <= 0:
+                continue
+            if file_id not in _lines_cache:
+                _lines_cache[file_id] = self._lines_for_file(index, file_id)
+            lines = _lines_cache[file_id]
+            idx = max(0, line_no - 1)
+            if idx >= len(lines):
+                continue
+            token = row.get("token") or ""
+            match = self._match_symbol(lines, idx, token)
+            kind = match[0] if match else "symbol"
+            key = (kind, token, file_id, line_no)
+            if key in seen:
+                continue
+            seen.add(key)
+            results.append({"kind": kind, "id": token, "label": token, "path": path, "line": line_no})
+
+        if not token_rows:
+            # Non-token query: extract matching tokens from text-matching lines
+            for file_item in index["files"]:
+                fid = file_item["id"]
+                if fid not in _lines_cache:
+                    _lines_cache[fid] = self._lines_for_file(index, fid)
+                lines_dicts = _lines_cache[fid]
+                stop_file = False
+                for idx, ld in enumerate(lines_dicts):
+                    line_text = ld.get("text") or ""
+                    if text not in line_text.lower():
+                        continue
+                    ln = idx + 1
+                    for token in re.findall(r"\b[A-Za-z_]\w*\b", line_text):
+                        if text not in token.lower():
+                            continue
+                        match = self._match_symbol(lines_dicts, idx, token)
+                        kind = match[0] if match else "symbol"
+                        key = (kind, token, fid, ln)
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        results.append({"kind": kind, "id": token, "label": token, "path": file_item["path"], "line": ln})
+                        if len(results) >= limit:
+                            stop_file = True
+                            break
+                    if stop_file:
+                        break
+                if len(results) >= limit:
+                    break
+        self._perf_end("search.index_hit", t_idx)
+
+        need_text_scan = (not token_rows) or (not re.fullmatch(r"[A-Za-z_]\w*", text))
+        if need_text_scan and len(results) < limit:
+            t_scan = self._perf_begin()
+            lines_by_file = index.get("_lines_by_file", {})
+            for file_item in index["files"]:
+                file_id = file_item["id"]
+                lines = lines_by_file.get(file_id)
+                if lines is None:
+                    _, raw_lines = self._read_source_cached(file_item["abs_path"])
+                    lines = [{"line_number": i + 1, "text": line} for i, line in enumerate(raw_lines)]
+                    lines_by_file[file_id] = lines
+                for row in lines:
+                    ln = int(row.get("line_number") or 0)
+                    line_text = str(row.get("text") or "")
+                    if text not in line_text.lower():
+                        continue
+                    raw_key = ("text", file_id, ln)
+                    if raw_key in seen:
+                        continue
                     seen.add(raw_key)
-                    snippet = (line_text or "").strip()
+                    snippet = line_text.strip()
                     if len(snippet) > 120:
                         snippet = snippet[:117] + "..."
                     results.append({
                         "kind": "text",
-                        "id": f"{file_item['id']}:{line['line_number']}",
+                        "id": f"{file_id}:{ln}",
                         "label": snippet or (keyword or "").strip(),
-                        "path": source["path"],
-                        "line": line["line_number"],
+                        "path": file_item["path"],
+                        "line": ln,
                     })
-                for token in re.findall(r"\b[A-Za-z_]\w*\b", line_text):
-                    if text not in token.lower():
-                        continue
-                    match = self._match_symbol(source["lines"], idx, token)
-                    kind = match[0] if match else "symbol"
-                    key = (kind, token, file_item["id"], line["line_number"])
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    results.append({"kind": kind, "id": token, "label": token, "path": source["path"], "line": line["line_number"]})
+                    if len(results) >= limit:
+                        break
+                if len(results) >= limit:
+                    break
+            self._perf_end("search.text_scan", t_scan)
 
         kind_order = {"function": 0, "file": 1, "macro": 2, "struct": 3, "typedef": 4, "definition": 5, "declaration": 6, "text": 8, "symbol": 9}
         noisy_path_tokens = ("example", "demo", "sample", "test", "archive", "legacy", "backup")
+        path_penalty_cache: Dict[str, int] = {}
 
         def _path_penalty(path: str) -> int:
-            low = (path or "").lower()
-            return 1 if any(token in low for token in noisy_path_tokens) else 0
+            p = path or ""
+            if p in path_penalty_cache:
+                return path_penalty_cache[p]
+            low = p.lower()
+            score = 1 if any(token in low for token in noisy_path_tokens) else 0
+            path_penalty_cache[p] = score
+            return score
 
         def _match_rank(item: Dict) -> tuple:
             label_low = (item.get("label") or "").lower()
@@ -173,54 +742,59 @@ class CodeMapService:
             )
 
         results.sort(key=_match_rank)
-        return {"success": True, "results": results[:limit]}
+        final_rows = results[:limit]
+        self._put_search_cache(cache_key, final_rows)
+        self._perf_end("search", t0)
+        return {"success": True, "results": final_rows}
 
     def list_files(self, project_id: str) -> Dict:
         index = self._projects[project_id]
+        fn_count = index.get("_fn_count_by_file", {})
         files = []
         for item in sorted(index["files"], key=lambda x: x["path"]):
-            files.append({
-                **item,
-                "function_count": sum(1 for fn in index["functions"] if fn["file_id"] == item["id"]),
-            })
+            files.append({**item, "function_count": fn_count.get(item["id"], 0)})
         return {"success": True, "files": files}
 
     def get_file(self, project_id: str, file_id: str) -> Dict:
         index = self._projects[project_id]
-        file_item = next(item for item in index["files"] if item["id"] == file_id)
-        functions = [self._summarize_function(fn) for fn in index["functions"] if fn["file_id"] == file_id]
-        functions.sort(key=lambda item: item["start_line"])
+        file_item = index["_file_by_id"][file_id]
+        fns = index.get("_fns_by_file", {}).get(file_id, [])
+        functions = sorted([self._summarize_function(fn) for fn in fns], key=lambda item: item["start_line"])
         return {"success": True, "file": {**file_item, "functions": functions}}
 
     def get_file_source(self, project_id: str, file_id: str) -> Dict:
         index = self._projects[project_id]
-        file_item = next(item for item in index["files"] if item["id"] == file_id)
-        text = Path(file_item["abs_path"]).read_text(encoding="utf-8", errors="ignore")
-        lines = text.splitlines()
+        file_item = index["_file_by_id"][file_id]
+        text, raw_lines = self._read_source_cached(file_item["abs_path"])
         return {
             "success": True,
             "file_id": file_id,
             "path": file_item["path"],
             "abs_path": file_item["abs_path"],
             "source": text,
-            "lines": [{"line_number": i + 1, "text": line} for i, line in enumerate(lines)],
+            "lines": [{"line_number": i + 1, "text": line} for i, line in enumerate(raw_lines)],
         }
 
     def save_file_source(self, project_id: str, file_id: str, content: str) -> Dict:
         index = self._projects[project_id]
-        file_item = next(item for item in index["files"] if item["id"] == file_id)
+        file_item = index["_file_by_id"][file_id]
         path = Path(file_item["abs_path"])
         path.write_text(content or "", encoding="utf-8", newline="\n")
+        self._source_cache.pop(str(path.resolve()), None)
+        with self._nav_cache_lock:
+            self._nav_cache.clear()
+        with self._search_cache_lock:
+            self._search_cache.clear()
         return {"success": True, "file_id": file_id, "path": file_item["path"], "line_count": len((content or "").splitlines())}
 
     def get_function(self, project_id: str, function_id: str) -> Dict:
         index = self._projects[project_id]
-        fn = next(item for item in index["functions"] if item["id"] == function_id)
+        fn = index["_fn_by_id"][function_id]
         return {"success": True, "function": self._summarize_function(fn)}
 
     def get_function_source(self, project_id: str, function_id: str) -> Dict:
         index = self._projects[project_id]
-        fn = next(item for item in index["functions"] if item["id"] == function_id)
+        fn = index["_fn_by_id"][function_id]
         lines = fn["source"].splitlines()
         return {
             "success": True,
@@ -235,8 +809,9 @@ class CodeMapService:
         }
 
     def get_calls(self, project_id: str, function_id: str, direction: str = "out") -> Dict:
+        t0 = self._perf_begin()
         index = self._projects[project_id]
-        by_id = {fn["id"]: fn for fn in index["functions"]}
+        by_id = index.get("_fn_by_id", {})
         if direction == "in":
             relevant = [c for c in index["calls"] if c["callee_id"] == function_id]
             rows = []
@@ -245,6 +820,7 @@ class CodeMapService:
                 if not fn:
                     continue
                 rows.append({"function_id": fn["id"], "name": fn["name"], "path": fn["path"], "line": call["callsite_line"], "def_line": fn["start_line"], "signature": fn["signature"]})
+            self._perf_end("get_calls", t0)
             return {"success": True, "calls": rows}
         relevant = [c for c in index["calls"] if c["caller_id"] == function_id]
         rows = []
@@ -253,6 +829,7 @@ class CodeMapService:
             if not fn:
                 continue
             rows.append({"function_id": fn["id"], "name": fn["name"], "path": fn["path"], "line": call["callsite_line"], "def_line": fn["start_line"], "signature": fn["signature"]})
+        self._perf_end("get_calls", t0)
         return {"success": True, "calls": rows}
 
     def select_folder(self) -> Dict:
@@ -357,7 +934,18 @@ class CodeMapService:
         current_line: int = 0,
         current_column: int = 0,
         limit: int = 160,
+        perf_mode: str = "normal",
     ) -> Dict:
+        return self._navigation_engine.get_navigation_targets(
+            project_id=project_id,
+            symbol=symbol,
+            current_path=current_path,
+            current_line=current_line,
+            current_column=current_column,
+            limit=limit,
+            perf_mode=perf_mode,
+        )
+        t0 = self._perf_begin()
         name = (symbol or "").strip()
         if not name:
             return {"success": False, "error": "空符号"}
@@ -365,18 +953,53 @@ class CodeMapService:
             return {"success": False, "error": "工程未索引"}
 
         index = self._projects[project_id]
+        normalized_path = (current_path or "").replace("\\", "/")
         cur_file_id = self._resolve_file_id_by_path(index, current_path)
+        cache_key = self._nav_cache_key(
+            project_id=project_id,
+            symbol=name,
+            current_path=normalized_path,
+            current_line=int(current_line or 0),
+            current_column=int(current_column or 0),
+            limit=int(limit or 0),
+        )
+        cache_allowed = str(perf_mode or "normal").lower() != "coldish"
+        self._stat_inc("navigation.cache_total")
+        if cache_allowed:
+            cached = self._get_nav_cache(cache_key)
+            if cached:
+                self._stat_inc("navigation.cache_hit")
+                cached["message"] = str(cached.get("message") or "命中导航缓存")
+                self._set_last_navigation(cached)
+                self._perf_end("navigation", t0)
+                return cached
+        else:
+            self._stat_inc("navigation.cache_bypass_count")
+
+        perf_breakdown: Dict[str, float] = {}
+        t_fast = self._perf_begin()
+        definition = self._pick_definition(index, name, cur_file_id, current_line)
+        perf_breakdown["def_pick_ms"] = round((time.perf_counter() - t_fast) * 1000.0, 3)
+        self._perf_end("navigation.fast_resolve", t_fast)
+        fast_confident = self._is_fast_resolve_confident(index, name, definition, normalized_path, cur_file_id, int(current_line or 0))
+        local_refs: List[Dict[str, Any]] = []
+
         clangd_path = self._find_clangd_path()
-        if clangd_path:
+        if clangd_path and not fast_confident:
+            t_sem = self._perf_begin()
             sem = self._query_navigation_with_clangd(
                 index=index,
                 clangd_path=clangd_path,
                 symbol=name,
-                current_path=current_path,
+                current_path=normalized_path,
                 current_line=int(current_line or 1),
                 current_column=int(current_column or 1),
                 limit=limit,
             )
+            perf_breakdown["semantic_ms"] = round((time.perf_counter() - t_sem) * 1000.0, 3)
+            self._perf_end("navigation.semantic", t_sem)
+            if "timeout" in str(sem.get("error") or "").lower():
+                self._stat_inc("navigation.semantic_timeout_count")
             if sem.get("success") and (sem.get("definition") or sem.get("references")):
                 sem_def = sem.get("definition") or {}
                 sem_refs = sem.get("references") or []
@@ -384,34 +1007,64 @@ class CodeMapService:
                     sem_def = {}
                 if sem_def and not self._semantic_def_matches_symbol(sem_def, name):
                     sem_def = {}
+                t_pick = self._perf_begin()
                 local_def = self._pick_definition(index, name, cur_file_id, current_line)
                 sem_def = self._prefer_local_function_impl(sem_def, local_def, name)
                 if not sem_def:
                     sem_def = local_def
+                perf_breakdown["def_pick_sem_ms"] = round((time.perf_counter() - t_pick) * 1000.0, 3)
+                self._perf_end("navigation.def_pick", t_pick)
                 if not sem_refs:
+                    t_refs = self._perf_begin()
                     sem_refs = self._collect_references(index, name, sem_def, cur_file_id, current_line, limit)
-                return {
+                    perf_breakdown["refs_collect_ms"] = round((time.perf_counter() - t_refs) * 1000.0, 3)
+                    self._perf_end("navigation.refs_collect", t_refs)
+                out = {
                     "success": True,
                     "engine": "clangd",
                     "message": f"语义引擎: clangd ({clangd_path})",
                     "clangd_path": clangd_path,
+                    "perf_mode": "coldish" if not cache_allowed else "normal",
+                    "resolve_mode": "fast+semantic",
+                    "perf_breakdown": perf_breakdown,
                     "definition": sem_def,
                     "references": sem_refs[:limit],
                 }
+                if cache_allowed:
+                    self._put_nav_cache(cache_key, out)
+                self._set_last_navigation(out)
+                self._perf_end("navigation", t0)
+                if not cache_allowed:
+                    self._perf_end("navigation.non_cache", t0)
+                return out
 
-        definition = self._pick_definition(index, name, cur_file_id, current_line)
-        refs = self._collect_references(index, name, definition, cur_file_id, current_line, limit)
+        t_refs = self._perf_begin()
+        local_refs = self._collect_references(index, name, definition, cur_file_id, current_line, limit)
+        perf_breakdown["refs_collect_ms"] = round((time.perf_counter() - t_refs) * 1000.0, 3)
+        self._perf_end("navigation.refs_collect", t_refs)
         fallback_msg = "clangd 未安装，当前使用增强文本引擎"
-        if clangd_path:
+        if clangd_path and not fast_confident:
             fallback_msg = "clangd 语义查询失败，已自动降级到增强文本引擎"
-        return {
+        if fast_confident:
+            fallback_msg = "已使用快速索引直达"
+        out = {
             "success": True,
-            "engine": "text",
+            "engine": "text" if not fast_confident else "fast",
             "message": fallback_msg,
             "clangd_path": clangd_path,
+            "perf_mode": "coldish" if not cache_allowed else "normal",
+            "resolve_mode": "fast_only" if fast_confident else "fallback_fast",
+            "perf_breakdown": perf_breakdown,
             "definition": definition,
-            "references": refs,
+            "references": local_refs,
         }
+        if cache_allowed:
+            self._put_nav_cache(cache_key, out)
+        self._set_last_navigation(out)
+        self._perf_end("navigation", t0)
+        if not cache_allowed:
+            self._perf_end("navigation.non_cache", t0)
+        return out
 
     def _remember_project(self, project: Dict) -> None:
         items = []
@@ -478,18 +1131,123 @@ class CodeMapService:
         define_flags = [f"-D{d}" for d in target.get("defines", [])]
         misc_flags = shlex.split(target.get("misc", "") or "")
         base_flags = include_flags + define_flags + misc_flags
-        rows = []
+        uv_rows: List[Dict[str, Any]] = []
+        known_files: Dict[str, Path] = {}
         for item in target.get("files", []):
             abs_path = Path(item.get("abs_path", ""))
             ext = abs_path.suffix.lower()
             if ext not in {".c", ".cc", ".cpp", ".cxx"}:
                 continue
-            rows.append({
+            resolved = abs_path.resolve()
+            known_files[str(resolved).lower()] = resolved
+            uv_rows.append({
                 "file": str(abs_path),
                 "directory": str(project_dir.resolve()),
                 "arguments": ["clang"] + base_flags + ["-c", str(abs_path)],
             })
-        return rows
+        log_rows = self._build_compile_commands_from_keil_logs(project_dir, known_files)
+        merged: Dict[str, Dict[str, Any]] = {}
+        for row in uv_rows:
+            key = str(Path(row.get("file", "")).resolve()).lower()
+            merged[key] = row
+        for row in log_rows:
+            key = str(Path(row.get("file", "")).resolve()).lower()
+            merged[key] = row
+        return list(merged.values())
+
+    def _build_compile_commands_from_keil_logs(self, project_dir: Path, known_files: Dict[str, Path]) -> List[Dict]:
+        candidates = self._candidate_keil_log_files(project_dir)
+        if not candidates:
+            return []
+        out: Dict[str, Dict[str, Any]] = {}
+        for log_path in candidates:
+            try:
+                text = log_path.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            for raw_line in text.splitlines():
+                line = (raw_line or "").strip()
+                low = line.lower()
+                if ".c" not in low:
+                    continue
+                if not any(tool in low for tool in ("armclang", "armcc", "clang", "gcc")):
+                    continue
+                row = self._parse_keil_compile_line(project_dir, line, known_files)
+                if not row:
+                    continue
+                out[str(Path(row["file"]).resolve()).lower()] = row
+        return list(out.values())
+
+    def _candidate_keil_log_files(self, project_dir: Path) -> List[Path]:
+        rows: List[Path] = []
+        patterns = ("*.log", "*.txt")
+        for pattern in patterns:
+            rows.extend(project_dir.rglob(pattern))
+        ranked = []
+        for path in rows:
+            low = path.name.lower()
+            if not any(x in low for x in ("build", "uv", "output", "log")):
+                continue
+            try:
+                ranked.append((path.stat().st_mtime, path))
+            except OSError:
+                continue
+        ranked.sort(reverse=True, key=lambda x: x[0])
+        return [p for _, p in ranked[:12]]
+
+    def _parse_keil_compile_line(self, project_dir: Path, line: str, known_files: Dict[str, Path]) -> Optional[Dict]:
+        try:
+            tokens = shlex.split(line, posix=False)
+        except Exception:
+            tokens = line.split()
+        if not tokens:
+            return None
+        source = self._extract_source_from_tokens(project_dir, tokens, known_files)
+        if not source:
+            return None
+        flags: List[str] = []
+        i = 0
+        while i < len(tokens):
+            tok = str(tokens[i] or "").strip()
+            if not tok:
+                i += 1
+                continue
+            if tok in {"-I", "-D", "-std", "--target", "-mcpu", "-mfpu"} and i + 1 < len(tokens):
+                flags.append(tok)
+                flags.append(str(tokens[i + 1]))
+                i += 2
+                continue
+            if tok.startswith(("-I", "-D", "-std=", "--target=", "-mcpu=", "-mfpu=", "-mthumb", "-f", "-W", "-O")):
+                flags.append(tok)
+            i += 1
+        if not any(str(x).startswith("-I") for x in flags):
+            return None
+        return {
+            "file": str(source),
+            "directory": str(project_dir.resolve()),
+            "arguments": ["clang"] + flags + ["-c", str(source)],
+        }
+
+    def _extract_source_from_tokens(self, project_dir: Path, tokens: List[str], known_files: Dict[str, Path]) -> Optional[Path]:
+        for tok in tokens:
+            raw = str(tok or "").strip().strip('"')
+            low = raw.lower()
+            if not low.endswith((".c", ".cc", ".cpp", ".cxx")):
+                continue
+            as_path = Path(raw)
+            if not as_path.is_absolute():
+                as_path = (project_dir / as_path).resolve()
+            if as_path.exists():
+                return as_path
+            hit = known_files.get(str(as_path).lower())
+            if hit:
+                return hit
+            # Handle logs that only keep file basename.
+            base = as_path.name.lower()
+            for _, candidate in known_files.items():
+                if candidate.name.lower() == base:
+                    return candidate
+        return None
 
     def _query_navigation_with_clangd(
         self,
@@ -501,6 +1259,139 @@ class CodeMapService:
         current_column: int,
         limit: int,
     ) -> Dict:
+        root_key = str(Path(index["project"]["root"]).resolve())
+        now = time.time()
+        disabled_until = float(self._clangd_persistent_disabled_until.get(root_key) or 0.0)
+        if now < disabled_until:
+            return self._query_navigation_with_clangd_oneshot(
+                index=index,
+                clangd_path=clangd_path,
+                symbol=symbol,
+                current_path=current_path,
+                current_line=current_line,
+                current_column=current_column,
+                limit=limit,
+            )
+        sem = self._query_navigation_with_clangd_persistent(
+            index=index,
+            clangd_path=clangd_path,
+            symbol=symbol,
+            current_path=current_path,
+            current_line=current_line,
+            current_column=current_column,
+            limit=limit,
+        )
+        if sem.get("success"):
+            self._clangd_persistent_failures[root_key] = 0
+            return sem
+        fail_count = int(self._clangd_persistent_failures.get(root_key) or 0) + 1
+        self._clangd_persistent_failures[root_key] = fail_count
+        if fail_count <= 2:
+            cooldown = 60.0
+        elif fail_count <= 5:
+            cooldown = 180.0
+        else:
+            cooldown = 600.0
+        self._clangd_persistent_disabled_until[root_key] = time.time() + cooldown
+        self._perf_record("navigation.semantic_fallback", cooldown)
+        return self._query_navigation_with_clangd_oneshot(
+            index=index,
+            clangd_path=clangd_path,
+            symbol=symbol,
+            current_path=current_path,
+            current_line=current_line,
+            current_column=current_column,
+            limit=limit,
+        )
+
+    def _query_navigation_with_clangd_persistent(
+        self,
+        index: Dict,
+        clangd_path: str,
+        symbol: str,
+        current_path: str,
+        current_line: int,
+        current_column: int,
+        limit: int,
+    ) -> Dict:
+        t0 = self._perf_begin()
+        project_root = Path(index["project"]["root"]).resolve()
+        current_abs = self._resolve_abs_path_by_rel(index, current_path)
+        if not current_abs or not current_abs.exists():
+            return {"success": False, "error": "当前文件路径无效"}
+        ok, _ = self._ensure_compile_commands(project_root)
+        if not ok:
+            return {"success": False, "error": "compile_commands 不可用"}
+
+        session = self._ensure_clangd_session(project_root, clangd_path)
+        if not session:
+            return {"success": False, "error": "clangd 会话不可用"}
+
+        text = current_abs.read_text(encoding="utf-8", errors="ignore")
+        lang = "cpp" if current_abs.suffix.lower() in {".cpp", ".cc", ".cxx", ".hpp", ".hh"} else "c"
+        uri = current_abs.as_uri()
+        line0 = max(0, int(current_line or 1) - 1)
+        col0 = max(0, int(current_column or 1) - 1)
+        lines = text.splitlines()
+        if 0 <= line0 < len(lines):
+            line_text = lines[line0]
+            if not line_text[col0:col0 + len(symbol)] == symbol:
+                probe = line_text.find(symbol)
+                if probe >= 0:
+                    col0 = probe
+        pos = {"line": line0, "character": col0}
+        try:
+            with session["lock"]:
+                version = int(session.get("version", 1)) + 1
+                session["version"] = version
+                self._clangd_send_packet(session, {
+                    "jsonrpc": "2.0",
+                    "method": "textDocument/didOpen",
+                    "params": {"textDocument": {"uri": uri, "languageId": lang, "version": version, "text": text}},
+                })
+                def_id = self._clangd_next_id(session)
+                ref_id = self._clangd_next_id(session)
+                self._clangd_send_packet(session, {
+                    "jsonrpc": "2.0",
+                    "id": def_id,
+                    "method": "textDocument/definition",
+                    "params": {"textDocument": {"uri": uri}, "position": pos},
+                })
+                self._clangd_send_packet(session, {
+                    "jsonrpc": "2.0",
+                    "id": ref_id,
+                    "method": "textDocument/references",
+                    "params": {"textDocument": {"uri": uri}, "position": pos, "context": {"includeDeclaration": False}},
+                })
+                def_msg = self._clangd_wait_response(session, def_id, timeout=0.09)
+                ref_msg = self._clangd_wait_response(session, ref_id, timeout=0.09)
+                if not def_msg and not ref_msg:
+                    raise RuntimeError("clangd persistent timeout")
+            def_rows = self._lsp_locations_to_rows(index, (def_msg or {}).get("result"), symbol)
+            ref_rows = self._lsp_locations_to_rows(index, (ref_msg or {}).get("result"), symbol)
+            definition = self._pick_best_semantic_definition(index, def_rows, current_path, current_line)
+            if definition:
+                ref_rows = [r for r in ref_rows if not (r["path"] == definition["path"] and int(r["line"]) == int(definition["line"]))]
+            self._perf_end("navigation.semantic_persistent", t0)
+            return {"success": True, "definition": definition or {}, "references": ref_rows[:limit]}
+        except Exception as exc:
+            with self._clangd_session_lock:
+                self._shutdown_clangd_session_locked()
+            self._perf_end("navigation.semantic_persistent", t0)
+            msg = str(exc) if exc else "clangd 常驻会话查询异常"
+            return {"success": False, "error": msg}
+
+    def _query_navigation_with_clangd_oneshot(
+        self,
+        index: Dict,
+        clangd_path: str,
+        symbol: str,
+        current_path: str,
+        current_line: int,
+        current_column: int,
+        limit: int,
+    ) -> Dict:
+        t0 = self._perf_begin()
         project_root = Path(index["project"]["root"]).resolve()
         current_abs = self._resolve_abs_path_by_rel(index, current_path)
         if not current_abs or not current_abs.exists():
@@ -559,7 +1450,7 @@ class CodeMapService:
 
             data = b"".join(self._lsp_packet(p) for p in packets)
             proc = subprocess.Popen(
-                [clangd_path, "--background-index=0", f"--compile-commands-dir={project_root}"],
+                [clangd_path, "--background-index=0", "--pch-storage=memory", f"--compile-commands-dir={project_root}"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -568,7 +1459,7 @@ class CodeMapService:
                 return {"success": False, "error": "clangd stdin 不可用"}
             proc.stdin.write(data)
             proc.stdin.close()
-            out, _ = proc.communicate(timeout=20)
+            out, _ = proc.communicate(timeout=8)
             messages = self._lsp_parse_stream(out or b"")
             by_id = {m.get("id"): m for m in messages if isinstance(m, dict) and "id" in m}
             if init_id not in by_id or "result" not in by_id.get(init_id, {}):
@@ -580,31 +1471,177 @@ class CodeMapService:
             definition = self._pick_best_semantic_definition(index, def_rows, current_path, current_line)
             if definition:
                 ref_rows = [r for r in ref_rows if not (r["path"] == definition["path"] and int(r["line"]) == int(definition["line"]))]
+            self._perf_end("navigation.semantic_oneshot", t0)
             return {"success": True, "definition": definition or {}, "references": ref_rows[:limit]}
+        except subprocess.TimeoutExpired:
+            self._perf_end("navigation.semantic_oneshot", t0)
+            return {"success": False, "error": "clangd oneshot timeout"}
         except Exception:
+            self._perf_end("navigation.semantic_oneshot", t0)
             return {"success": False, "error": "clangd 查询异常"}
+
+    def _ensure_clangd_session(self, project_root: Path, clangd_path: str) -> Dict[str, Any]:
+        with self._clangd_session_lock:
+            session = self._clangd_session
+            if session:
+                proc = session.get("proc")
+                same_root = str(session.get("root") or "") == str(project_root)
+                if proc and proc.poll() is None and same_root:
+                    return session
+                self._shutdown_clangd_session_locked()
+
+            try:
+                proc = subprocess.Popen(
+                    [clangd_path, "--background-index", "--pch-storage=memory", f"--compile-commands-dir={project_root}"],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                if not proc.stdin or not proc.stdout:
+                    return {}
+                q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+                session = {
+                    "proc": proc,
+                    "stdin": proc.stdin,
+                    "stdout": proc.stdout,
+                    "queue": q,
+                    "lock": threading.Lock(),
+                    "root": str(project_root),
+                    "next_id": 10,
+                    "version": 1,
+                }
+                reader = threading.Thread(target=self._clangd_reader_loop, args=(session,), daemon=True)
+                session["reader"] = reader
+                reader.start()
+                init_id = self._clangd_next_id(session)
+                self._clangd_send_packet(session, {
+                    "jsonrpc": "2.0",
+                    "id": init_id,
+                    "method": "initialize",
+                    "params": {
+                        "processId": None,
+                        "rootUri": project_root.as_uri(),
+                        "capabilities": {},
+                        "workspaceFolders": [{"uri": project_root.as_uri(), "name": project_root.name}],
+                    },
+                })
+                init_msg = self._clangd_wait_response(session, init_id, timeout=8.0)
+                if not init_msg or "result" not in init_msg:
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
+                    return {}
+                self._clangd_send_packet(session, {"jsonrpc": "2.0", "method": "initialized", "params": {}})
+                self._clangd_session = session
+                return session
+            except Exception:
+                return {}
+
+    def _shutdown_clangd_session_locked(self) -> None:
+        session = self._clangd_session
+        self._clangd_session = {}
+        if not session:
+            return
+        try:
+            self._clangd_send_packet(session, {"jsonrpc": "2.0", "method": "exit", "params": {}})
+        except Exception:
+            pass
+        proc = session.get("proc")
+        if proc and proc.poll() is None:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+
+    def _clangd_next_id(self, session: Dict[str, Any]) -> int:
+        cur = int(session.get("next_id") or 1)
+        session["next_id"] = cur + 1
+        return cur
+
+    def _clangd_send_packet(self, session: Dict[str, Any], payload: Dict[str, Any]) -> None:
+        stdin = session.get("stdin")
+        if not stdin:
+            raise RuntimeError("clangd stdin invalid")
+        stdin.write(self._lsp_packet(payload))
+        stdin.flush()
+
+    def _clangd_wait_response(self, session: Dict[str, Any], req_id: int, timeout: float = 8.0) -> Optional[Dict[str, Any]]:
+        q = session.get("queue")
+        if not q:
+            return None
+        end_at = time.time() + timeout
+        stash = session.setdefault("stash", [])
+        for i, item in enumerate(list(stash)):
+            if item.get("id") == req_id:
+                stash.pop(i)
+                return item
+        while time.time() < end_at:
+            remain = max(0.05, end_at - time.time())
+            try:
+                msg = q.get(timeout=remain)
+            except Exception:
+                continue
+            if not isinstance(msg, dict):
+                continue
+            if msg.get("id") == req_id:
+                return msg
+            stash.append(msg)
+        return None
+
+    def _clangd_reader_loop(self, session: Dict[str, Any]) -> None:
+        stdout = session.get("stdout")
+        q = session.get("queue")
+        proc = session.get("proc")
+        if not stdout or not q:
+            return
+        while proc and proc.poll() is None:
+            try:
+                headers: Dict[str, str] = {}
+                line = stdout.readline()
+                if not line:
+                    break
+                while line and line not in {b"\r\n", b"\n"}:
+                    text = line.decode("ascii", errors="ignore").strip()
+                    if ":" in text:
+                        k, v = text.split(":", 1)
+                        headers[k.strip().lower()] = v.strip()
+                    line = stdout.readline()
+                length = int(headers.get("content-length", "0") or "0")
+                if length <= 0:
+                    continue
+                body = stdout.read(length)
+                if not body:
+                    break
+                msg = json.loads(body.decode("utf-8", errors="ignore"))
+                if isinstance(msg, dict):
+                    q.put(msg)
+            except Exception:
+                break
 
     def _ensure_compile_commands(self, project_root: Path) -> tuple[bool, str]:
         cc_path = project_root / "compile_commands.json"
         if cc_path.exists() and cc_path.stat().st_size > 20:
+            self._set_index_state(project_root, compile_commands_ready=True)
             return True, ""
         ctx = self.get_keil_compile_context(str(project_root))
         if not ctx.get("success"):
+            self._set_index_state(project_root, compile_commands_ready=False, error=str(ctx.get("error") or ""))
             return False, str(ctx.get("error") or "未找到 Keil 工程参数")
         rows = ctx.get("compile_commands") or []
         if not rows:
+            self._set_index_state(project_root, compile_commands_ready=False, error="compile_commands 为空")
             return False, "compile_commands 为空"
         cc_path.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._set_index_state(project_root, compile_commands_ready=True)
         return True, ""
 
     def _resolve_abs_path_by_rel(self, index: Dict, rel_path: str) -> Optional[Path]:
         target = (rel_path or "").replace("\\", "/")
         if not target:
             return None
-        for f in index["files"]:
-            if f["path"] == target:
-                return Path(f["abs_path"]).resolve()
-        return None
+        file_item = index.get("_file_by_path", {}).get(target)
+        return Path(file_item["abs_path"]).resolve() if file_item else None
 
     def _lsp_packet(self, payload: Dict) -> bytes:
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -691,10 +1728,10 @@ class CodeMapService:
         return Path(raw).resolve()
 
     def _abs_to_rel_path(self, index: Dict, abs_path: Path) -> str:
-        s = str(abs_path).lower()
-        for f in index["files"]:
-            if str(Path(f["abs_path"]).resolve()).lower() == s:
-                return f["path"]
+        s = str(abs_path.resolve()).lower()
+        rel = index.get("_abs_to_rel", {}).get(s)
+        if rel:
+            return rel
         root = Path(index["project"]["root"]).resolve()
         try:
             return abs_path.resolve().relative_to(root).as_posix()
@@ -703,7 +1740,7 @@ class CodeMapService:
 
     def _read_line_text(self, abs_path: Path, line_no: int) -> str:
         try:
-            lines = abs_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+            _, lines = self._read_source_cached(str(abs_path))
             if 1 <= line_no <= len(lines):
                 return lines[line_no - 1].strip()
         except Exception:
@@ -773,10 +1810,23 @@ class CodeMapService:
         target = (path or "").replace("\\", "/")
         if not target:
             return ""
-        for f in index["files"]:
-            if f["path"] == target:
-                return f["id"]
-        return ""
+        file_item = index.get("_file_by_path", {}).get(target)
+        return file_item["id"] if file_item else ""
+
+    def _lines_for_file(self, index: Dict, file_id: str) -> List[Dict]:
+        cached = index.get("_lines_by_file", {}).get(file_id)
+        if cached is not None:
+            return cached
+        file_item = index.get("_file_by_id", {}).get(file_id)
+        if not file_item:
+            return []
+        _, raw_lines = self._read_source_cached(file_item["abs_path"])
+        lines = [{"line_number": i + 1, "text": line} for i, line in enumerate(raw_lines)]
+        index.setdefault("_lines_by_file", {})[file_id] = lines
+        return lines
+
+    def _iter_token_rows(self, index: Dict, name: str) -> List[Dict]:
+        return list(index.get("token_index", {}).get((name or "").lower(), []))
 
     def _pick_best_callee_candidate(self, caller_fn: Dict, callee_name: str, candidates: List[Dict]) -> Optional[Dict]:
         if not candidates:
@@ -814,32 +1864,35 @@ class CodeMapService:
                 {"path": fn["path"], "line": fn["start_line"], "column": 1, "kind": "function", "label": fn["name"], "function_id": fn["id"]},
             ))
 
-        escaped = re.escape(name)
-        token_re = re.compile(rf"\b{escaped}\b")
-        for f in index["files"]:
-            src = Path(f["abs_path"]).read_text(encoding="utf-8", errors="ignore").splitlines()
-            for i, raw in enumerate(src, start=1):
-                if not token_re.search(raw):
-                    continue
-                lines = [{"line_number": n + 1, "text": t} for n, t in enumerate(src)]
-                match = self._match_symbol(lines, i - 1, name)
-                if not match:
-                    continue
-                kind = match[0]
-                if kind not in {"macro", "struct", "typedef", "definition", "declaration"}:
-                    continue
-                bias = 0 if f["id"] == cur_file_id else 1
-                dist = abs(int(cur_line or 0) - i) if bias == 0 and cur_line else 0
-                col = raw.find(name) + 1
-                candidates.append((
-                    self._kind_priority(kind),
-                    bias,
-                    path_penalty(f["path"]),
-                    dist,
-                    f["path"],
-                    i,
-                    {"path": f["path"], "line": i, "column": max(1, col), "kind": kind, "label": name},
-                ))
+        by_file: Dict[str, List[Dict]] = {}
+        for row in self._iter_token_rows(index, name):
+            file_id = row.get("file_id") or ""
+            if not file_id:
+                continue
+            lines = by_file.setdefault(file_id, self._lines_for_file(index, file_id))
+            i = int(row.get("line") or 0)
+            if i <= 0 or i > len(lines):
+                continue
+            raw = str(row.get("text") or "")
+            match = self._match_symbol(lines, i - 1, name)
+            if not match:
+                continue
+            kind = match[0]
+            if kind not in {"macro", "struct", "typedef", "definition", "declaration"}:
+                continue
+            path = row.get("path") or ""
+            bias = 0 if file_id == cur_file_id else 1
+            dist = abs(int(cur_line or 0) - i) if bias == 0 and cur_line else 0
+            col = int(row.get("column") or max(1, raw.find(name) + 1))
+            candidates.append((
+                self._kind_priority(kind),
+                bias,
+                path_penalty(path),
+                dist,
+                path,
+                i,
+                {"path": path, "line": i, "column": max(1, col), "kind": kind, "label": name},
+            ))
 
         if not candidates:
             return {}
@@ -855,34 +1908,32 @@ class CodeMapService:
         cur_line: int,
         limit: int,
     ) -> List[Dict]:
-        escaped = re.escape(name)
-        token_re = re.compile(rf"\b{escaped}\b")
         def_path = definition.get("path", "")
         def_line = int(definition.get("line") or 0)
         rows = []
-        for f in index["files"]:
-            src = Path(f["abs_path"]).read_text(encoding="utf-8", errors="ignore").splitlines()
-            for i, raw in enumerate(src, start=1):
-                m = token_re.search(raw)
-                if not m:
-                    continue
-                if f["path"] == def_path and i == def_line:
-                    continue
-                snippet = raw.strip()
-                bias = 0 if f["id"] == cur_file_id else 1
-                dist = abs(int(cur_line or 0) - i) if bias == 0 and cur_line else 0
-                fn = self._find_function_context_in_index(index, f["path"], i)
-                rows.append({
-                    "path": f["path"],
-                    "line": i,
-                    "column": m.start() + 1,
-                    "label": name,
-                    "kind": "reference",
-                    "snippet": snippet[:220],
-                    "function_id": fn.get("id", ""),
-                    "function_name": fn.get("name", ""),
-                    "_sort": (bias, dist, f["path"], i),
-                })
+        for row in self._iter_token_rows(index, name):
+            path = row.get("path") or ""
+            file_id = row.get("file_id") or ""
+            i = int(row.get("line") or 0)
+            if not i:
+                continue
+            if path == def_path and i == def_line:
+                continue
+            snippet = str(row.get("text") or "").strip()
+            bias = 0 if file_id == cur_file_id else 1
+            dist = abs(int(cur_line or 0) - i) if bias == 0 and cur_line else 0
+            fn = self._find_function_context_in_index(index, path, i)
+            rows.append({
+                "path": path,
+                "line": i,
+                "column": int(row.get("column") or 1),
+                "label": name,
+                "kind": "reference",
+                "snippet": snippet[:220],
+                "function_id": fn.get("id", ""),
+                "function_name": fn.get("name", ""),
+                "_sort": (bias, dist, path, i),
+            })
         rows.sort(key=lambda r: r["_sort"])
         out = []
         for row in rows[:limit]:
@@ -892,6 +1943,7 @@ class CodeMapService:
         return out
 
     def peek_symbol(self, project_id: str, symbol: str, current_file_id: Optional[str] = None, current_line: Optional[int] = None) -> Dict:
+        t0 = self._perf_begin()
         index = self._projects[project_id]
         name = (symbol or "").strip()
         if not name:
@@ -903,16 +1955,33 @@ class CodeMapService:
             if macro:
                 return macro
         candidates: List[tuple] = []
-        for file_item in ordered_files:
-            source = self.get_file_source(project_id, file_item["id"])
-            lines = source["lines"]
-            for idx, line in enumerate(lines):
-                match = self._match_symbol(lines, idx, name)
-                if not match:
-                    continue
-                kind, start_idx, end_idx = match
-                distance = abs(line["line_number"] - int(current_line or 0)) if current_file_id == file_item["id"] and current_line else 0
-                candidates.append((self._kind_priority(kind), 0 if current_file_id == file_item["id"] else 1, distance, line["line_number"], file_item["id"], kind, start_idx, end_idx))
+        by_file_lines: Dict[str, List[Dict]] = {}
+        token_rows = self._iter_token_rows(index, name)
+        for row in token_rows:
+            file_id = row.get("file_id") or ""
+            if not file_id:
+                continue
+            lines = by_file_lines.setdefault(file_id, self._lines_for_file(index, file_id))
+            line_no = int(row.get("line") or 0)
+            if line_no <= 0 or line_no > len(lines):
+                continue
+            match = self._match_symbol(lines, line_no - 1, name)
+            if not match:
+                continue
+            kind, start_idx, end_idx = match
+            distance = abs(line_no - int(current_line or 0)) if current_file_id == file_id and current_line else 0
+            candidates.append((self._kind_priority(kind), 0 if current_file_id == file_id else 1, distance, line_no, file_id, kind, start_idx, end_idx))
+        if not candidates:
+            for file_item in ordered_files:
+                source = self.get_file_source(project_id, file_item["id"])
+                lines = source["lines"]
+                for idx, line in enumerate(lines):
+                    match = self._match_symbol(lines, idx, name)
+                    if not match:
+                        continue
+                    kind, start_idx, end_idx = match
+                    distance = abs(line["line_number"] - int(current_line or 0)) if current_file_id == file_item["id"] and current_line else 0
+                    candidates.append((self._kind_priority(kind), 0 if current_file_id == file_item["id"] else 1, distance, line["line_number"], file_item["id"], kind, start_idx, end_idx))
 
         if not candidates:
             return {"success": False, "error": "未找到符号"}
@@ -969,6 +2038,7 @@ class CodeMapService:
         elif kind in {"struct", "typedef"}:
             sections.append({"title": "定义片段", "kind": "code", "path": source["path"], "line": snippet[0]["line_number"], "lines": snippet})
 
+        self._perf_end("peek_symbol", t0)
         return {"success": True, "kind": kind, "symbol": name, "path": source["path"], "line": snippet[0]["line_number"], "lines": snippet, "facts": facts, "sections": sections}
 
     def _upgrade_symbol_peek_target(
@@ -995,7 +2065,7 @@ class CodeMapService:
         if not def_path or def_line <= 0:
             return None
         index = self._projects[project_id]
-        target_file = next((f for f in index["files"] if f["path"] == def_path), None)
+        target_file = index.get("_file_by_path", {}).get(def_path)
         if not target_file:
             return None
         target_source = self.get_file_source(project_id, target_file["id"])
@@ -1063,20 +2133,24 @@ class CodeMapService:
             "sections": [{"title": "宏链路", "items": items}] if items else [],
         }
 
-    def _collect_files(self, root: Path) -> List[Path]:
+    def _collect_files(self, root: Path, scan_mode: str = "full") -> List[Path]:
         exts = {".c", ".h", ".cpp", ".hpp", ".cc"}
         skip_dirs = {
-            "build", "dist", ".git", "__pycache__", "node_modules", "output",
-            "CMSIS", "lib", "Listings", "RTE", "analysis_reports", "project_docs",
-            "project_meta", "docs", "logs", ".kiro", ".windsurf", "legacy", "public",
+            "build", "dist", ".git", "__pycache__", "node_modules", "output", "out", "bin", "obj",
+            "Listings", "RTE", "analysis_reports", "project_docs", "project_meta", "docs", "logs",
+            ".kiro", ".windsurf", ".cache", ".idea", ".vscode", "legacy", "public", "CMSIS", "lib", "tools",
+            "external", "third_party", "thirdparty",
         }
         preferred_roots = [
             "app", "board", "boot_sdk", "calibration", "cmd", "config", "core",
             "drivers", "hal", "hw_system", "protocol", "ranging", "storage", "usb", "user",
         ]
-        scan_roots = [root / name for name in preferred_roots if (root / name).exists()]
-        if not scan_roots:
-            scan_roots = [root]
+        mode = (scan_mode or "full").strip().lower()
+        scan_roots = [root]
+        if mode == "whitelist":
+            scan_roots = [root / name for name in preferred_roots if (root / name).exists()]
+            if not scan_roots:
+                scan_roots = [root]
         files = []
         seen = set()
         for scan_root in scan_roots:
@@ -1244,29 +2318,33 @@ class CodeMapService:
         return bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", name or ""))
 
     def _find_macro_definition(self, project_id: str, name: str, ordered_files: List[Dict], current_file_id: Optional[str], current_line: Optional[int]) -> Optional[Dict]:
+        index = self._projects[project_id]
         matches = []
-        for file_item in ordered_files:
-            source = self.get_file_source(project_id, file_item["id"])
-            for idx, line in enumerate(source["lines"]):
-                text = line["text"]
-                if not re.search(rf"^\s*#\s*define\s+{re.escape(name)}\b", text):
-                    continue
-                value = self._extract_define_value([line], name)
-                distance = abs(line["line_number"] - int(current_line or 0)) if current_file_id == file_item["id"] and current_line else 0
-                matches.append((
-                    0 if current_file_id == file_item["id"] else 1,
-                    distance,
-                    line["line_number"],
-                    {
-                        "name": name,
-                        "value": value,
-                        "resolved_value": value,
-                        "display": f"-> {value}" if value else "",
-                        "path": source["path"],
-                        "line": line["line_number"],
-                        "lines": [line],
-                    },
-                ))
+        define_re = re.compile(rf"^\s*#\s*define\s+{re.escape(name)}\b")
+        for row in self._iter_token_rows(index, name):
+            file_id = row.get("file_id") or ""
+            line_no = int(row.get("line") or 0)
+            text = row.get("text") or ""
+            path = row.get("path") or ""
+            if not define_re.search(text):
+                continue
+            line_dict = {"line_number": line_no, "text": text}
+            value = self._extract_define_value([line_dict], name)
+            distance = abs(line_no - int(current_line or 0)) if current_file_id == file_id and current_line else 0
+            matches.append((
+                0 if current_file_id == file_id else 1,
+                distance,
+                line_no,
+                {
+                    "name": name,
+                    "value": value,
+                    "resolved_value": value,
+                    "display": f"-> {value}" if value else "",
+                    "path": path,
+                    "line": line_no,
+                    "lines": [line_dict],
+                },
+            ))
         if not matches:
             return None
         matches.sort(key=lambda item: (item[0], item[1], item[2]))
@@ -1468,13 +2546,22 @@ class CodeMapService:
             return None
         index = self._projects[project_id]
         candidates = []
-        for file_item in self._ordered_files(index, current_file_id):
-            source = self.get_file_source(project_id, file_item["id"])
-            for idx, line in enumerate(source["lines"]):
-                match = self._match_symbol(source["lines"], idx, target)
-                if not match or match[0] not in {"struct", "typedef"}:
-                    continue
-                candidates.append((0 if file_item["id"] == current_file_id else 1, line["line_number"], file_item["id"], match[0], match[1], match[2]))
+        _lines_cache: Dict[str, List[Dict]] = {}
+        for row in self._iter_token_rows(index, target):
+            file_id = row.get("file_id") or ""
+            line_no = int(row.get("line") or 0)
+            if not file_id or line_no <= 0:
+                continue
+            if file_id not in _lines_cache:
+                _lines_cache[file_id] = self._lines_for_file(index, file_id)
+            lines = _lines_cache[file_id]
+            idx = max(0, line_no - 1)
+            if idx >= len(lines):
+                continue
+            match = self._match_symbol(lines, idx, target)
+            if not match or match[0] not in {"struct", "typedef"}:
+                continue
+            candidates.append((0 if file_id == current_file_id else 1, line_no, file_id, match[0], match[1], match[2]))
         if not candidates:
             return None
         candidates.sort(key=lambda item: (item[0], item[1]))
@@ -1491,7 +2578,9 @@ class CodeMapService:
         return None
 
     def _find_function_context_in_index(self, index: Dict, path: str, line_no: int) -> Dict:
-        matched = [fn for fn in index["functions"] if fn["path"] == path and fn["start_line"] <= line_no <= fn["end_line"]]
+        file_item = index.get("_file_by_path", {}).get(path)
+        fns = index.get("_fns_by_file", {}).get(file_item["id"], []) if file_item else []
+        matched = [fn for fn in fns if fn["start_line"] <= line_no <= fn["end_line"]]
         if not matched:
             return {}
         matched.sort(key=lambda fn: (fn["end_line"] - fn["start_line"], fn["start_line"]))
@@ -1505,64 +2594,72 @@ class CodeMapService:
     def _find_symbol_lines(self, project_id: str, name: str, mode: str, limit: int = 8) -> List[Dict]:
         index = self._projects[project_id]
         rows = []
-        for file_item in index["files"]:
-            source = self.get_file_source(project_id, file_item["id"])
-            for idx, line in enumerate(source["lines"]):
-                text = line["text"]
-                if not re.search(rf"\b{re.escape(name)}\b", text):
-                    continue
-                match = self._match_symbol(source["lines"], idx, name)
-                if match and match[0] in {"definition", "declaration", "macro", "typedef", "struct"}:
-                    continue
-                is_write = bool(re.search(rf"\b{re.escape(name)}\b\s*(?:\[[^\]]+\])?\s*=(?!=)|\.\s*{re.escape(name)}\b\s*=(?!=)|->\s*{re.escape(name)}\b\s*=(?!=)", text))
-                if mode == "read" and is_write:
-                    continue
-                if mode == "write" and not is_write:
-                    continue
-                fn = self._find_function_context(project_id, source["path"], line["line_number"])
-                display = f"{source['path']} : {line['line_number']}"
-                if fn.get("name"):
-                    display = f"{display} · {fn['name']}"
-                rows.append({
-                    "name": display,
-                    "detail": text.strip(),
-                    "path": source["path"],
-                    "line": line["line_number"],
-                    "function_id": fn.get("id", ""),
-                    "tag": self._classify_context("write" if is_write else "read", text, fn.get("name", ""), ""),
-                })
+        _lines_cache: Dict[str, List[Dict]] = {}
+        write_re = re.compile(rf"\b{re.escape(name)}\b\s*(?:\[[^\]]+\])?\s*=(?!=)|\.\s*{re.escape(name)}\b\s*=(?!=)|->\s*{re.escape(name)}\b\s*=(?!=)")
+        for row in self._iter_token_rows(index, name):
+            path = row.get("path") or ""
+            file_id = row.get("file_id") or ""
+            line_no = int(row.get("line") or 0)
+            text = row.get("text") or ""
+            if not line_no:
+                continue
+            if file_id not in _lines_cache:
+                _lines_cache[file_id] = self._lines_for_file(index, file_id)
+            lines = _lines_cache[file_id]
+            idx = max(0, line_no - 1)
+            if idx >= len(lines):
+                continue
+            match = self._match_symbol(lines, idx, name)
+            if match and match[0] in {"definition", "declaration", "macro", "typedef", "struct"}:
+                continue
+            is_write = bool(write_re.search(text))
+            if mode == "read" and is_write:
+                continue
+            if mode == "write" and not is_write:
+                continue
+            fn = self._find_function_context_in_index(index, path, line_no)
+            display = f"{path} : {line_no}"
+            if fn.get("name"):
+                display = f"{display} · {fn['name']}"
+            rows.append({
+                "name": display,
+                "detail": text.strip(),
+                "path": path,
+                "line": line_no,
+                "function_id": fn.get("id", ""),
+                "tag": self._classify_context("write" if is_write else "read", text, fn.get("name", ""), ""),
+            })
         rows.sort(key=lambda item: (item["path"], item["line"]))
         return rows[:limit]
 
     def _find_call_usages(self, project_id: str, name: str, mode: str, limit: int = 8) -> List[Dict]:
         index = self._projects[project_id]
-        symbol_pattern = re.compile(rf"(?:[&*]\s*)?\b{re.escape(name)}\b")
         init_pattern = re.compile(r"(init|default|reset|load|setup|config|set)", re.I)
         grouped: Dict[tuple, Dict] = {}
-        for file_item in index["files"]:
-            source = self.get_file_source(project_id, file_item["id"])
-            for line in source["lines"]:
-                text = line["text"]
-                if not symbol_pattern.search(text):
+        for row in self._iter_token_rows(index, name):
+            path = row.get("path") or ""
+            line_no = int(row.get("line") or 0)
+            text = row.get("text") or ""
+            if not line_no:
+                continue
+            calls = [x for x in CALL_RE.findall(text) if x not in {"if", "for", "while", "switch", "return", "sizeof"} and x != name]
+            if not calls:
+                continue
+            fn = self._find_function_context_in_index(index, path, line_no)
+            for callee in calls:
+                if mode == "init" and not init_pattern.search(callee):
                     continue
-                calls = [x for x in CALL_RE.findall(text) if x not in {"if", "for", "while", "switch", "return", "sizeof"} and x != name]
-                if not calls:
-                    continue
-                fn = self._find_function_context(project_id, source["path"], line["line_number"])
-                for callee in calls:
-                    if mode == "init" and not init_pattern.search(callee):
-                        continue
-                    key = (callee, fn.get("id", ""), source["path"])
-                    item = grouped.setdefault(key, {
-                        "name": f"{callee} · {fn.get('name', '')}".rstrip(" ·"),
-                        "detail": f"{source['path']} : {line['line_number']}",
-                        "path": source["path"],
-                        "line": line["line_number"],
-                        "function_id": fn.get("id", ""),
-                        "count": 0,
-                        "tag": self._classify_context(mode, text, fn.get("name", ""), callee),
-                    })
-                    item["count"] += 1
+                key = (callee, fn.get("id", ""), path)
+                item = grouped.setdefault(key, {
+                    "name": f"{callee} · {fn.get('name', '')}".rstrip(" ·"),
+                    "detail": f"{path} : {line_no}",
+                    "path": path,
+                    "line": line_no,
+                    "function_id": fn.get("id", ""),
+                    "count": 0,
+                    "tag": self._classify_context(mode, text, fn.get("name", ""), callee),
+                })
+                item["count"] += 1
         rows = []
         for item in grouped.values():
             item["detail"] = f"{item['detail']} · {item['count']}次"

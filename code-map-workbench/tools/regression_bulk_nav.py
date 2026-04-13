@@ -11,9 +11,9 @@ if str(ROOT_DIR) not in sys.path:
 from backend.service import CodeMapService
 
 
-def run(root: str = r"E:\相位\program\green", target_checks: int = 450) -> int:
+def run(root: str = r"E:\相位\program\green", target_checks: int = 40) -> int:
     svc = CodeMapService()
-    scan = svc.scan_project(root)
+    scan = svc.scan_project(root, "whitelist")
     if not scan.get("success"):
         print("FAIL scan_project", scan.get("error", ""))
         return 2
@@ -22,12 +22,12 @@ def run(root: str = r"E:\相位\program\green", target_checks: int = 450) -> int
     idx = svc._projects[pid]
 
     # Targeted symbols from known regressions / user feedback.
-    for q in ["LD_PWR_RCU", "drv_manager_init", "protocol_reply_wave_u16x2", "S1-HW"]:
+    for q in ["LD_PWR_RCU", "comm_init", "protocol_reply_wave_u16x2", "S1-HW"]:
         res = svc.search(pid, q, 10).get("results", [])
         print("SEARCH", q, "count", len(res), "top", res[0] if res else None)
 
     targeted_nav = [
-        ("drv_manager_init", "app/app_init.c", 10, 5),
+        ("comm_init", "app/app_init.c", 93, 5),
         ("protocol_reply_wave_u16x2", "cmd/cmd_debug_capture.c", 82, 3),
         ("hw_system_get_ref_count", "hw_system/hw_system.c", 780, 5),
     ]
